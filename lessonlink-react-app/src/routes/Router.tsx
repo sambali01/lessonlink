@@ -1,0 +1,63 @@
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import MainLayout from "../layout/MainLayout";
+import { Role } from "../models/Role";
+import Dashboard from "../pages/Dashboard";
+import Home from "../pages/Home";
+import Login from "../pages/Login";
+import Profile from "../pages/Profile";
+import Register from "../pages/Register";
+import TeacherDetails from "../pages/TeacherDetails";
+import TeacherSearch from "../pages/TeacherSearch";
+import ProtectedRoute from "./ProtectedRoute";
+import { UnauthenticatedRoute } from "./UnauthenticatedRoute";
+
+export default function Router() {
+    const router = createBrowserRouter([
+        {
+            element: <MainLayout />,
+            children: [
+                {
+                    element: <UnauthenticatedRoute />,
+                    children: [
+                        {
+                            path: '/',
+                            element: <Home />
+                        },
+                        {
+                            path: '/login',
+                            element: <Login />
+                        },
+                        {
+                            path: '/register',
+                            element: <Register />
+                        },
+                        {
+                            path: '/teachers',
+                            element: <TeacherSearch />
+                        },
+                        {
+                            path: '/teachers/:userId',
+                            element: <TeacherDetails />
+                        }
+                    ]
+                },
+                {
+                    path: '/dashboard',
+                    element: <ProtectedRoute allowedRoles={[Role.Student, Role.Teacher]}>
+                        <Dashboard />
+                    </ProtectedRoute>
+                },
+                {
+                    path: '/profile',
+                    element: <ProtectedRoute allowedRoles={[Role.Student, Role.Teacher]}>
+                        <Profile />
+                    </ProtectedRoute>
+                }
+            ]
+        }
+    ])
+
+    return (
+        <RouterProvider router={router} />
+    )
+}
