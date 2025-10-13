@@ -12,12 +12,10 @@ namespace LessonLink.WebApi.Controllers;
 public class TeachersController : ControllerBase
 {
     private readonly TeacherService _teacherService;
-    private readonly UserService _userService;
 
-    public TeachersController(TeacherService teacherService, UserService userService)
+    public TeachersController(TeacherService teacherService)
     {
         _teacherService = teacherService;
-        _userService = userService;
     }
 
     // GET: api/Teachers

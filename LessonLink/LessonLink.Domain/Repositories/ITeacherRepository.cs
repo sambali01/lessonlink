@@ -18,6 +18,6 @@ public interface ITeacherRepository
         int page,
         int pageSize);
     Task<Teacher> CreateAsync(Teacher teacher);
-    Task UpdateAsync(string id, Teacher updatedTeacher);
+    Task UpdateAsync(Teacher updatedTeacher);
     Task DeleteAsync(Teacher teacher);
 }

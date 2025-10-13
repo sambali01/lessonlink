@@ -1,12 +1,12 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using LessonLink.BusinessLogic.Common;
+﻿using LessonLink.BusinessLogic.Common;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LessonLink.BusinessLogic.Services;
 
@@ -66,22 +66,21 @@ public class JwtTokenService
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SigningKey));
             var claims = new List<Claim>
                 {
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email)
+                    new (ClaimTypes.Email, user.Email!),
+                    new(ClaimTypes.NameIdentifier, user.Id)
                 };
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
             var expiration = DateTime.UtcNow.AddMinutes(Convert.ToInt32(_jwtSettings.AccessTokenValidityInMinutes));
-            var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = expiration,
-                SigningCredentials = signIn,
+                SigningCredentials = credentials,
                 Issuer = _jwtSettings.Issuer,
                 Audience = _jwtSettings.Audience,
             };

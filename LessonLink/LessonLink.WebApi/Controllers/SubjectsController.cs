@@ -1,4 +1,5 @@
 ﻿using LessonLink.BusinessLogic.Common;
+using LessonLink.BusinessLogic.DTOs.Subject;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,13 @@ public class SubjectsController : ControllerBase
     {
         var subjectResult = await _subjectService.GetByIdAsync(id);
         return HandleServiceResult(subjectResult);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> PostSubject([FromBody] SubjectCreateDto subjectCreateDto)
+    {
+        var result = await _subjectService.CreateAsync(subjectCreateDto);
+        return HandleServiceResult(result);
     }
 
     private IActionResult HandleServiceResult<T>(ServiceResult<T> result)

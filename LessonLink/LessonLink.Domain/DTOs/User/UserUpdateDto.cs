@@ -2,7 +2,7 @@
 
 namespace LessonLink.BusinessLogic.DTOs.User;
 
-public class ProfileUpdateDto
+public class UserUpdateDto
 {
     public string? NickName { get; set; }
     public IFormFile? ProfilePicture { get; set; }
@@ -10,4 +10,5 @@ public class ProfileUpdateDto
     public bool? AcceptsInPerson { get; set; }
     public string? Location { get; set; }
     public int? HourlyRate { get; set; }
+    public List<string>? Subjects { get; set; }
 }

@@ -1,8 +1,10 @@
 import {
     Alert,
+    Autocomplete,
     Avatar,
     Box,
     Button,
+    Chip,
     CircularProgress,
     Container,
     FormControlLabel,
@@ -22,6 +24,7 @@ import { useTeacherDetails } from "../hooks/teacherQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useFindUserById, useUpdateProfile } from "../hooks/userQueries";
 import { Role } from "../models/Role";
+import { useSubjects } from "../hooks/subjectQueries";
 
 const Profile: FunctionComponent = () => {
     const theme = useTheme();
@@ -47,6 +50,8 @@ const Profile: FunctionComponent = () => {
     const [teachingMethod, setTeachingMethod] = useState<'online' | 'inPerson' | 'both'>('online');
     const [location, setLocation] = useState('');
     const [hourlyRate, setHourlyRate] = useState<number>(0);
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+    const { data: allSubjects = [] } = useSubjects();
 
     useEffect(() => {
         if (user) setNickName(user.nickName || '');
@@ -57,6 +62,7 @@ const Profile: FunctionComponent = () => {
             );
             setLocation(teacher.location || '');
             setHourlyRate(teacher.hourlyRate || 0);
+            setSelectedSubjects(teacher.subjects || []);
         }
     }, [user, teacher]);
 
@@ -79,7 +85,8 @@ const Profile: FunctionComponent = () => {
             acceptsOnline: teachingMethod !== 'inPerson',
             acceptsInPerson: teachingMethod !== 'online',
             location: teachingMethod !== 'online' ? location : undefined,
-            hourlyRate: hourlyRate !== (teacher?.hourlyRate || 0) ? hourlyRate : undefined
+            hourlyRate: hourlyRate !== (teacher?.hourlyRate || 0) ? hourlyRate : undefined,
+            subjects: currentUserAuth?.roles.includes(Role.Teacher) ? selectedSubjects : undefined
         };
 
         updateProfile(updateData, {
@@ -104,6 +111,7 @@ const Profile: FunctionComponent = () => {
             );
             setLocation(teacher.location || '');
             setHourlyRate(teacher.hourlyRate || 0);
+            setSelectedSubjects(teacher.subjects || []);
         }
         setImagePreview(null);
         setProfilePicture(undefined);
@@ -291,6 +299,34 @@ const Profile: FunctionComponent = () => {
                                         { value: 10000, label: '10.000 Ft' },
                                         { value: 20000, label: '20.000 Ft' }
                                     ]}
+                                />
+                            </Box>
+                            <Box sx={{ mt: 2 }}>
+                                <FormLabel component="legend">Tantárgyak</FormLabel>
+                                <Autocomplete
+                                    multiple
+                                    options={allSubjects}
+                                    value={selectedSubjects}
+                                    onChange={(_, newValue) => setSelectedSubjects(newValue)}
+                                    disabled={!isEditing}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Tantárgyak"
+                                            placeholder="Válassz tantárgyakat"
+                                        />
+                                    )}
+                                    renderTags={(value, getTagProps) =>
+                                        value.map((option, index) => (
+                                            <Chip
+                                                {...getTagProps({ index })}
+                                                key={option}
+                                                label={option}
+                                                size="small"
+                                            />
+                                        ))
+                                    }
+                                    sx={{ mt: 1 }}
                                 />
                             </Box>
                         </>

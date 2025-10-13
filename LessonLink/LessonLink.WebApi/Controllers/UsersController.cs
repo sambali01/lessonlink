@@ -47,6 +47,14 @@ public class UsersController : ControllerBase
         return HandleServiceResult(result);
     }
 
+    // PATCH: api/Users/5
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> UpdateUser(string id, [FromForm] UserUpdateDto updateDto)
+    {
+        var result = await _userService.UpdateAsync(id, updateDto);
+        return HandleServiceResult(result);
+    }
+
     // DELETE: api/Users/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(string id)

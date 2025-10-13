@@ -5,6 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useFindUserById } from "../../hooks/userQueries";
 import ThemeSwitcher from "../features/ThemeSwitcher";
 import "./Header.less";
+import { Role } from "../../models/Role";
 
 const Header: FunctionComponent = () => {
     const theme = useTheme();
@@ -45,6 +46,7 @@ const Header: FunctionComponent = () => {
                     component={Link}
                     to="/"
                     sx={{
+                        marginRight: 4,
                         textDecoration: 'none',
                         color: theme.palette.text.primary,
                         fontFamily: theme.typography.fontFamily,
@@ -54,7 +56,53 @@ const Header: FunctionComponent = () => {
                 >
                     LessonLink
                 </Typography>
+                <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
+                    {currentUserAuth && (
+                        <Button
+                            component={Link}
+                            to="/dashboard"
+                            sx={{
+                                color: theme.palette.text.primary,
+                                mx: 1,
+                                '&:hover': {
+                                    backgroundColor: theme.palette.action.hover
+                                }
+                            }}
+                        >
+                            Irányítópult
+                        </Button>
+                    )}
 
+                    <Button
+                        component={Link}
+                        to="/teachers"
+                        sx={{
+                            color: theme.palette.text.primary,
+                            mx: 1,
+                            '&:hover': {
+                                backgroundColor: theme.palette.action.hover
+                            }
+                        }}
+                    >
+                        Oktatók
+                    </Button>
+
+                    {currentUserAuth?.roles.includes(Role.Teacher) && (
+                        <Button
+                            component={Link}
+                            to="/my-slots"
+                            sx={{
+                                color: theme.palette.text.primary,
+                                mx: 1,
+                                '&:hover': {
+                                    backgroundColor: theme.palette.action.hover
+                                }
+                            }}
+                        >
+                            Óraidőpontjaim
+                        </Button>
+                    )}
+                </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <ThemeSwitcher />
 

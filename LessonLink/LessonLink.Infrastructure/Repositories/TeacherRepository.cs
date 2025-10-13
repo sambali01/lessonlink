@@ -117,9 +117,9 @@ public class TeacherRepository : ITeacherRepository
         return teacher;
     }
 
-    public async Task UpdateAsync(string id, Teacher updatedTeacher)
+    public async Task UpdateAsync(Teacher updatedTeacher)
     {
-        _dbContext.Entry(updatedTeacher).State = EntityState.Modified;
+        _dbContext.Teachers.Update(updatedTeacher);
         await _dbContext.SaveChangesAsync();
     }
 

@@ -10,6 +10,7 @@ import TeacherDetails from "../pages/TeacherDetails";
 import TeacherSearch from "../pages/TeacherSearch";
 import ProtectedRoute from "./ProtectedRoute";
 import { UnauthenticatedRoute } from "./UnauthenticatedRoute";
+import TeacherSlotsCalendar from "../pages/TeacherSlotsCalendar";
 
 export default function Router() {
     const router = createBrowserRouter([
@@ -20,16 +21,20 @@ export default function Router() {
                     element: <UnauthenticatedRoute />,
                     children: [
                         {
-                            path: '/',
-                            element: <Home />
-                        },
-                        {
                             path: '/login',
                             element: <Login />
                         },
                         {
                             path: '/register',
                             element: <Register />
+                        }
+                    ]
+                },
+                {
+                    children: [
+                        {
+                            path: '/',
+                            element: <Home />
                         },
                         {
                             path: '/teachers',
@@ -51,6 +56,12 @@ export default function Router() {
                     path: '/profile',
                     element: <ProtectedRoute allowedRoles={[Role.Student, Role.Teacher]}>
                         <Profile />
+                    </ProtectedRoute>
+                },
+                {
+                    path: '/my-slots',
+                    element: <ProtectedRoute allowedRoles={[Role.Teacher]}>
+                        <TeacherSlotsCalendar />
                     </ProtectedRoute>
                 }
             ]

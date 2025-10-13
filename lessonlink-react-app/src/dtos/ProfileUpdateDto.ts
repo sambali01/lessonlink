@@ -5,4 +5,5 @@ export type ProfileUpdateDto = {
     acceptsInPerson?: boolean;
     location?: string;
     hourlyRate?: number;
+    subjects?: string[];
 };

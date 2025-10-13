@@ -1,4 +1,3 @@
-using System.Text;
 using LessonLink.BusinessLogic.Common;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +85,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<ITeacherSubjectRepository, TeacherSubjectRepository>();
+builder.Services.AddScoped<IAvailableSlotRepository, AvailableSlotRepository>();
 
 // Add services to the container
 builder.Services.AddScoped<UserService>();
@@ -92,6 +94,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<TeacherService>();
 builder.Services.AddScoped<SubjectService>();
+builder.Services.AddScoped<AvailableSlotService>();
 
 builder.Services.AddHttpContextAccessor();
 

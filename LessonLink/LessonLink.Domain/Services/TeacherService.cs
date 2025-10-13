@@ -127,7 +127,7 @@ public class TeacherService
             if (!addToRoleResult.Succeeded)
                 return ServiceResult<Teacher>.Failure(addToRoleResult.Errors.Select(e => e.Description).ToList(), 500);
 
-            var teacher = TeacherMappers.CreateDtoToTeacher(teacherCreateDto);
+            Teacher teacher = TeacherMappers.CreateDtoToTeacher(teacherCreateDto);
             teacher.User = user;
 
             await _teacherRepository.CreateAsync(teacher);
@@ -142,7 +142,7 @@ public class TeacherService
 
     public Task UpdateAsync(string id, Teacher updatedTeacher)
     {
-        return _teacherRepository.UpdateAsync(id, updatedTeacher);
+        return _teacherRepository.UpdateAsync(updatedTeacher);
     }
 
     public async Task<ServiceResult<Teacher>> DeleteAsync(string id)

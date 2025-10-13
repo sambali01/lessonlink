@@ -33,6 +33,11 @@ public class LessonLinkDbContext : IdentityDbContext<User>
             .WithOne()
             .HasForeignKey<Teacher>(t => t.UserId);
 
+        // Subject configuration
+        modelBuilder.Entity<Subject>()
+            .HasIndex(s => s.Name)
+            .IsUnique();
+
         // TeacherSubject join entity configuration
         modelBuilder.Entity<TeacherSubject>()
             .HasKey(ts => new { ts.TeacherId, ts.SubjectId });

@@ -12,12 +12,20 @@ public class UserService
 {
     private readonly IUserRepository _userRepository;
     private readonly ITeacherRepository _teacherRepository;
+    private readonly ITeacherSubjectRepository _teacherSubjectRepository;
+    private readonly ISubjectRepository _subjectRepository;
 
 
-    public UserService(IUserRepository userRepository, ITeacherRepository teacherRepository)
+    public UserService(
+        IUserRepository userRepository,
+        ITeacherRepository teacherRepository,
+        ITeacherSubjectRepository teacherSubjectRepository,
+        ISubjectRepository subjectRepository)
     {
         _userRepository = userRepository;
         _teacherRepository = teacherRepository;
+        _teacherSubjectRepository = teacherSubjectRepository;
+        _subjectRepository = subjectRepository;
     }
 
     public Task<IReadOnlyCollection<User>> GetAllAsync()
@@ -81,7 +89,7 @@ public class UserService
         }
     }
 
-    public async Task<ServiceResult<User>> UpdateAsync(string userId, ProfileUpdateDto updateDto)
+    public async Task<ServiceResult<User>> UpdateAsync(string userId, UserUpdateDto updateDto)
     {
         try
         {
@@ -89,7 +97,6 @@ public class UserService
             if (user == null)
                 return ServiceResult<User>.Failure("User not found", 404);
 
-            // Profilkép kezelése
             if (updateDto.ProfilePicture != null)
             {
                 using var memoryStream = new MemoryStream();
@@ -97,7 +104,6 @@ public class UserService
                 user.ProfilePicture = memoryStream.ToArray();
             }
 
-            // Mezők frissítése
             if (!string.IsNullOrEmpty(updateDto.NickName))
                 user.NickName = updateDto.NickName;
 
@@ -105,11 +111,65 @@ public class UserService
             if (!result.Succeeded)
                 return ServiceResult<User>.Failure(result.Errors.Select(e => e.Description).ToList(), 500);
 
+            var userRoles = await _userRepository.GetUserRolesAsync(user);
+            var isTeacher = userRoles.Contains(Role.Teacher.ToString());
+            if (isTeacher)
+            {
+                var teacher = await _teacherRepository.GetByIdAsync(userId);
+                if (teacher == null)
+                {
+                    teacher = new Teacher { UserId = userId };
+                    await _teacherRepository.CreateAsync(teacher);
+                }
+
+                if (updateDto.AcceptsOnline.HasValue)
+                    teacher.AcceptsOnline = updateDto.AcceptsOnline;
+
+                if (updateDto.AcceptsInPerson.HasValue)
+                    teacher.AcceptsInPerson = updateDto.AcceptsInPerson;
+
+                if (updateDto.Location != null)
+                    teacher.Location = updateDto.Location;
+
+                if (updateDto.HourlyRate.HasValue)
+                    teacher.HourlyRate = updateDto.HourlyRate;
+
+                await _teacherRepository.UpdateAsync(teacher);
+
+                if (updateDto.Subjects != null && updateDto.Subjects.Any())
+                {
+                    await UpdateTeacherSubjectsAsync(userId, updateDto.Subjects);
+                }
+            }
+
             return ServiceResult<User>.Success(user);
         }
         catch (Exception ex)
         {
             return ServiceResult<User>.Failure(ex.Message, 500);
+        }
+    }
+
+    private async Task UpdateTeacherSubjectsAsync(string teacherId, List<string> subjectNames)
+    {
+        await _teacherSubjectRepository.DeleteByTeacherIdAsync(teacherId);
+
+        foreach (var subjectName in subjectNames)
+        {
+            var subject = await _subjectRepository.GetByNameAsync(subjectName);
+            if (subject == null)
+            {
+                subject = new Subject { Name = subjectName };
+                await _subjectRepository.CreateAsync(subject);
+            }
+
+            var teacherSubject = new TeacherSubject
+            {
+                TeacherId = teacherId,
+                SubjectId = subject.Id
+            };
+
+            await _teacherSubjectRepository.CreateAsync(teacherSubject);
         }
     }
 

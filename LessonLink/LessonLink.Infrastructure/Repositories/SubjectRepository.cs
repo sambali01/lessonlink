@@ -23,6 +23,19 @@ public class SubjectRepository : ISubjectRepository
     public async Task<Subject?> GetByIdAsync(int id)
     {
         return await _dbContext.Subjects
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .SingleOrDefaultAsync(s => s.Id == id);
+    }
+
+    public async Task<Subject?> GetByNameAsync(string name)
+    {
+        return await _dbContext.Subjects
+            .SingleOrDefaultAsync(s => s.Name.Equals(name));
+    }
+
+    public async Task<Subject> CreateAsync(Subject subject)
+    {
+        _dbContext.Subjects.Add(subject);
+        await _dbContext.SaveChangesAsync();
+        return subject;
     }
 }

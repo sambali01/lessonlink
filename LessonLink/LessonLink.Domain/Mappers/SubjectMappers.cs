@@ -12,5 +12,13 @@ namespace LessonLink.BusinessLogic.Mappers
                 Name = subject.Name
             };
         }
+
+        public static Subject CreateDtoToSubject(SubjectCreateDto subjectCreateDto)
+        {
+            return new Subject
+            {
+                Name = subjectCreateDto.Name
+            };
+        }
     }
 }

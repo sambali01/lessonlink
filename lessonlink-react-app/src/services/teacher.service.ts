@@ -25,12 +25,10 @@ export const getTeacherById = async (userId: string): Promise<TeacherDto> => {
 
 export const searchTeachers = async (filters: TeacherSearchFilters): Promise<PaginatedResponse<TeacherDto>> => {
     try {
-        console.log(filters);
         const response = await axiosInstance.get<PaginatedResponse<TeacherDto>>(
             `${TEACHER_API}/search`,
             { params: filters }
         );
-        console.log(response.data);
         return response.data;
     } catch (error) {
         console.log("Error teacher!");
