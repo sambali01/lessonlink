@@ -33,11 +33,11 @@ public class AvailableSlotService
         }
     }
 
-    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetSlotsByTeacherIdAsync(string teacherId)
+    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetNotBookedSlotsByTeacherIdAsync(string teacherId)
     {
         try
         {
-            var slots = await _availableSlotRepository.GetByTeacherIdAsync(teacherId);
+            var slots = await _availableSlotRepository.GetNotBookedByTeacherIdAsync(teacherId);
             return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Success(slots);
         }
         catch (Exception ex)

@@ -63,11 +63,6 @@ public class UsersController : ControllerBase
         return HandleServiceResult(result);
     }
 
-    private async Task<bool> UserExists(string id)
-    {
-        return await _userService.GetByIdAsync(id) != null;
-    }
-
     private IActionResult HandleServiceResult<T>(ServiceResult<T> result)
     {
         if (result.Succeeded)

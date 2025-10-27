@@ -28,12 +28,12 @@ public class AvailableSlotsController : ControllerBase
         return HandleServiceResult(result);
     }
 
-    // GET: api/AvailableSlots/teacher/5
-    [HttpGet("{teacherId}")]
+    // GET: api/AvailableSlots/teacher/{teacherId}
+    [HttpGet("teacher/{teacherId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetSlotsByTeacherId(string teacherId)
     {
-        var result = await _availableSlotService.GetSlotsByTeacherIdAsync(teacherId);
+        var result = await _availableSlotService.GetNotBookedSlotsByTeacherIdAsync(teacherId);
         return HandleServiceResult(result);
     }
 
@@ -58,7 +58,13 @@ public class AvailableSlotsController : ControllerBase
     {
         if (result.Succeeded)
         {
-            return Ok(result.Data);
+            return result.StatusCode switch
+            {
+                200 => Ok(result.Data),
+                201 => Created("", result.Data),
+                204 => NoContent(),
+                _ => StatusCode(result.StatusCode, result.Data)
+            };
         }
         else
         {

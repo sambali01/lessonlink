@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useFindUserById } from "../../hooks/userQueries";
-import ThemeSwitcher from "../features/ThemeSwitcher";
+import ThemeSwitcher from "./ThemeSwitcher";
 import "./Header.less";
 import { Role } from "../../models/Role";
 
@@ -100,6 +100,22 @@ const Header: FunctionComponent = () => {
                             }}
                         >
                             Óraidőpontjaim
+                        </Button>
+                    )}
+
+                    {currentUserAuth?.roles.includes(Role.Student) && (
+                        <Button
+                            component={Link}
+                            to="/my-bookings"
+                            sx={{
+                                color: theme.palette.text.primary,
+                                mx: 1,
+                                '&:hover': {
+                                    backgroundColor: theme.palette.action.hover
+                                }
+                            }}
+                        >
+                            Saját foglalások
                         </Button>
                     )}
                 </Box>

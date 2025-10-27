@@ -5,13 +5,14 @@ public class Booking
     public int Id { get; set; }
 
     // The booker
-    public string StudentId { get; set; }
-    public User Student { get; set; }
+    public required string StudentId { get; set; }
+    public User Student { get; set; } = null!;
 
     // A teacher's available slot that the booker books
     public int AvailableSlotId { get; set; }
-    public AvailableSlot AvailableSlot { get; set; }
+    public AvailableSlot AvailableSlot { get; set; } = null!;
 
     public BookingStatus Status { get; set; }
+    public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -10,10 +10,10 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { AvailableSlot } from '../models/AvailableSlot';
-import MonthSection from '../components/calendar/MonthSection';
 import { useMyAvailableSlots, useCreateAvailableSlot, useDeleteAvailableSlot } from '../hooks/avaliableSlotQueries';
-import CreateSlotModal from '../components/calendar/CreateSlotModal';
 import { AvailableSlotCreateDto } from '../services/availableSlot.service';
+import MonthSection from '../components/features/calendar/MonthSection';
+import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
 
 const TeacherSlotsCalendar = () => {
     const theme = useTheme();

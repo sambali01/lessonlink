@@ -1,7 +1,7 @@
 import { Box, Typography, Button, Container, useTheme } from "@mui/material";
 import { FunctionComponent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 
 const HeroSection: FunctionComponent = () => {
     const theme = useTheme();

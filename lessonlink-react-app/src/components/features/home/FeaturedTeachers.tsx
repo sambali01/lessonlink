@@ -1,8 +1,8 @@
 import { Box, Button, Container, Skeleton, Typography, useTheme } from "@mui/material";
 import { FunctionComponent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFeaturedTeachers } from "../../hooks/teacherQueries";
-import TeacherCard from "../features/TeacherCard";
+import { useFeaturedTeachers } from "../../../hooks/teacherQueries";
+import TeacherCard from "../teacher/TeacherCard";
 
 const FeaturedTeachers: FunctionComponent = () => {
     const theme = useTheme();

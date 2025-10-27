@@ -19,7 +19,7 @@ export const getMyAvailableSlots = async (): Promise<AvailableSlot[]> => {
 
 export const getAvailableSlotsByTeacherId = async (teacherId: string): Promise<AvailableSlot[]> => {
     try {
-        const response = await axiosInstance.get(`${AVAILABLESLOT_API}/${teacherId}`);
+        const response = await axiosInstance.get(`${AVAILABLESLOT_API}/teacher/${teacherId}`);
         return response.data;
     } catch (error) {
         throw new Error('Error fetching available slots by teacher id: ' + error);

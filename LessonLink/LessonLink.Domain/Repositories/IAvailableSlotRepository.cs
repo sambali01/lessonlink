@@ -5,6 +5,7 @@ namespace LessonLink.BusinessLogic.Repositories
     public interface IAvailableSlotRepository
     {
         Task<IReadOnlyCollection<AvailableSlot>> GetByTeacherIdAsync(string teacherId);
+        Task<IReadOnlyCollection<AvailableSlot>> GetNotBookedByTeacherIdAsync(string teacherId);
         Task<AvailableSlot?> GetByIdAsync(int id);
         Task<AvailableSlot> CreateAsync(AvailableSlot slot);
         Task UpdateAsync(AvailableSlot slot);

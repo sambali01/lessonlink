@@ -1,42 +1,71 @@
 import {
-    Avatar,
     Box,
     Button,
-    Chip,
     Container,
-    Divider,
     Paper,
-    Rating,
-    Skeleton,
     Tab,
     Tabs,
     Typography,
-    useTheme
+    useTheme,
+    Alert
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TabPanel from "../components/common/TabPanel";
+import TeacherProfile from "../components/features/teacher/TeacherProfile";
+import TeacherScheduleView from "../components/features/teacher/TeacherScheduleView";
 import { useTeacherDetails } from "../hooks/teacherQueries";
+import { useAvailableSlotsByTeacherId } from "../hooks/avaliableSlotQueries";
+import { useCreateBooking } from "../hooks/bookingQueries";
+import { AvailableSlot } from "../models/AvailableSlot";
 
 const TeacherDetails: FunctionComponent = () => {
-    const subjects = ['kémia', 'fizika'];
     const theme = useTheme();
     const { userId } = useParams<{ userId: string }>();
-    const { data: teacher, isLoading, isError } = useTeacherDetails(userId || '');
-    const [tabValue, setTabValue] = useState(0);
     const navigate = useNavigate();
+    const [tabValue, setTabValue] = useState(0);
+
+    // Queries
+    const {
+        data: teacher,
+        isLoading: teacherLoading,
+        isError: teacherError
+    } = useTeacherDetails(userId || '');
+
+    const {
+        data: availableSlots,
+        isLoading: slotsLoading,
+        error: slotsError
+    } = useAvailableSlotsByTeacherId(userId || '');
+
+    const createBookingMutation = useCreateBooking();
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
     };
 
-    if (isError) {
+    const handleBookSlot = async (slot: AvailableSlot) => {
+        try {
+            await createBookingMutation.mutateAsync({
+                availableSlotId: slot.id,
+                notes: `Foglalás: ${new Date(slot.startTime).toLocaleString('hu-HU')} - ${new Date(slot.endTime).toLocaleString('hu-HU')}`
+            });
+            // Show success message or navigate to bookings page
+            navigate('/dashboard');
+        } catch (error) {
+            console.error('Booking failed:', error);
+            // Handle error (show toast, etc.)
+        }
+    };
+
+    // Error handling
+    if (teacherError) {
         return (
             <Container sx={{ textAlign: 'center', py: 8 }}>
-                <Typography variant="h4" color="error">
-                    Hiba történt az adatok betöltése közben
-                </Typography>
-                <Button sx={{ mt: 2 }} onClick={() => navigate('/')}>
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    Hiba történt a tanár adatainak betöltése közben
+                </Alert>
+                <Button variant="contained" onClick={() => navigate('/')}>
                     Vissza a főoldalra
                 </Button>
             </Container>
@@ -45,83 +74,20 @@ const TeacherDetails: FunctionComponent = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Paper sx={{
-                borderRadius: theme.shape.borderRadius,
-                overflow: 'hidden',
-                boxShadow: theme.shadows[3]
-            }}>
-                {/* Header Section */}
-                <Box sx={{
-                    bgcolor: theme.palette.mode === 'dark'
-                        ? theme.palette.background.paper
-                        : theme.palette.primary.light,
-                    p: 4,
-                    position: 'relative'
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+
+                {/* Teacher Profile Section */}
+                <TeacherProfile
+                    teacher={teacher!}
+                    isLoading={teacherLoading}
+                />
+
+                {/* Tabs Section */}
+                <Paper sx={{
+                    borderRadius: theme.shape.borderRadius,
+                    overflow: 'hidden',
+                    boxShadow: theme.shadows[2]
                 }}>
-                    <Box sx={{
-                        display: 'flex',
-                        gap: 4,
-                        flexDirection: { xs: 'column', md: 'row' },
-                        alignItems: 'center'
-                    }}>
-                        {isLoading ? (
-                            <Skeleton
-                                variant="circular"
-                                width={150}
-                                height={150}
-                            />
-                        ) : (
-                            <Avatar
-                                src={teacher?.profilePicture || '/src/assets/images/exampleteacher1.jpg'}
-                                sx={{
-                                    width: 150,
-                                    height: 150,
-                                    border: `4px solid ${theme.palette.background.paper}`
-                                }}
-                            >
-                                {teacher?.firstName?.[0]}{teacher?.surName?.[0]}
-                            </Avatar>
-                        )}
-
-                        <Box sx={{ flex: 1 }}>
-                            {isLoading ? (
-                                <>
-                                    <Skeleton width="60%" height={40} />
-                                    <Skeleton width="40%" height={30} sx={{ mt: 1 }} />
-                                </>
-                            ) : (
-                                <>
-                                    <Typography variant="h2" component="h1">
-                                        {teacher?.firstName} {teacher?.surName}
-                                        {teacher?.nickName && (
-                                            <Typography
-                                                variant="h4"
-                                                component="span"
-                                                sx={{ ml: 2, opacity: 0.8 }}
-                                            >
-                                                "{teacher.nickName}"
-                                            </Typography>
-                                        )}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                                        <Rating
-                                            value={Number(teacher?.rating) || 0}
-                                            precision={0.5}
-                                            readOnly
-                                            size="large"
-                                        />
-                                        <Typography variant="body1" sx={{ ml: 2 }}>
-                                            ({teacher?.rating || 'Nincs'} értékelés)
-                                        </Typography>
-                                    </Box>
-                                </>
-                            )}
-                        </Box>
-                    </Box>
-                </Box>
-
-                {/* Main Content */}
-                <Box sx={{ bgcolor: 'background.paper' }}>
                     <Tabs
                         value={tabValue}
                         onChange={handleTabChange}
@@ -134,165 +100,99 @@ const TeacherDetails: FunctionComponent = () => {
                                 : '#fff'
                         }}
                     >
-                        <Tab label="Leírás" />
-                        <Tab label="Időpontok" />
-                        <Tab label="Vélemények" />
+                        <Tab label="Elérhető időpontok" />
+                        <Tab label="Kapcsolat" />
                     </Tabs>
 
-                    {/* About Tab */}
+                    {/* Available Slots Tab */}
                     <TabPanel value={tabValue} index={0}>
-                        <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                            {isLoading ? (
-                                <>
-                                    <Skeleton height={40} width="30%" />
-                                    <Skeleton height={25} sx={{ mt: 2 }} />
-                                    <Skeleton height={25} width="80%" />
-                                </>
-                            ) : (
-                                <>
-                                    <Typography variant="h4" gutterBottom>
-                                        Bemutatkozás
-                                    </Typography>
-                                    <Typography variant="body1" paragraph>
-                                        {teacher?.description || 'Nincs elérhető leírás'}
-                                    </Typography>
-
-                                    <Divider sx={{ my: 4 }} />
-
-                                    <Typography variant="h4" gutterBottom>
-                                        Tantárgyak
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        {subjects.map((subject, index) => (
-                                            <Chip
-                                                key={index}
-                                                label={subject}
-                                                sx={{
-                                                    bgcolor: theme.palette.primary.light,
-                                                    color: theme.palette.getContrastText(
-                                                        theme.palette.primary.light
-                                                    )
-                                                }}
-                                            />
-                                        ))}
-                                        {/*{teacher?.subjects?.map((subject, index) => (
-                                            <Chip
-                                                key={index}
-                                                label={subject}
-                                                sx={{
-                                                    bgcolor: theme.palette.primary.light,
-                                                    color: theme.palette.getContrastText(
-                                                        theme.palette.primary.light
-                                                    )
-                                                }}
-                                            />
-                                        ))}*/}
-                                    </Box>
-
-                                    <Divider sx={{ my: 4 }} />
-
-                                    <Box sx={{
-                                        display: 'grid',
-                                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-                                        gap: 3
-                                    }}>
-                                        {/*<Box>
-                                            <Typography variant="h6" gutterBottom>
-                                                Óradíj
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {teacher?.hourlyRate
-                                                    ? `${teacher.hourlyRate} Ft/óra`
-                                                    : 'Egyedi árazás'}
-                                            </Typography>
-                                        </Box>*/}
-                                        <Box>
-                                            <Typography variant="h6" gutterBottom>
-                                                Elérhetőség
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {teacher?.location || 'Online'}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                </>
-                            )}
+                        <Box sx={{ p: 3 }}>
+                            <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+                                Elérhető időpontok
+                            </Typography>
+                            <TeacherScheduleView
+                                slots={availableSlots || []}
+                                isLoading={slotsLoading}
+                                error={slotsError}
+                                onBookSlot={handleBookSlot}
+                                showBookingButtons={true}
+                            />
                         </Box>
                     </TabPanel>
 
-                    {/* Schedule Tab */}
+                    {/* Contact Tab */}
                     <TabPanel value={tabValue} index={1}>
                         <Box sx={{
-                            maxWidth: 800,
-                            mx: 'auto',
-                            minHeight: 400,
+                            p: 4,
+                            textAlign: 'center',
+                            minHeight: 200,
                             display: 'flex',
-                            alignItems: 'center',
+                            flexDirection: 'column',
                             justifyContent: 'center'
                         }}>
-                            <Typography variant="h6" color="text.secondary">
-                                Időpontválasztó (hamarosan...)
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                                Kapcsolat
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                                A kapcsolatfelvétel funkcionalitás hamarosan elérhető lesz.
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                                Addig is foglalj órát az elérhető időpontok közül!
                             </Typography>
                         </Box>
                     </TabPanel>
+                </Paper>
 
-                    {/* Reviews Tab */}
-                    <TabPanel value={tabValue} index={2}>
-                        <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                            <Typography variant="h4" gutterBottom>
-                                Vélemények
-                            </Typography>
-                            <Box sx={{
-                                bgcolor: 'background.paper',
-                                p: 3,
-                                borderRadius: 2,
-                                boxShadow: theme.shadows[1]
-                            }}>
-                                <Typography color="text.secondary">
-                                    Még nincsenek vélemények. Legyél te az első!
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </TabPanel>
-                </Box>
-
-                {/* Fixed CTA */}
-                <Box sx={{
+                {/* Fixed Bottom Action Bar */}
+                {/*<Paper sx={{
                     position: 'sticky',
-                    bottom: 0,
-                    bgcolor: 'background.paper',
-                    borderTop: `1px solid ${theme.palette.divider}`,
+                    bottom: 16,
                     p: 2,
-                    zIndex: theme.zIndex.appBar
+                    borderRadius: 2,
+                    boxShadow: theme.shadows[8],
+                    zIndex: theme.zIndex.appBar,
+                    background: theme.palette.mode === 'dark'
+                        ? theme.palette.background.paper
+                        : theme.palette.background.default
                 }}>
-                    <Container maxWidth="lg">
-                        <Box sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <Typography variant="h6">
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        maxWidth: 'lg',
+                        mx: 'auto'
+                    }}>
+                        <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                                 {teacher?.hourlyRate
-                                    ? `${teacher.hourlyRate} Ft/óra`
+                                    ? `${teacher.hourlyRate.toLocaleString()} Ft/óra`
                                     : 'Egyedi árazás'}
                             </Typography>
-                            <Button
-                                variant="contained"
-                                size="large"
-                                onClick={() => navigate(`/book/${userId}`)}
-                                sx={{
-                                    bgcolor: theme.palette.secondary.main,
-                                    '&:hover': {
-                                        bgcolor: theme.palette.secondary.dark
-                                    }
-                                }}
-                            >
-                                Óra foglalása
-                            </Button>
+                            {teacher?.subjects && teacher.subjects.length > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                    {teacher.subjects.slice(0, 2).join(', ')}
+                                    {teacher.subjects.length > 2 && '...'}
+                                </Typography>
+                            )}
                         </Box>
-                    </Container>
-                </Box>
-            </Paper>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() => setTabValue(0)}
+                            sx={{
+                                bgcolor: theme.palette.secondary.main,
+                                px: 4,
+                                py: 1.5,
+                                '&:hover': {
+                                    bgcolor: theme.palette.secondary.dark
+                                }
+                            }}
+                        >
+                            Időpont választása
+                        </Button>
+                    </Box>
+                </Paper>*/}
+            </Box>
         </Container>
     );
 };

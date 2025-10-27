@@ -22,6 +22,16 @@ public class AvailableSlotRepository : IAvailableSlotRepository
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyCollection<AvailableSlot>> GetNotBookedByTeacherIdAsync(string teacherId)
+    {
+        return await _dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId &&
+                !_dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
+            )
+            .OrderBy(slot => slot.StartTime)
+            .ToListAsync();
+    }
+
     public async Task<AvailableSlot?> GetByIdAsync(int id)
     {
         return await _dbContext.AvailableSlots

@@ -10,8 +10,8 @@ import {
     useTheme
 } from "@mui/material";
 import { FunctionComponent } from "react";
-import { TeacherSearchFilters } from "../../models/TeacherSearchFilters";
-import PriceSlider from "../common/PriceSlider";
+import { TeacherSearchFilters } from "../../../models/TeacherSearchFilters";
+import PriceSlider from "../../common/PriceSlider";
 
 interface TeacherFiltersProps {
     filters: TeacherSearchFilters;

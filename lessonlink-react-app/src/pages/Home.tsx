@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { FunctionComponent } from 'react';
-import FeaturedTeachers from '../components/home/FeaturedTeachers';
-import HeroSection from '../components/home/HeroSection';
+import HeroSection from '../components/features/home/HeroSection';
+import FeaturedTeachers from '../components/features/home/FeaturedTeachers';
 
 const Home: FunctionComponent = () => {
     return (

@@ -87,6 +87,7 @@ builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<ITeacherSubjectRepository, TeacherSubjectRepository>();
 builder.Services.AddScoped<IAvailableSlotRepository, AvailableSlotRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
 // Add services to the container
 builder.Services.AddScoped<UserService>();
@@ -95,6 +96,7 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<TeacherService>();
 builder.Services.AddScoped<SubjectService>();
 builder.Services.AddScoped<AvailableSlotService>();
+builder.Services.AddScoped<BookingService>();
 
 builder.Services.AddHttpContextAccessor();
 

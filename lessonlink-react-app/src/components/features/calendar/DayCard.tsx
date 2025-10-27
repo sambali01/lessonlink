@@ -10,10 +10,10 @@ import {
     useTheme
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { AvailableSlot } from '../../models/AvailableSlot';
-import { useDeleteAvailableSlot } from '../../hooks/avaliableSlotQueries';
 import { useState } from 'react';
-import DeleteConfirmationModal from '../common/DeleteConfirmationModal';
+import { AvailableSlot } from '../../../models/AvailableSlot';
+import { useDeleteAvailableSlot } from '../../../hooks/avaliableSlotQueries';
+import DeleteConfirmationModal from '../../common/DeleteConfirmationModal';
 
 interface DayCardProps {
     date: string;

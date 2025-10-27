@@ -8,6 +8,7 @@ import Profile from "../pages/Profile";
 import Register from "../pages/Register";
 import TeacherDetails from "../pages/TeacherDetails";
 import TeacherSearch from "../pages/TeacherSearch";
+import MyBookings from "../pages/MyBookings";
 import ProtectedRoute from "./ProtectedRoute";
 import { UnauthenticatedRoute } from "./UnauthenticatedRoute";
 import TeacherSlotsCalendar from "../pages/TeacherSlotsCalendar";
@@ -62,6 +63,12 @@ export default function Router() {
                     path: '/my-slots',
                     element: <ProtectedRoute allowedRoles={[Role.Teacher]}>
                         <TeacherSlotsCalendar />
+                    </ProtectedRoute>
+                },
+                {
+                    path: '/my-bookings',
+                    element: <ProtectedRoute allowedRoles={[Role.Student]}>
+                        <MyBookings />
                     </ProtectedRoute>
                 }
             ]

@@ -9,11 +9,11 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TeacherCard from "../components/features/TeacherCard";
-import TeacherFilters from "../components/features/TeacherFilters";
 import { useSubjects } from "../hooks/subjectQueries";
 import { useSearchTeachers } from "../hooks/teacherQueries";
 import { TeacherSearchFilters } from "../models/TeacherSearchFilters";
+import TeacherFilters from "../components/features/teacher/TeacherFilters";
+import TeacherCard from "../components/features/teacher/TeacherCard";
 
 const PAGE_SIZE = 12;
 
