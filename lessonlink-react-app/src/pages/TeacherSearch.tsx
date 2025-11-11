@@ -44,7 +44,9 @@ const TeacherSearch: FunctionComponent = () => {
 
     return (
         <Container maxWidth="xl" sx={{ py: 2 }}>
-            <Typography variant="h2"
+            <Typography
+                variant="h2"
+                component="h1"
                 sx={{
                     mb: 4,
                     color: theme.palette.text.primary,
@@ -99,7 +101,7 @@ const TeacherSearch: FunctionComponent = () => {
                                 <TeacherCard
                                     key={teacher.userId}
                                     teacher={teacher}
-                                    picturePath="src/assets/images/exampleteacher2.jpg"
+                                    picturePath="src/assets/images/blank-profile-picture.webp"
                                     onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
                                 />
                             )

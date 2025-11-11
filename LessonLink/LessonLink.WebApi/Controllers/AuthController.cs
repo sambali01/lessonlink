@@ -1,5 +1,5 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.User;
+﻿using LessonLink.BusinessLogic.DTOs.User;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Services;
 using Microsoft.AspNetCore.Mvc;
 

@@ -159,7 +159,7 @@ const Profile: FunctionComponent = () => {
                     }}
                     >
                         <Avatar
-                            src={imagePreview || user?.profilePicture}
+                            src={imagePreview || user?.imageUrl}
                             sx={{
                                 width: 120,
                                 height: 120,
@@ -168,7 +168,7 @@ const Profile: FunctionComponent = () => {
                                 mb: 2,
                             }}
                         >
-                            {!user?.profilePicture && `${user?.firstName?.[0]}${user?.surName?.[0]}`}
+                            {!user?.imageUrl && `${user?.firstName?.[0]}${user?.surName?.[0]}`}
                         </Avatar>
                         {isEditing && (
                             <Button

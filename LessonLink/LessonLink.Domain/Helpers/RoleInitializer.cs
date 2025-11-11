@@ -1,7 +1,7 @@
 ﻿using LessonLink.BusinessLogic.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace LessonLink.BusinessLogic.Common;
+namespace LessonLink.BusinessLogic.Helpers;
 
 public static class RoleInitializer
 {

@@ -16,8 +16,8 @@ export const useCreateBooking = () => {
     return useMutation<Booking, Error, BookingCreateDto>({
         mutationFn: createBooking,
         onSuccess: () => {
-            // Invalidate both student and teacher bookings
-            queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+            queryClient.invalidateQueries({ queryKey: ['myBookings', 'student'] });
+            queryClient.invalidateQueries({ queryKey: ['myBookings', 'teacher'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
         },
     });
@@ -44,6 +44,7 @@ export const useUpdateBookingStatus = () => {
         mutationFn: ({ bookingId, data }) => updateBookingStatus(bookingId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+            queryClient.invalidateQueries({ queryKey: ['availableSlotDetails'] });
         },
     });
 };
@@ -54,7 +55,8 @@ export const useCancelBooking = () => {
     return useMutation<void, Error, number>({
         mutationFn: cancelBooking,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+            queryClient.invalidateQueries({ queryKey: ['myBookings', 'student'] });
+            queryClient.invalidateQueries({ queryKey: ['myBookings', 'teacher'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
         },
     });

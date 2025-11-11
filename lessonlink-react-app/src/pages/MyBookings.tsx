@@ -99,7 +99,16 @@ const MyBookings: React.FC = () => {
                             color: theme.palette.primary.main
                         }}
                     />
-                    <Typography variant="h3" component="h1">
+                    <Typography
+                        variant="h2"
+                        component="h1"
+                        sx={{
+                            mb: 4,
+                            color: theme.palette.text.primary,
+                            fontWeight: 400,
+                            letterSpacing: '-1px'
+                        }}
+                    >
                         Saját foglalások
                     </Typography>
                 </Box>
@@ -212,7 +221,6 @@ const MyBookings: React.FC = () => {
                 </Paper>
             )}
 
-            {/* Snackbar for notifications */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}

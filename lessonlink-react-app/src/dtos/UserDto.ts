@@ -2,6 +2,6 @@ export type UserDto = {
     firstName: string;
     surName: string;
     nickName?: string;
-    profilePicture?: string;
+    imageUrl?: string;
     bookings: string[];
 }

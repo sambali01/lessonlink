@@ -4,6 +4,7 @@ using LessonLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LessonLink.Infrastructure.Migrations
 {
     [DbContext(typeof(LessonLinkDbContext))]
-    partial class LessonLinkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027150407_ImageUrlString")]
+    partial class ImageUrlString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -412,7 +415,7 @@ namespace LessonLink.Infrastructure.Migrations
             modelBuilder.Entity("LessonLink.BusinessLogic.Models.Booking", b =>
                 {
                     b.HasOne("LessonLink.BusinessLogic.Models.AvailableSlot", "AvailableSlot")
-                        .WithMany("Bookings")
+                        .WithMany()
                         .HasForeignKey("AvailableSlotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -518,11 +521,6 @@ namespace LessonLink.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("LessonLink.BusinessLogic.Models.AvailableSlot", b =>
-                {
-                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("LessonLink.BusinessLogic.Models.Subject", b =>

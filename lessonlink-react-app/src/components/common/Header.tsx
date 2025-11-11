@@ -126,6 +126,7 @@ const Header: FunctionComponent = () => {
                         <div className="user-section">
                             <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
                                 <Avatar
+                                    src={user?.imageUrl}
                                     sx={{
                                         bgcolor: theme.palette.primary.main,
                                         color: theme.palette.primary.contrastText,

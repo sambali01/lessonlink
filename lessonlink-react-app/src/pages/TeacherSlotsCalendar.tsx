@@ -5,7 +5,8 @@ import {
     CircularProgress,
     Alert,
     Button,
-    Snackbar
+    Snackbar,
+    Pagination
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
@@ -15,9 +16,12 @@ import { AvailableSlotCreateDto } from '../services/availableSlot.service';
 import MonthSection from '../components/features/calendar/MonthSection';
 import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
 
+const PAGE_SIZE = 12;
+
 const TeacherSlotsCalendar = () => {
     const theme = useTheme();
-    const { data: slots, isLoading, error } = useMyAvailableSlots();
+    const [currentPage, setCurrentPage] = useState(1);
+    const { data: slotsResponse, isLoading, error } = useMyAvailableSlots(currentPage, PAGE_SIZE);
     const createSlotMutation = useCreateAvailableSlot();
     const deleteSlotMutation = useDeleteAvailableSlot();
 
@@ -76,8 +80,15 @@ const TeacherSlotsCalendar = () => {
         );
     }
 
+    const slots = slotsResponse?.items || [];
+    const totalPages = slotsResponse?.totalPages || 0;
+
+    const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setCurrentPage(value);
+    };
+
     // Group slots by month and then by day
-    const groupedSlots = (slots || []).reduce((acc, slot) => {
+    const groupedSlots = slots.reduce((acc, slot) => {
         const startDate = new Date(slot.startTime);
         const monthKey = startDate.toLocaleString('hu-HU', { month: 'long', year: 'numeric' });
         const dateKey = startDate.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -96,13 +107,15 @@ const TeacherSlotsCalendar = () => {
 
     return (
         <Box sx={{ p: { xs: 1, sm: 2 } }}>
-            {/* Fejléc és gomb */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography
-                    variant="h4"
+                    variant="h2"
                     component="h1"
                     sx={{
+                        mb: 4,
                         color: theme.palette.text.primary,
+                        fontWeight: 400,
+                        letterSpacing: '-1px'
                     }}
                 >
                     Óraidőpontjaim
@@ -113,6 +126,10 @@ const TeacherSlotsCalendar = () => {
                     startIcon={<AddIcon />}
                     onClick={() => setIsModalOpen(true)}
                     sx={{
+                        position: 'fixed',
+                        top: 80,
+                        right: 24,
+                        zIndex: theme.zIndex.appBar,
                         textTransform: 'none'
                     }}
                 >
@@ -120,7 +137,6 @@ const TeacherSlotsCalendar = () => {
                 </Button>
             </Box>
 
-            {/* Tartalom */}
             {Object.keys(groupedSlots).length === 0 ? (
                 <Box textAlign="center" mt={4}>
                     <Typography
@@ -130,19 +146,52 @@ const TeacherSlotsCalendar = () => {
                             mb: 2
                         }}
                     >
-                        Nincsenek óraidőpontok.
+                        {slotsResponse?.totalCount === 0
+                            ? 'Még nincsenek óraidőpontok.'
+                            : 'Nincsenek óraidőpontok ezen az oldalon.'}
                     </Typography>
-                    <Button
-                        variant="outlined"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Hozd létre az elsőt!
-                    </Button>
+                    {slotsResponse?.totalCount === 0 && (
+                        <Button
+                            variant="outlined"
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            Hozd létre az elsőt!
+                        </Button>
+                    )}
                 </Box>
             ) : (
-                Object.entries(groupedSlots).map(([month, days]) => (
-                    <MonthSection key={month} month={month} days={days} />
-                ))
+                <>
+                    {Object.entries(groupedSlots).map(([month, days]) => (
+                        <MonthSection key={month} month={month} days={days} />
+                    ))}
+                </>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: theme.palette.text.secondary,
+                            mb: 2
+                        }}
+                    >
+                        {slotsResponse?.totalCount} óraidőpont összesen
+                    </Typography>
+                    <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
+                        size="large"
+                        sx={{
+                            '& .MuiPaginationItem-root': {
+                                fontSize: '1rem',
+                            },
+                        }}
+                    />
+                </Box>
             )}
 
             {/* Modal */}

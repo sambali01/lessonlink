@@ -1,5 +1,5 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.User;
+﻿using LessonLink.BusinessLogic.DTOs.User;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Mappers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
@@ -14,18 +14,21 @@ public class UserService
     private readonly ITeacherRepository _teacherRepository;
     private readonly ITeacherSubjectRepository _teacherSubjectRepository;
     private readonly ISubjectRepository _subjectRepository;
+    private readonly PhotoService _photoService;
 
 
     public UserService(
         IUserRepository userRepository,
         ITeacherRepository teacherRepository,
         ITeacherSubjectRepository teacherSubjectRepository,
-        ISubjectRepository subjectRepository)
+        ISubjectRepository subjectRepository,
+        PhotoService photoService)
     {
         _userRepository = userRepository;
         _teacherRepository = teacherRepository;
         _teacherSubjectRepository = teacherSubjectRepository;
         _subjectRepository = subjectRepository;
+        _photoService = photoService;
     }
 
     public Task<IReadOnlyCollection<User>> GetAllAsync()
@@ -99,9 +102,13 @@ public class UserService
 
             if (updateDto.ProfilePicture != null)
             {
-                using var memoryStream = new MemoryStream();
-                await updateDto.ProfilePicture.CopyToAsync(memoryStream);
-                user.ProfilePicture = memoryStream.ToArray();
+                var cloudinaryResult = await _photoService.UploadPhotoAsync(updateDto.ProfilePicture);
+                if (cloudinaryResult.Error != null)
+                {
+                    return ServiceResult<User>.Failure("Photo upload failed: " + cloudinaryResult.Error.Message, 500);
+                }
+
+                user.ImageUrl = cloudinaryResult.SecureUrl.ToString();
             }
 
             if (!string.IsNullOrEmpty(updateDto.NickName))

@@ -3,7 +3,7 @@ export type TeacherDto = {
     firstName: string;
     surName: string;
     nickName: string;
-    profilePicture?: string;
+    imageUrl?: string;
     acceptsOnline?: boolean;
     acceptsInPerson?: boolean;
     location?: string;

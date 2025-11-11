@@ -53,7 +53,7 @@ const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, isLoading }) =
                 {/* Header Section - Avatar and Basic Info */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
                     <Avatar
-                        src={teacher.profilePicture || '/src/assets/images/exampleteacher1.jpg'}
+                        src={teacher.imageUrl}
                         sx={{
                             width: 120,
                             height: 120,
@@ -139,7 +139,7 @@ const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, isLoading }) =
                     </>
                 )}
 
-                {/* Subjects Section */}
+                {/* Subjects */}
                 <Box>
                     <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <SubjectIcon color="primary" />
@@ -168,7 +168,6 @@ const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, isLoading }) =
 
                 <Divider />
 
-                {/* Details Grid */}
                 <Box sx={{
                     display: 'grid',
                     gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },

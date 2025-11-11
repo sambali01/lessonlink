@@ -6,7 +6,7 @@ public class TeacherGetDto
     public string FirstName { get; set; }
     public string SurName { get; set; }
     public string? NickName { get; set; }
-    public byte[]? ProfilePicture { get; set; }
+    public string? ImageUrl { get; set; }
     public bool? AcceptsOnline { get; set; }
     public bool? AcceptsInPerson { get; set; }
     public string? Location { get; set; }

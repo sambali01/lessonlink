@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { AvailableSlot } from '../../models/AvailableSlot';
 import DayCard from './DayCard';
+import { AvailableSlot } from '../../../models/AvailableSlot';
 
 interface MonthSectionProps {
     month: string;

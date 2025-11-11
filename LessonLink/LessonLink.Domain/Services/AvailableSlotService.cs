@@ -1,5 +1,7 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+﻿using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+using LessonLink.BusinessLogic.DTOs.Common;
+using LessonLink.BusinessLogic.Helpers;
+using LessonLink.BusinessLogic.Mappers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 
@@ -15,21 +17,74 @@ public class AvailableSlotService
         _availableSlotRepository = availableSlotRepository;
     }
 
-    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetMySlotsAsync(string teacherId)
+    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>> GetMySlotsAsync(string teacherId)
     {
         try
         {
             if (string.IsNullOrEmpty(teacherId))
             {
-                return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Failure("Teacher not found.", 401);
+                return ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>.Failure("Teacher not found.", 401);
             }
 
-            var slots = await _availableSlotRepository.GetByTeacherIdAsync(teacherId);
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Success(slots);
+            var slots = await _availableSlotRepository.GetByTeacherIdWithBookingsAsync(teacherId);
+
+            var slotDtos = slots.Select(slot => new AvailableSlotWithBookingsDto
+            {
+                Id = slot.Id,
+                TeacherId = slot.TeacherId,
+                StartTime = slot.StartTime,
+                EndTime = slot.EndTime,
+                Bookings = slot.Bookings
+                    .Where(booking => booking.Status != BookingStatus.Cancelled)
+                    .Select(booking => booking.ToGetDto())
+                    .ToList()
+            }).ToList();
+
+            return ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>.Success(slotDtos);
         }
         catch (Exception ex)
         {
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Failure(ex.Message, 500);
+            return ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>.Failure(ex.Message, 500);
+        }
+    }
+
+    public async Task<ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>> GetMySlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                return ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>.Failure("Teacher not found.", 401);
+            }
+
+            var paginatedSlots = await _availableSlotRepository.GetByTeacherIdWithBookingsPaginatedAsync(teacherId, page, pageSize);
+
+            var slotDtos = paginatedSlots.Items.Select(slot => new AvailableSlotWithBookingsDto
+            {
+                Id = slot.Id,
+                TeacherId = slot.TeacherId,
+                StartTime = slot.StartTime,
+                EndTime = slot.EndTime,
+                Bookings = slot.Bookings
+                    .Where(booking => booking.Status != BookingStatus.Cancelled)
+                    .Select(booking => booking.ToGetDto())
+                    .ToList()
+            }).ToList();
+
+            var result = new PaginatedResponse<AvailableSlotWithBookingsDto>
+            {
+                Items = slotDtos,
+                TotalCount = paginatedSlots.TotalCount,
+                Page = paginatedSlots.Page,
+                PageSize = paginatedSlots.PageSize,
+                TotalPages = paginatedSlots.TotalPages
+            };
+
+            return ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>.Failure(ex.Message, 500);
         }
     }
 
@@ -89,7 +144,6 @@ public class AvailableSlotService
         }
     }
 
-    // AvailableSlotService.cs - Add hozzá ezt a metódust
     public async Task<ServiceResult<bool>> DeleteSlotAsync(string teacherId, int slotId)
     {
         try
@@ -105,13 +159,11 @@ public class AvailableSlotService
                 return ServiceResult<bool>.Failure("Az időpont nem található.", 404);
             }
 
-            // Ellenőrizzük, hogy a slot a bejelentkezett tanárhoz tartozik-e
             if (slot.TeacherId != teacherId)
             {
                 return ServiceResult<bool>.Failure("Nincs jogosultságod törölni ezt az időpontot.", 403);
             }
 
-            // Ellenőrizzük, hogy nincs-e foglalás a slot-ra
             var hasBooking = await _availableSlotRepository.HasBookingAsync(slotId);
             if (hasBooking)
             {
@@ -124,6 +176,46 @@ public class AvailableSlotService
         catch (Exception ex)
         {
             return ServiceResult<bool>.Failure(ex.Message, 500);
+        }
+    }
+
+    public async Task<ServiceResult<AvailableSlotDetailsDto>> GetSlotDetailsAsync(string teacherId, int slotId)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("Tanár nem található.", 401);
+            }
+
+            var slot = await _availableSlotRepository.GetByIdWithBookingAsync(slotId);
+            if (slot == null)
+            {
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("Az időpont nem található.", 404);
+            }
+
+            if (slot.TeacherId != teacherId)
+            {
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("Nincs jogosultságod megtekinteni ezt az időpontot.", 403);
+            }
+
+            var detailsDto = new AvailableSlotDetailsDto
+            {
+                Id = slot.Id,
+                TeacherId = slot.TeacherId,
+                TeacherName = slot.Teacher?.User != null
+                    ? $"{slot.Teacher.User.FirstName} {slot.Teacher.User.SurName}"
+                    : string.Empty,
+                StartTime = slot.StartTime,
+                EndTime = slot.EndTime,
+                Booking = slot.Bookings?.FirstOrDefault()?.ToGetDto()
+            };
+
+            return ServiceResult<AvailableSlotDetailsDto>.Success(detailsDto);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<AvailableSlotDetailsDto>.Failure(ex.Message, 500);
         }
     }
 }

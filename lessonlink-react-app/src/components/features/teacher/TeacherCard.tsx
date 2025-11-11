@@ -10,7 +10,7 @@ import {
     CardActionArea
 } from "@mui/material";
 import { FunctionComponent } from "react";
-import { TeacherDto } from "../../dtos/TeacherDto";
+import { TeacherDto } from "../../../dtos/TeacherDto";
 
 interface TeacherCardProps {
     teacher: TeacherDto;
@@ -38,7 +38,7 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, picturePath
                 <CardMedia
                     component="img"
                     height={345}
-                    image={teacher.profilePicture || picturePath}
+                    image={teacher.imageUrl || picturePath}
                     alt={`${teacher.firstName} profilképe`}
                     sx={{
                         objectFit: 'cover',
@@ -71,7 +71,7 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, picturePath
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                        {teacher.subjects.map((subject, index) => (
+                        {teacher.subjects.map((subject: string, index: number) => (
                             <Chip
                                 key={index}
                                 label={subject}

@@ -23,15 +23,22 @@ public static class BookingMappers
         {
             Id = booking.Id,
             StudentId = booking.StudentId,
-            StudentName = $"{booking.Student.FirstName} {booking.Student.SurName}",
+            StudentName = $"{booking.Student?.FirstName} {booking.Student?.SurName}",
             AvailableSlotId = booking.AvailableSlotId,
-            SlotStartTime = booking.AvailableSlot.StartTime,
-            SlotEndTime = booking.AvailableSlot.EndTime,
-            TeacherId = booking.AvailableSlot.TeacherId,
-            TeacherName = $"{booking.AvailableSlot.Teacher.User.FirstName} {booking.AvailableSlot.Teacher.User.SurName}",
+            SlotStartTime = booking.AvailableSlot?.StartTime ?? default,
+            SlotEndTime = booking.AvailableSlot?.EndTime ?? default,
+            TeacherId = booking.AvailableSlot?.TeacherId ?? string.Empty,
+            TeacherName = booking.AvailableSlot?.Teacher?.User != null
+                ? $"{booking.AvailableSlot.Teacher.User.FirstName} {booking.AvailableSlot.Teacher.User.SurName}"
+                : string.Empty,
             Status = booking.Status,
             Notes = booking.Notes,
             CreatedAt = booking.CreatedAt
         };
+    }
+
+    public static BookingGetDto ToGetDto(this Booking booking)
+    {
+        return BookingToGetDto(booking);
     }
 }

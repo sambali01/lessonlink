@@ -1,8 +1,8 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.User;
+﻿using LessonLink.BusinessLogic.DTOs.User;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Repositories;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LessonLink.BusinessLogic.Services;
 

@@ -1,4 +1,4 @@
-﻿namespace LessonLink.BusinessLogic.Common;
+﻿namespace LessonLink.BusinessLogic.Helpers;
 
 public class ServiceResult<T>
 {

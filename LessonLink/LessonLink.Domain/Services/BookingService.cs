@@ -1,7 +1,6 @@
-using LessonLink.BusinessLogic.Common;
 using LessonLink.BusinessLogic.DTOs.Booking;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Mappers;
-using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 
 namespace LessonLink.BusinessLogic.Services;

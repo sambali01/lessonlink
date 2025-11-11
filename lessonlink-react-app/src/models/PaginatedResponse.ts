@@ -3,4 +3,5 @@ export interface PaginatedResponse<T> {
     totalCount: number;
     page: number;
     pageSize: number;
+    totalPages: number;
 }

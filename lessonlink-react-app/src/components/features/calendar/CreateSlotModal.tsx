@@ -9,7 +9,7 @@ import {
     Typography
 } from '@mui/material';
 import { useState } from 'react';
-import { AvailableSlotCreateDto } from '../../services/availableSlot.service';
+import { AvailableSlotCreateDto } from '../../../services/availableSlot.service';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { hu } from 'date-fns/locale';

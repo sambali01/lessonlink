@@ -1,5 +1,5 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+﻿using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Services;
 using LessonLink.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -22,9 +22,18 @@ public class AvailableSlotsController : ControllerBase
     // GET: api/AvailableSlots/my-slots
     [HttpGet("my-slots")]
     [Authorize(Roles = "Teacher")]
-    public async Task<IActionResult> GetMySlots()
+    public async Task<IActionResult> GetMySlots([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _availableSlotService.GetMySlotsAsync(User.GetUserId());
+        var result = await _availableSlotService.GetMySlotsPaginatedAsync(User.GetUserId(), page, pageSize);
+        return HandleServiceResult(result);
+    }
+
+    // GET: api/AvailableSlots/{id}/details
+    [HttpGet("{id}/details")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> GetSlotDetails(int id)
+    {
+        var result = await _availableSlotService.GetSlotDetailsAsync(User.GetUserId(), id);
         return HandleServiceResult(result);
     }
 

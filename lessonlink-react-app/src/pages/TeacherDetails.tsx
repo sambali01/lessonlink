@@ -142,56 +142,6 @@ const TeacherDetails: FunctionComponent = () => {
                         </Box>
                     </TabPanel>
                 </Paper>
-
-                {/* Fixed Bottom Action Bar */}
-                {/*<Paper sx={{
-                    position: 'sticky',
-                    bottom: 16,
-                    p: 2,
-                    borderRadius: 2,
-                    boxShadow: theme.shadows[8],
-                    zIndex: theme.zIndex.appBar,
-                    background: theme.palette.mode === 'dark'
-                        ? theme.palette.background.paper
-                        : theme.palette.background.default
-                }}>
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        maxWidth: 'lg',
-                        mx: 'auto'
-                    }}>
-                        <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                {teacher?.hourlyRate
-                                    ? `${teacher.hourlyRate.toLocaleString()} Ft/óra`
-                                    : 'Egyedi árazás'}
-                            </Typography>
-                            {teacher?.subjects && teacher.subjects.length > 0 && (
-                                <Typography variant="body2" color="text.secondary">
-                                    {teacher.subjects.slice(0, 2).join(', ')}
-                                    {teacher.subjects.length > 2 && '...'}
-                                </Typography>
-                            )}
-                        </Box>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={() => setTabValue(0)}
-                            sx={{
-                                bgcolor: theme.palette.secondary.main,
-                                px: 4,
-                                py: 1.5,
-                                '&:hover': {
-                                    bgcolor: theme.palette.secondary.dark
-                                }
-                            }}
-                        >
-                            Időpont választása
-                        </Button>
-                    </Box>
-                </Paper>*/}
             </Box>
         </Container>
     );

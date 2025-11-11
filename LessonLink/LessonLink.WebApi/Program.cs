@@ -1,4 +1,4 @@
-using LessonLink.BusinessLogic.Common;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 using LessonLink.BusinessLogic.Services;
@@ -97,6 +97,9 @@ builder.Services.AddScoped<TeacherService>();
 builder.Services.AddScoped<SubjectService>();
 builder.Services.AddScoped<AvailableSlotService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<PhotoService>();
+
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.CloudinarySettingsKey));
 
 builder.Services.AddHttpContextAccessor();
 

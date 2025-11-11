@@ -1,4 +1,4 @@
-﻿using LessonLink.BusinessLogic.Common;
+﻿using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -66,7 +66,7 @@ public class LessonLinkDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<Booking>()
             .HasOne(b => b.AvailableSlot)
-            .WithMany()
+            .WithMany(slot => slot.Bookings)
             .HasForeignKey(b => b.AvailableSlotId)
             .OnDelete(DeleteBehavior.Restrict);
 
