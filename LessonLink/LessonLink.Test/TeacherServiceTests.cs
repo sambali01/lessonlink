@@ -29,7 +29,7 @@ public class TeacherServiceTests
         // Arrange
         var searchRequest = new TeacherSearchRequest
         {
-            SearchQuery = "John",
+            SearchText = "John",
             Subjects = new List<string> { "Mathematics" },
             MinPrice = 1000,
             MaxPrice = 5000,
@@ -62,13 +62,14 @@ public class TeacherServiceTests
 
         _mockTeacherRepository
             .Setup(x => x.SearchAsync(
-                searchRequest.SearchQuery,
+                searchRequest.SearchText,
                 searchRequest.Subjects,
                 searchRequest.MinPrice,
                 searchRequest.MaxPrice,
                 searchRequest.MinRating,
                 searchRequest.AcceptsOnline,
                 searchRequest.AcceptsInPerson,
+                searchRequest.Location,
                 searchRequest.Page,
                 searchRequest.PageSize))
             .ReturnsAsync((teachers, totalCount));
@@ -198,7 +199,7 @@ public class TeacherServiceTests
         // Arrange
         var searchRequest = new TeacherSearchRequest
         {
-            SearchQuery = "NonExistentTeacher",
+            SearchText = "NonExistentTeacher",
             Page = 1,
             PageSize = 10
         };
@@ -208,13 +209,14 @@ public class TeacherServiceTests
 
         _mockTeacherRepository
             .Setup(x => x.SearchAsync(
-                searchRequest.SearchQuery,
+                searchRequest.SearchText,
                 searchRequest.Subjects,
                 searchRequest.MinPrice,
                 searchRequest.MaxPrice,
                 searchRequest.MinRating,
                 searchRequest.AcceptsOnline,
                 searchRequest.AcceptsInPerson,
+                searchRequest.Location,
                 searchRequest.Page,
                 searchRequest.PageSize))
             .ReturnsAsync((teachers, totalCount));

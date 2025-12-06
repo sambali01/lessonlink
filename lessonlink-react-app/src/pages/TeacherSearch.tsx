@@ -9,37 +9,23 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSubjects } from "../hooks/subjectQueries";
 import { useSearchTeachers } from "../hooks/teacherQueries";
-import { TeacherSearchFilters } from "../models/TeacherSearchFilters";
+import { TeacherSearchRequest } from "../models/TeacherSearchRequest";
 import TeacherFilters from "../components/features/teacher/TeacherFilters";
 import TeacherCard from "../components/features/teacher/TeacherCard";
-
-const PAGE_SIZE = 12;
+import { DEFAULT_TEACHER_SEARCH_FILTERS, PAGE_SIZE } from "../constants/searchDefaults";
 
 const TeacherSearch: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const [filters, setFilters] = useState<TeacherSearchFilters>({
-        searchQuery: '',
-        subjects: [],
-        minPrice: 0,
-        maxPrice: 20000,
-        minRating: 0,
-        acceptsOnline: false,
-        acceptsInPerson: false,
-        page: 1,
-        pageSize: PAGE_SIZE
-    });
+    const [searchFilters, setSearchFilters] = useState<TeacherSearchRequest>(DEFAULT_TEACHER_SEARCH_FILTERS);
 
-    const { data: paginatedData, isLoading, isError } = useSearchTeachers(filters);
+    const { data: paginatedData, isLoading, isError } = useSearchTeachers(searchFilters);
     const teachers = paginatedData?.items ?? [];
     const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / PAGE_SIZE) : 0;
 
-    const { data: subjects = [] } = useSubjects();
-
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
-        setFilters(prev => ({ ...prev, page }));
+        setSearchFilters(prev => ({ ...prev, page }));
     };
 
     return (
@@ -66,9 +52,8 @@ const TeacherSearch: FunctionComponent = () => {
                 <Box sx={{}}>
                     <Paper elevation={3} sx={{ borderRadius: theme.shape.borderRadius, p: 4 }}>
                         <TeacherFilters
-                            filters={filters}
-                            onFilterChange={(newFilters) => setFilters({ ...newFilters, page: 1 })}
-                            subjectsOptions={subjects}
+                            initialFilters={searchFilters}
+                            onSearch={setSearchFilters}
                         />
                     </Paper>
                 </Box>
@@ -101,7 +86,6 @@ const TeacherSearch: FunctionComponent = () => {
                                 <TeacherCard
                                     key={teacher.userId}
                                     teacher={teacher}
-                                    picturePath="src/assets/images/blank-profile-picture.webp"
                                     onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
                                 />
                             )
@@ -119,7 +103,7 @@ const TeacherSearch: FunctionComponent = () => {
             }}>
                 <Pagination
                     count={totalPages}
-                    page={filters.page}
+                    page={searchFilters.page || 1}
                     onChange={handlePageChange}
                     color="primary"
                 />

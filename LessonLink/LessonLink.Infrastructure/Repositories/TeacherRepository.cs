@@ -50,6 +50,7 @@ public class TeacherRepository : ITeacherRepository
         double? minRating,
         bool? acceptsOnline,
         bool? acceptsInPerson,
+        string? location,
         int page,
         int pageSize)
     {
@@ -89,14 +90,21 @@ public class TeacherRepository : ITeacherRepository
             query = query.Where(t => t.Rating >= minRating);
         }
 
-        if (acceptsOnline.HasValue)
+        if (acceptsOnline == false)
         {
-            query = query.Where(t => t.AcceptsOnline == acceptsOnline);
+            query = query.Where(t => t.AcceptsOnline == false);
         }
 
-        if (acceptsInPerson.HasValue)
+        if (acceptsInPerson == false)
         {
-            query = query.Where(t => t.AcceptsInPerson == acceptsInPerson);
+            query = query.Where(t => t.AcceptsInPerson == false);
+        }
+        else
+        {
+            if (location != null)
+            {
+                query = query.Where(t => t.Location != null && t.Location.Contains(location));
+            }
         }
 
         var totalCount = await query.CountAsync();

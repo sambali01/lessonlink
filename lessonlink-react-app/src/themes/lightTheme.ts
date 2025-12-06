@@ -39,13 +39,13 @@ export const AppLightTheme: Theme = createTheme({
             contrastText: "#FFFFFF"
         },
         background: {
-            default: "#F8FAFC", // Nagyon világos szürkés-kék - oldal háttere
-            paper: "#FFFFFF"     // Tiszta fehér a kártyáknak/panelnek
+            default: "#F8FAFC",
+            paper: "#FFFFFF"
         },
         text: {
-            primary: "#2D3748",   // Sötét szürke elsődleges szövegeknek
-            secondary: "#718096", // Közepes szürke másodlagos szövegeknek
-            disabled: "#A0AEC0"   // Világos szürke letiltott elemeknek
+            primary: "#2D3748",
+            secondary: "#718096",
+            disabled: "#A0AEC0"
         },
         divider: "#E2E8F0",
         action: {

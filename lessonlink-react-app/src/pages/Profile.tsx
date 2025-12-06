@@ -25,6 +25,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useFindUserById, useUpdateProfile } from "../hooks/userQueries";
 import { Role } from "../models/Role";
 import { useSubjects } from "../hooks/subjectQueries";
+import { TeachingMethod } from "../enums/TeachingMethod";
+import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../utils/teachingMethodConverters";
 
 const Profile: FunctionComponent = () => {
     const theme = useTheme();
@@ -47,7 +49,7 @@ const Profile: FunctionComponent = () => {
     const [nickName, setNickName] = useState('');
 
     // Teacher state
-    const [teachingMethod, setTeachingMethod] = useState<'online' | 'inPerson' | 'both'>('online');
+    const [teachingMethod, setTeachingMethod] = useState<TeachingMethod>(TeachingMethod.ONLINE);
     const [location, setLocation] = useState('');
     const [hourlyRate, setHourlyRate] = useState<number>(0);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -57,8 +59,7 @@ const Profile: FunctionComponent = () => {
         if (user) setNickName(user.nickName || '');
         if (teacher) {
             setTeachingMethod(
-                teacher.acceptsOnline && teacher.acceptsInPerson ? 'both' :
-                    teacher.acceptsOnline ? 'online' : 'inPerson'
+                convertBoolsToTeachingMethod(teacher.acceptsOnline, teacher.acceptsInPerson)
             );
             setLocation(teacher.location || '');
             setHourlyRate(teacher.hourlyRate || 0);
@@ -79,12 +80,14 @@ const Profile: FunctionComponent = () => {
     const handleSave = () => {
         if (!currentUserAuth?.userId) return;
 
+        const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToBools(teachingMethod);
+
         const updateData: ProfileUpdateDto = {
             nickName: nickName !== user?.nickName ? nickName : undefined,
             profilePicture: profilePicture || undefined,
-            acceptsOnline: teachingMethod !== 'inPerson',
-            acceptsInPerson: teachingMethod !== 'online',
-            location: teachingMethod !== 'online' ? location : undefined,
+            acceptsOnline,
+            acceptsInPerson,
+            location: teachingMethod !== TeachingMethod.ONLINE ? location : undefined,
             hourlyRate: hourlyRate !== (teacher?.hourlyRate || 0) ? hourlyRate : undefined,
             subjects: currentUserAuth?.roles.includes(Role.Teacher) ? selectedSubjects : undefined
         };
@@ -106,8 +109,7 @@ const Profile: FunctionComponent = () => {
         if (user) setNickName(user.nickName || '');
         if (teacher) {
             setTeachingMethod(
-                teacher.acceptsOnline && teacher.acceptsInPerson ? 'both' :
-                    teacher.acceptsOnline ? 'online' : 'inPerson'
+                convertBoolsToTeachingMethod(teacher.acceptsOnline, teacher.acceptsInPerson)
             );
             setLocation(teacher.location || '');
             setHourlyRate(teacher.hourlyRate || 0);
@@ -241,7 +243,7 @@ const Profile: FunctionComponent = () => {
                                 <FormLabel component="legend">Óraadás módja</FormLabel>
                                 <RadioGroup
                                     value={teachingMethod}
-                                    onChange={(e) => setTeachingMethod(e.target.value as 'online' | 'inPerson' | 'both')}
+                                    onChange={(e) => setTeachingMethod(e.target.value as TeachingMethod)}
                                     row
                                     sx={{
                                         gap: 3,
@@ -250,28 +252,28 @@ const Profile: FunctionComponent = () => {
                                     }}
                                 >
                                     <FormControlLabel
-                                        value="online"
+                                        value={TeachingMethod.ONLINE}
                                         control={<Radio color="primary" />}
                                         label="Csak online"
                                         disabled={!isEditing}
                                     />
                                     <FormControlLabel
-                                        value="inPerson"
+                                        value={TeachingMethod.IN_PERSON}
                                         control={<Radio color="primary" />}
                                         label="Csak személyesen"
                                         disabled={!isEditing}
                                     />
                                     <FormControlLabel
-                                        value="both"
+                                        value={TeachingMethod.BOTH}
                                         control={<Radio color="primary" />}
                                         label="Online és személyesen"
                                         disabled={!isEditing}
                                     />
                                 </RadioGroup>
 
-                                {(teachingMethod === 'inPerson' || teachingMethod === 'both') && (
+                                {(teachingMethod === TeachingMethod.IN_PERSON || teachingMethod === TeachingMethod.BOTH) && (
                                     <TextField
-                                        label="Város"
+                                        label="Helyszín"
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
                                         disabled={!isEditing}
@@ -302,7 +304,6 @@ const Profile: FunctionComponent = () => {
                                 />
                             </Box>
                             <Box sx={{ mt: 2 }}>
-                                <FormLabel component="legend">Tantárgyak</FormLabel>
                                 <Autocomplete
                                     multiple
                                     options={allSubjects}
@@ -313,10 +314,9 @@ const Profile: FunctionComponent = () => {
                                         <TextField
                                             {...params}
                                             label="Tantárgyak"
-                                            placeholder="Válassz tantárgyakat"
                                         />
                                     )}
-                                    renderTags={(value, getTagProps) =>
+                                    renderValue={(value, getTagProps) =>
                                         value.map((option, index) => (
                                             <Chip
                                                 {...getTagProps({ index })}

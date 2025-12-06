@@ -9,16 +9,16 @@ interface PriceSliderProps {
 }
 
 const PriceSlider: FunctionComponent<PriceSliderProps> = ({ minPrice, maxPrice, minimumDistance, onValueChange }) => {
-    const [value, setValue] = useState<number[]>([minPrice, maxPrice]);
+    const [boundaries, setBoundaries] = useState<number[]>([minPrice, maxPrice]);
 
     const handleChange = (_event: Event, newValue: number[], activeThumb: number) => {
         if (activeThumb === 0) {
-            setValue([Math.min(newValue[0], value[1] - minimumDistance), value[1]]);
+            setBoundaries([Math.min(newValue[0], boundaries[1] - minimumDistance), boundaries[1]]);
         } else {
-            setValue([value[0], Math.max(newValue[1], value[0] + minimumDistance)]);
+            setBoundaries([boundaries[0], Math.max(newValue[1], boundaries[0] + minimumDistance)]);
         }
 
-        onValueChange?.(value);
+        onValueChange?.(boundaries);
     };
 
     const valuetext = (value: number) => {
@@ -29,7 +29,7 @@ const PriceSlider: FunctionComponent<PriceSliderProps> = ({ minPrice, maxPrice, 
         <Box>
             <Slider
                 getAriaLabel={() => 'Price'}
-                value={value}
+                value={boundaries}
                 min={minPrice}
                 max={maxPrice}
                 step={500}

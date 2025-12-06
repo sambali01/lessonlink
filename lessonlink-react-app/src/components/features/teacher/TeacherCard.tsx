@@ -11,14 +11,14 @@ import {
 } from "@mui/material";
 import { FunctionComponent } from "react";
 import { TeacherDto } from "../../../dtos/TeacherDto";
+import { BLANK_PROFILE_PICTURE_PATH } from "../../../constants/assets";
 
 interface TeacherCardProps {
     teacher: TeacherDto;
-    picturePath: string;
     onCardClick?: () => void;
 }
 
-const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, picturePath, onCardClick }) => {
+const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick }) => {
     const theme = useTheme();
 
     return (
@@ -38,8 +38,8 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, picturePath
                 <CardMedia
                     component="img"
                     height={345}
-                    image={teacher.imageUrl || picturePath}
-                    alt={`${teacher.firstName} profilképe`}
+                    image={teacher.imageUrl || BLANK_PROFILE_PICTURE_PATH}
+                    alt={`${teacher.surName} ${teacher.firstName} profilképe`}
                     sx={{
                         objectFit: 'cover',
                         bgcolor: theme.palette.mode === 'dark'

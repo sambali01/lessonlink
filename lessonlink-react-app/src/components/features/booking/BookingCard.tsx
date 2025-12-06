@@ -1,4 +1,4 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 import {
     Card,
     CardContent,
@@ -27,7 +27,7 @@ interface BookingCardProps {
     isLoading?: boolean;
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({
+const BookingCard: FunctionComponent<BookingCardProps> = ({
     booking,
     onCancel,
     showCancelButton = true,

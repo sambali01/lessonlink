@@ -15,6 +15,7 @@ public interface ITeacherRepository
         double? minRating,
         bool? acceptsOnline,
         bool? acceptsInPerson,
+        string? location,
         int page,
         int pageSize);
     Task<Teacher> CreateAsync(Teacher teacher);

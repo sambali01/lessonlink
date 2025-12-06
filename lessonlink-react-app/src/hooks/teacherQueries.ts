@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { TeacherDto } from '../dtos/TeacherDto';
 import { getFeaturedTeachers, getTeacherById, searchTeachers } from '../services/teacher.service';
-import { TeacherSearchFilters } from '../models/TeacherSearchFilters';
+import { TeacherSearchRequest } from '../models/TeacherSearchRequest';
 import { PaginatedResponse } from '../models/PaginatedResponse';
 
 export const useFeaturedTeachers = () => {
@@ -20,7 +20,7 @@ export const useTeacherDetails = (userId: string, options?: { enabled?: boolean 
     });
 };
 
-export const useSearchTeachers = (filters: TeacherSearchFilters) => {
+export const useSearchTeachers = (filters: TeacherSearchRequest) => {
     return useQuery<PaginatedResponse<TeacherDto>, Error>({
         queryKey: ['teachers', filters],
         queryFn: () => searchTeachers(filters),

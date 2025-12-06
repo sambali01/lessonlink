@@ -28,9 +28,7 @@ public static class TeacherMappers
             HourlyRate = teacher.HourlyRate,
             Description = teacher.Description,
             Rating = teacher.Rating,
-            Subjects = teacher.TeacherSubjects
-                .Select(ts => ts.Subject.Name)
-                .ToList(),
+            Subjects = [.. teacher.TeacherSubjects.Select(ts => ts.Subject.Name)],
         };
     }
 }

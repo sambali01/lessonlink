@@ -15,8 +15,7 @@ import { useMyAvailableSlots, useCreateAvailableSlot, useDeleteAvailableSlot } f
 import { AvailableSlotCreateDto } from '../services/availableSlot.service';
 import MonthSection from '../components/features/calendar/MonthSection';
 import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
-
-const PAGE_SIZE = 12;
+import { PAGE_SIZE } from '../constants/searchDefaults';
 
 const TeacherSlotsCalendar = () => {
     const theme = useTheme();

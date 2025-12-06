@@ -1,7 +1,7 @@
 import { axiosInstance } from "../configs/axiosConfig";
 import { TeacherDto } from "../dtos/TeacherDto";
 import { PaginatedResponse } from "../models/PaginatedResponse";
-import { TeacherSearchFilters } from "../models/TeacherSearchFilters";
+import { TeacherSearchRequest } from "../models/TeacherSearchRequest";
 
 const TEACHER_API = '/Teachers';
 
@@ -23,7 +23,7 @@ export const getTeacherById = async (userId: string): Promise<TeacherDto> => {
     }
 };
 
-export const searchTeachers = async (filters: TeacherSearchFilters): Promise<PaginatedResponse<TeacherDto>> => {
+export const searchTeachers = async (filters: TeacherSearchRequest): Promise<PaginatedResponse<TeacherDto>> => {
     try {
         const response = await axiosInstance.get<PaginatedResponse<TeacherDto>>(
             `${TEACHER_API}/search`,

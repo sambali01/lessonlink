@@ -1,61 +1,113 @@
 import {
     Autocomplete,
     Box,
-    Checkbox,
+    Button,
     Chip,
     FormControlLabel,
+    FormLabel,
+    Radio,
+    RadioGroup,
     Rating,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
-import { FunctionComponent } from "react";
-import { TeacherSearchFilters } from "../../../models/TeacherSearchFilters";
+import { FunctionComponent, useState } from "react";
+import { PAGE_SIZE } from "../../../constants/searchDefaults";
+import { TeachingMethod } from "../../../enums/TeachingMethod";
+import { TeacherSearchRequest } from "../../../models/TeacherSearchRequest";
+import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../../../utils/teachingMethodConverters";
+import { useSubjects } from "../../../hooks/subjectQueries";
 import PriceSlider from "../../common/PriceSlider";
 
 interface TeacherFiltersProps {
-    filters: TeacherSearchFilters;
-    onFilterChange: (newFilters: TeacherSearchFilters) => void;
-    subjectsOptions: string[];
+    initialFilters: TeacherSearchRequest;
+    onSearch: (searchFilters: TeacherSearchRequest) => void;
 }
 
 const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
-    filters,
-    onFilterChange,
-    subjectsOptions
+    initialFilters,
+    onSearch
 }) => {
     const theme = useTheme();
+    const { data: subjectsOptions = [] } = useSubjects();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || '');
+    const [subjects, setSubjects] = useState(initialFilters.subjects || []);
+    const [minPrice, setMinPrice] = useState(initialFilters.minPrice || 0);
+    const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || 20000);
+    const [minRating, setMinRating] = useState(initialFilters.minRating || 0);
+    const [location, setLocation] = useState(initialFilters.location || '');
+    const [teachingMethod, setTeachingMethod] = useState(
+        convertBoolsToTeachingMethod(initialFilters.acceptsOnline, initialFilters.acceptsInPerson)
+    );
+
+    // Handle search button click
+    const handleSearchClick = () => {
+        const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToBools(teachingMethod);
+
+        const searchFilters: TeacherSearchRequest = {
+            searchQuery,
+            subjects,
+            minPrice,
+            maxPrice,
+            minRating,
+            acceptsOnline,
+            acceptsInPerson,
+            location,
+            page: 1,
+            pageSize: PAGE_SIZE
+        };
+
+        onSearch(searchFilters);
+    };
+
+    // Handle clear filters
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        setSubjects([]);
+        setMinPrice(0);
+        setMaxPrice(20000);
+        setMinRating(0);
+        setLocation('');
+        setTeachingMethod(TeachingMethod.BOTH);
+    };
 
     return (
-        <Box sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                Szűrők
-            </Typography>
+        <Box sx={{ p: 1 }}>
+            <Button
+                fullWidth
+                variant="outlined"
+                color="info"
+                onClick={handleClearFilters}
+                sx={{ verticalAlign: 'middle', mb: 2 }}
+            >
+                Szűrők törlése
+            </Button>
 
-            {/* Name */}
             <TextField
                 fullWidth
-                label="Név keresése"
+                label="Név"
                 variant="outlined"
-                value={filters.searchQuery}
-                onChange={(e) => onFilterChange({ ...filters, searchQuery: e.target.value })}
-                sx={{ mb: 3 }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Írj be egy nevet"
+                sx={{ mb: 2 }}
             />
 
-            {/* Subjects */}
             <Autocomplete
                 multiple
                 options={subjectsOptions}
-                value={filters.subjects}
-                onChange={(_, newValue) => onFilterChange({ ...filters, subjects: newValue })}
+                value={subjects}
+                onChange={(_, newValue) => setSubjects(newValue)}
                 renderInput={(params) => (
                     <TextField
                         {...params}
                         label="Tantárgyak"
-                        placeholder="Válassz tantárgyakat"
                     />
                 )}
-                renderTags={(value, getTagProps) =>
+                renderValue={(value, getTagProps) =>
                     value.map((option, index) => (
                         <Chip
                             {...getTagProps({ index })}
@@ -69,55 +121,77 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
                         />
                     ))
                 }
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
             />
 
-            {/* Price */}
-            <Box sx={{ mb: 3 }}>
-                <Typography gutterBottom>Óradíj tartomány (Ft/óra)</Typography>
+            <Box sx={{ mb: 2 }}>
+                <Typography sx={{ mb: 1 }}>Óradíj tartomány (Ft/óra)</Typography>
                 <PriceSlider
                     minPrice={0}
                     maxPrice={20000}
                     minimumDistance={500}
-                    onValueChange={(newValue) => {
-                        onFilterChange({ ...filters, minPrice: newValue[0], maxPrice: newValue[1] });
+                    onValueChange={(newBoundaries) => {
+                        setMinPrice(newBoundaries[0]);
+                        setMaxPrice(newBoundaries[1]);
                     }}
                 />
             </Box>
 
-            {/* Minimum rating */}
-            <Box sx={{ mb: 3 }}>
-                <Typography gutterBottom>Minimum értékelés</Typography>
+            <Box sx={{ mb: 2 }}>
+                <Typography sx={{ mb: 1 }}>Minimum értékelés</Typography>
                 <Rating
-                    value={filters.minRating}
+                    value={minRating}
                     onChange={(_, newValue) => {
-                        onFilterChange({ ...filters, minRating: newValue ?? 0 });
+                        setMinRating(newValue ?? 0);
                     }}
                 />
             </Box>
 
-            {/* Online and/or in person */}
-            <Box>
-                <Typography gutterBottom sx={{ mb: 1 }}>Óraadás módja</Typography>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={filters.acceptsOnline}
-                            onChange={(e) => onFilterChange({ ...filters, acceptsOnline: e.target.checked })}
-                        />
-                    }
-                    label="Online"
-                />
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={filters.acceptsInPerson}
-                            onChange={(e) => onFilterChange({ ...filters, acceptsInPerson: e.target.checked })}
-                        />
-                    }
-                    label="Személyesen"
-                />
+            <Box sx={{ mb: 2 }}>
+                <FormLabel component="legend">Óraadás módja</FormLabel>
+                <RadioGroup
+                    value={teachingMethod}
+                    onChange={(e) => setTeachingMethod(e.target.value as TeachingMethod)}
+                >
+                    <FormControlLabel
+                        value={TeachingMethod.ONLINE}
+                        control={<Radio />}
+                        label="Csak online"
+                    />
+                    <FormControlLabel
+                        value={TeachingMethod.IN_PERSON}
+                        control={<Radio />}
+                        label="Csak személyesen"
+                    />
+                    <FormControlLabel
+                        value={TeachingMethod.BOTH}
+                        control={<Radio />}
+                        label="Online vagy személyesen"
+                    />
+                </RadioGroup>
             </Box>
+
+            {(teachingMethod === TeachingMethod.IN_PERSON || teachingMethod === TeachingMethod.BOTH) && (
+                <Box sx={{ mb: 2 }}>
+                    <TextField
+                        fullWidth
+                        label="Helyszín"
+                        variant="outlined"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="Írj be egy településnevet"
+                    />
+                </Box>
+            )}
+
+            <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={handleSearchClick}
+            >
+                Keresés
+            </Button>
         </Box>
     );
 };

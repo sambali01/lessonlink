@@ -80,13 +80,14 @@ public class TeacherService
         try
         {
             var (teachers, totalCount) = await _teacherRepository.SearchAsync(
-                request.SearchQuery,
+                request.SearchText,
                 request.Subjects,
                 request.MinPrice,
                 request.MaxPrice,
                 request.MinRating,
                 request.AcceptsOnline,
                 request.AcceptsInPerson,
+                request.Location,
                 request.Page,
                 request.PageSize
             );
