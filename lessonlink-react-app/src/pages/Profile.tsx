@@ -4,7 +4,6 @@ import {
     Avatar,
     Box,
     Button,
-    Chip,
     CircularProgress,
     Container,
     FormControlLabel,
@@ -20,12 +19,12 @@ import {
 import { FunctionComponent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProfileUpdateDto } from "../dtos/ProfileUpdateDto";
+import { useSubjects } from "../hooks/subjectQueries";
 import { useTeacherDetails } from "../hooks/teacherQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useFindUserById, useUpdateProfile } from "../hooks/userQueries";
 import { Role } from "../models/Role";
-import { useSubjects } from "../hooks/subjectQueries";
-import { TeachingMethod } from "../enums/TeachingMethod";
+import { TeachingMethod } from "../utils/enums";
 import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../utils/teachingMethodConverters";
 
 const Profile: FunctionComponent = () => {
@@ -42,14 +41,15 @@ const Profile: FunctionComponent = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [profilePicture, setProfilePicture] = useState<File | undefined>(undefined);
+
     const [error, setError] = useState<string | null>(null);
 
     // User state
     const [nickName, setNickName] = useState('');
+    const [profilePicture, setProfilePicture] = useState<File | undefined>(undefined);
 
     // Teacher state
-    const [teachingMethod, setTeachingMethod] = useState<TeachingMethod>(TeachingMethod.ONLINE);
+    const [teachingMethod, setTeachingMethod] = useState<TeachingMethod>(TeachingMethod.Online);
     const [location, setLocation] = useState('');
     const [hourlyRate, setHourlyRate] = useState<number>(0);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -87,7 +87,7 @@ const Profile: FunctionComponent = () => {
             profilePicture: profilePicture || undefined,
             acceptsOnline,
             acceptsInPerson,
-            location: teachingMethod !== TeachingMethod.ONLINE ? location : undefined,
+            location: teachingMethod !== TeachingMethod.Online ? location : undefined,
             hourlyRate: hourlyRate !== (teacher?.hourlyRate || 0) ? hourlyRate : undefined,
             subjects: currentUserAuth?.roles.includes(Role.Teacher) ? selectedSubjects : undefined
         };
@@ -252,26 +252,26 @@ const Profile: FunctionComponent = () => {
                                     }}
                                 >
                                     <FormControlLabel
-                                        value={TeachingMethod.ONLINE}
+                                        value={TeachingMethod.Online}
                                         control={<Radio color="primary" />}
                                         label="Csak online"
                                         disabled={!isEditing}
                                     />
                                     <FormControlLabel
-                                        value={TeachingMethod.IN_PERSON}
+                                        value={TeachingMethod.InPerson}
                                         control={<Radio color="primary" />}
                                         label="Csak személyesen"
                                         disabled={!isEditing}
                                     />
                                     <FormControlLabel
-                                        value={TeachingMethod.BOTH}
+                                        value={TeachingMethod.Both}
                                         control={<Radio color="primary" />}
                                         label="Online és személyesen"
                                         disabled={!isEditing}
                                     />
                                 </RadioGroup>
 
-                                {(teachingMethod === TeachingMethod.IN_PERSON || teachingMethod === TeachingMethod.BOTH) && (
+                                {(teachingMethod === TeachingMethod.InPerson || teachingMethod === TeachingMethod.Both) && (
                                     <TextField
                                         label="Helyszín"
                                         value={location}
@@ -316,16 +316,11 @@ const Profile: FunctionComponent = () => {
                                             label="Tantárgyak"
                                         />
                                     )}
-                                    renderValue={(value, getTagProps) =>
-                                        value.map((option, index) => (
-                                            <Chip
-                                                {...getTagProps({ index })}
-                                                key={option}
-                                                label={option}
-                                                size="small"
-                                            />
-                                        ))
-                                    }
+                                    slotProps={{
+                                        chip: {
+                                            size: "small"
+                                        }
+                                    }}
                                     sx={{ mt: 1 }}
                                 />
                             </Box>

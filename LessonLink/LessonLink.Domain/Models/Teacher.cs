@@ -10,7 +10,6 @@ public class Teacher
     public string? Location { get; set; }
     public int? HourlyRate { get; set; }
     public string? Description { get; set; }
-    public double? Rating { get; set; }
 
     public List<TeacherSubject> TeacherSubjects { get; set; } = new List<TeacherSubject>();
     public List<AvailableSlot> AvailableSlots { get; set; } = new List<AvailableSlot>();

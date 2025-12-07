@@ -1,17 +1,21 @@
 import {
+    Box,
     Card,
+    CardActionArea,
     CardContent,
     CardMedia,
-    Typography,
     Chip,
-    Box,
-    Rating,
+    Typography,
     useTheme,
-    CardActionArea
+    Stack
 } from "@mui/material";
+import {
+    Language as OnlineIcon,
+    Person as InPersonIcon
+} from '@mui/icons-material';
 import { FunctionComponent } from "react";
 import { TeacherDto } from "../../../dtos/TeacherDto";
-import { BLANK_PROFILE_PICTURE_PATH } from "../../../constants/assets";
+import { BLANK_PROFILE_PICTURE_PATH } from "../../../utils/constants";
 
 interface TeacherCardProps {
     teacher: TeacherDto;
@@ -42,9 +46,7 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick
                     alt={`${teacher.surName} ${teacher.firstName} profilképe`}
                     sx={{
                         objectFit: 'cover',
-                        bgcolor: theme.palette.mode === 'dark'
-                            ? theme.palette.grey[800]
-                            : theme.palette.grey[200]
+                        bgcolor: theme.palette.background.default
                     }}
                 />
                 <CardContent>
@@ -58,17 +60,27 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick
                         </Typography>
                     )}
 
-                    <Box sx={{ mb: 1 }}>
-                        <Rating
-                            value={Number(teacher.rating) || 0}
-                            precision={0.1}
-                            readOnly
-                            size="small"
-                        />
-                        <Typography variant="caption" color="text.secondary" ml={1}>
-                            ({teacher.rating || 'Nincs értékelés'})
-                        </Typography>
-                    </Box>
+                    {/* Teaching Methods */}
+                    <Stack direction="row" spacing={0.5} sx={{ mb: 1 }}>
+                        {teacher.acceptsOnline && (
+                            <Chip
+                                icon={<OnlineIcon />}
+                                label="Online"
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                            />
+                        )}
+                        {teacher.acceptsInPerson && (
+                            <Chip
+                                icon={<InPersonIcon />}
+                                label="Személyes"
+                                size="small"
+                                variant="outlined"
+                                color="secondary"
+                            />
+                        )}
+                    </Stack>
 
                     <Box sx={{ mb: 2 }}>
                         {teacher.subjects.map((subject: string, index: number) => (

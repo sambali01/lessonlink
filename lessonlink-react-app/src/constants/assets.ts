@@ -1,1 +1,0 @@
-export const BLANK_PROFILE_PICTURE_PATH = "src/assets/images/blank-profile-picture.webp";

@@ -9,18 +9,18 @@ import {
     Pagination
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { useEffect, useState } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { AvailableSlot } from '../models/AvailableSlot';
 import { useMyAvailableSlots, useCreateAvailableSlot, useDeleteAvailableSlot } from '../hooks/avaliableSlotQueries';
 import { AvailableSlotCreateDto } from '../services/availableSlot.service';
 import MonthSection from '../components/features/calendar/MonthSection';
 import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
-import { PAGE_SIZE } from '../constants/searchDefaults';
+import { MY_SLOTS_PAGE_SIZE } from '../utils/constants';
 
-const TeacherSlotsCalendar = () => {
+const MySlots: FunctionComponent = () => {
     const theme = useTheme();
     const [currentPage, setCurrentPage] = useState(1);
-    const { data: slotsResponse, isLoading, error } = useMyAvailableSlots(currentPage, PAGE_SIZE);
+    const { data: slotsResponse, isLoading, error } = useMyAvailableSlots(currentPage, MY_SLOTS_PAGE_SIZE);
     const createSlotMutation = useCreateAvailableSlot();
     const deleteSlotMutation = useDeleteAvailableSlot();
 
@@ -220,4 +220,4 @@ const TeacherSlotsCalendar = () => {
     );
 };
 
-export default TeacherSlotsCalendar;
+export default MySlots;

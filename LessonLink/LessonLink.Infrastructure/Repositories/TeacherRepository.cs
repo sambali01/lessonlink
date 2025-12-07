@@ -28,8 +28,18 @@ public class TeacherRepository : ITeacherRepository
             .Include(t => t.User)
             .Include(t => t.TeacherSubjects)
                 .ThenInclude(ts => ts.Subject)
-            .OrderByDescending(t => t.Rating)
+            .Include(t => t.AvailableSlots)
+                .ThenInclude(slot => slot.Bookings)
+            .Select(t => new
+            {
+                Teacher = t,
+                BookingCount = t.AvailableSlots
+                    .SelectMany(slot => slot.Bookings)
+                    .Count(booking => booking.Status != BookingStatus.Cancelled)
+            })
+            .OrderByDescending(x => x.BookingCount)
             .Take(4)
+            .Select(x => x.Teacher)
             .ToListAsync();
     }
 
@@ -43,11 +53,10 @@ public class TeacherRepository : ITeacherRepository
     }
 
     public async Task<(List<Teacher>, int)> SearchAsync(
-        string? searchQuery,
-        List<string>? subjects,
+        string? searchText,
+        string[]? subjects,
         int? minPrice,
         int? maxPrice,
-        double? minRating,
         bool? acceptsOnline,
         bool? acceptsInPerson,
         string? location,
@@ -60,16 +69,16 @@ public class TeacherRepository : ITeacherRepository
                 .ThenInclude(ts => ts.Subject)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchQuery))
+        if (!string.IsNullOrEmpty(searchText))
         {
             query = query.Where(t =>
-                t.User.FirstName.Contains(searchQuery) ||
-                t.User.SurName.Contains(searchQuery) ||
-                t.User.NickName.Contains(searchQuery) ||
-                (t.Description != null && t.Description.Contains(searchQuery)));
+                t.User.FirstName.Contains(searchText) ||
+                t.User.SurName.Contains(searchText) ||
+                t.User.NickName.Contains(searchText) ||
+                (t.Description != null && t.Description.Contains(searchText)));
         }
 
-        if (subjects != null && subjects.Count != 0)
+        if (subjects != null && subjects.Length != 0)
         {
             query = query.Where(t => t.TeacherSubjects
                 .Any(ts => subjects.Contains(ts.Subject.Name)));
@@ -85,22 +94,15 @@ public class TeacherRepository : ITeacherRepository
             query = query.Where(t => t.HourlyRate <= maxPrice);
         }
 
-        if (minRating.HasValue)
+        if (acceptsOnline.HasValue && acceptsOnline.Value)
         {
-            query = query.Where(t => t.Rating >= minRating);
+            query = query.Where(t => t.AcceptsOnline == true);
         }
 
-        if (acceptsOnline == false)
+        if (acceptsInPerson.HasValue && acceptsInPerson.Value)
         {
-            query = query.Where(t => t.AcceptsOnline == false);
-        }
+            query = query.Where(t => t.AcceptsInPerson == true);
 
-        if (acceptsInPerson == false)
-        {
-            query = query.Where(t => t.AcceptsInPerson == false);
-        }
-        else
-        {
             if (location != null)
             {
                 query = query.Where(t => t.Location != null && t.Location.Contains(location));
@@ -110,7 +112,6 @@ public class TeacherRepository : ITeacherRepository
         var totalCount = await query.CountAsync();
 
         var teachers = await query
-            .OrderByDescending(t => t.Rating)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

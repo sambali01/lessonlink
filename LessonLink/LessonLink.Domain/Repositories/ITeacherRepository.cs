@@ -8,11 +8,10 @@ public interface ITeacherRepository
     Task<IReadOnlyCollection<Teacher>> GetFeaturedAsync();
     Task<Teacher?> GetByIdAsync(string id);
     Task<(List<Teacher>, int)> SearchAsync(
-        string? searchQuery,
-        List<string>? subjects,
+        string? searchText,
+        string[]? subjects,
         int? minPrice,
         int? maxPrice,
-        double? minRating,
         bool? acceptsOnline,
         bool? acceptsInPerson,
         string? location,

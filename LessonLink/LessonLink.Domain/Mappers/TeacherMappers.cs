@@ -27,7 +27,6 @@ public static class TeacherMappers
             Location = teacher.Location,
             HourlyRate = teacher.HourlyRate,
             Description = teacher.Description,
-            Rating = teacher.Rating,
             Subjects = [.. teacher.TeacherSubjects.Select(ts => ts.Subject.Name)],
         };
     }

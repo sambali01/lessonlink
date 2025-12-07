@@ -8,13 +8,13 @@ import {
     Tooltip,
     useTheme
 } from '@mui/material';
-import { Delete as DeleteIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AvailableSlot } from '../../../models/AvailableSlot';
 import { useDeleteAvailableSlot } from '../../../hooks/avaliableSlotQueries';
 import { BookingStatus } from '../../../models/Booking';
-import DeleteConfirmationModal from '../../common/DeleteConfirmationModal';
+import NegativeActionConfirmationModal from '../../common/NegativeActionConfirmationModal';
 
 interface DayCardProps {
     date: string;
@@ -57,15 +57,15 @@ const DayCard = ({ date, slots }: DayCardProps) => {
         setSlotToDelete({ id: slot.id, time: slotTime });
     };
 
+    const handleCancelDelete = () => {
+        setSlotToDelete(null);
+    };
+
     const handleConfirmDelete = async () => {
         if (slotToDelete) {
             await handleDeleteSlot(slotToDelete.id);
             setSlotToDelete(null);
         }
-    };
-
-    const handleCancelDelete = () => {
-        setSlotToDelete(null);
     };
 
     const handleDeleteSlot = async (slotId: number) => {
@@ -85,12 +85,7 @@ const DayCard = ({ date, slots }: DayCardProps) => {
                 sx={{
                     height: '100%',
                     display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: theme.shadows[4]
-                    }
+                    flexDirection: 'column'
                 }}
             >
                 <CardContent sx={{ flexGrow: 1, p: 2 }}>
@@ -137,31 +132,10 @@ const DayCard = ({ date, slots }: DayCardProps) => {
                                                 '&:hover': {
                                                     backgroundColor: isBooked
                                                         ? theme.palette.success.main
-                                                        : theme.palette.primary.main,
-                                                    transform: 'scale(1.02)'
-                                                },
-                                                transition: 'all 0.2s ease-in-out'
+                                                        : theme.palette.primary.main
+                                                }
                                             }}
                                         />
-
-                                        {isBooked && (
-                                            <Tooltip title="Időpont megtekintése">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleSlotClick(slot)}
-                                                    sx={{
-                                                        ml: 1,
-                                                        color: theme.palette.info.main,
-                                                        '&:hover': {
-                                                            backgroundColor: theme.palette.info.light,
-                                                            color: theme.palette.info.contrastText
-                                                        }
-                                                    }}
-                                                >
-                                                    <VisibilityIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
 
                                         <Tooltip title="Időpont törlése">
                                             <IconButton
@@ -199,12 +173,15 @@ const DayCard = ({ date, slots }: DayCardProps) => {
                     </Typography>
                 </CardContent>
             </Card>
-            <DeleteConfirmationModal
+            <NegativeActionConfirmationModal
                 open={!!slotToDelete}
                 onClose={handleCancelDelete}
                 onConfirm={handleConfirmDelete}
-                slotTime={slotToDelete?.time || ''}
-                isLoading={deletingSlotId === slotToDelete?.id} />
+                isLoading={deletingSlotId === slotToDelete?.id}
+                title="Időpont törlése"
+                content={`Biztosan törölni szeretnéd az időpontot?`}
+                confirmButtonText="Törlés"
+                confirmButtonLoadingText="Törlés..." />
         </>
     );
 };

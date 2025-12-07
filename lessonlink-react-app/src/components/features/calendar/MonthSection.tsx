@@ -2,13 +2,14 @@ import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import DayCard from './DayCard';
 import { AvailableSlot } from '../../../models/AvailableSlot';
+import { FunctionComponent } from 'react';
 
 interface MonthSectionProps {
     month: string;
     days: Record<string, AvailableSlot[]>;
 }
 
-const MonthSection = ({ month, days }: MonthSectionProps) => {
+const MonthSection: FunctionComponent<MonthSectionProps> = ({ month, days }) => {
     const theme = useTheme();
 
     return (

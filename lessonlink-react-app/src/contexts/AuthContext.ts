@@ -1,11 +1,11 @@
 import { createContext } from "react";
-import { AuthDto } from "../dtos/AuthDto";
+import { UserAuth } from "../models/UserAuth";
 
 interface IAuthContext {
     token?: string | null;
-    currentUserAuth?: AuthDto | null;
+    currentUserAuth?: UserAuth | null;
     handleLogin: (email: string, password: string) => void;
     handleLogout: () => void;
 }
 
-export const AuthContext = createContext<IAuthContext | undefined>({} as IAuthContext);
+export const AuthContext = createContext<IAuthContext | undefined>(undefined);

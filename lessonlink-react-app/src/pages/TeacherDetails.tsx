@@ -115,7 +115,6 @@ const TeacherDetails: FunctionComponent = () => {
                                 isLoading={slotsLoading}
                                 error={slotsError}
                                 onBookSlot={handleBookSlot}
-                                showBookingButtons={true}
                             />
                         </Box>
                     </TabPanel>

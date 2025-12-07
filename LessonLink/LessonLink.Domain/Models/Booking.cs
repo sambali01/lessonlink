@@ -9,7 +9,7 @@ public class Booking
     public User Student { get; set; } = null!;
 
     // A teacher's available slot that the booker books
-    public int AvailableSlotId { get; set; }
+    public required int AvailableSlotId { get; set; }
     public AvailableSlot AvailableSlot { get; set; } = null!;
 
     public BookingStatus Status { get; set; }

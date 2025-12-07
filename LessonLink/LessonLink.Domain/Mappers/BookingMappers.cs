@@ -29,7 +29,7 @@ public static class BookingMappers
             SlotEndTime = booking.AvailableSlot?.EndTime ?? default,
             TeacherId = booking.AvailableSlot?.TeacherId ?? string.Empty,
             TeacherName = booking.AvailableSlot?.Teacher?.User != null
-                ? $"{booking.AvailableSlot.Teacher.User.FirstName} {booking.AvailableSlot.Teacher.User.SurName}"
+                ? $"{booking.AvailableSlot.Teacher.User.SurName} {booking.AvailableSlot.Teacher.User.FirstName}"
                 : string.Empty,
             Status = booking.Status,
             Notes = booking.Notes,

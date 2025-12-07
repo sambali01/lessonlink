@@ -1,28 +1,29 @@
-import React, { useState } from 'react';
-import {
-    Box,
-    Button,
-    Container,
-    Typography,
-    useTheme,
-    CircularProgress,
-    Alert,
-    Paper,
-    Tab,
-    Tabs,
-    Stack,
-    Snackbar
-} from '@mui/material';
 import {
     BookmarkBorder as BookingsIcon,
     Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { useMyBookingsAsStudent, useCancelBooking } from '../hooks/bookingQueries';
-import BookingCard from '../components/features/booking/BookingCard';
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Container,
+    Paper,
+    Snackbar,
+    Stack,
+    Tab,
+    Tabs,
+    Typography,
+    useTheme
+} from '@mui/material';
+import { FunctionComponent, SyntheticEvent, useState } from 'react';
 import TabPanel from '../components/common/TabPanel';
+import BookingCard from '../components/features/booking/BookingCard';
+import NegativeActionConfirmationModal from '../components/common/NegativeActionConfirmationModal';
+import { useCancelBooking, useMyBookingsAsStudent } from '../hooks/bookingQueries';
 import { BookingStatus } from '../models/Booking';
 
-const MyBookings: React.FC = () => {
+const MyBookings: FunctionComponent = () => {
     const theme = useTheme();
     const [tabValue, setTabValue] = useState(0);
     const [snackbar, setSnackbar] = useState<{
@@ -34,29 +35,53 @@ const MyBookings: React.FC = () => {
         message: '',
         severity: 'success'
     });
+    const [bookingToCancel, setBookingToCancel] = useState<{ id: number; teacherName: string; time: string } | null>(null);
 
     const { data: bookings, isLoading, error, refetch } = useMyBookingsAsStudent();
     const cancelBookingMutation = useCancelBooking();
 
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
     };
 
-    const handleCancelBooking = async (bookingId: number) => {
-        try {
-            await cancelBookingMutation.mutateAsync(bookingId);
-            setSnackbar({
-                open: true,
-                message: 'Foglalás sikeresen lemondva',
-                severity: 'success'
-            });
-        } catch (error) {
-            setSnackbar({
-                open: true,
-                message: error instanceof Error ? error.message : 'Hiba történt a lemondás során',
-                severity: 'error'
+    const handleCancelBooking = (bookingId: number) => {
+        const booking = bookings?.find(b => b.id === bookingId);
+        if (booking) {
+            const startTime = new Date(booking.slotStartTime);
+            const endTime = new Date(booking.slotEndTime);
+            const timeString = `${startTime.toLocaleDateString('hu-HU')} ${startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`;
+
+            setBookingToCancel({
+                id: bookingId,
+                teacherName: booking.teacherName,
+                time: timeString
             });
         }
+    };
+
+    const handleConfirmCancelBooking = async () => {
+        if (bookingToCancel) {
+            try {
+                await cancelBookingMutation.mutateAsync(bookingToCancel.id);
+                setSnackbar({
+                    open: true,
+                    message: 'Foglalás sikeresen lemondva',
+                    severity: 'success'
+                });
+            } catch (error) {
+                setSnackbar({
+                    open: true,
+                    message: error instanceof Error ? error.message : 'Hiba történt a lemondás során',
+                    severity: 'error'
+                });
+            } finally {
+                setBookingToCancel(null);
+            }
+        }
+    };
+
+    const handleCancelCancelBooking = () => {
+        setBookingToCancel(null);
     };
 
     const handleCloseSnackbar = () => {
@@ -90,15 +115,9 @@ const MyBookings: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ p: { xs: 1, sm: 2 } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <BookingsIcon
-                        sx={{
-                            fontSize: 40,
-                            color: theme.palette.primary.main
-                        }}
-                    />
                     <Typography
                         variant="h2"
                         component="h1"
@@ -140,9 +159,7 @@ const MyBookings: React.FC = () => {
                         sx={{
                             borderBottom: 1,
                             borderColor: 'divider',
-                            bgcolor: theme.palette.mode === 'dark'
-                                ? theme.palette.background.default
-                                : '#fff'
+                            bgcolor: theme.palette.background.paper
                         }}
                     >
                         <Tab
@@ -179,7 +196,7 @@ const MyBookings: React.FC = () => {
                                             key={booking.id}
                                             booking={booking}
                                             onCancel={handleCancelBooking}
-                                            showCancelButton={true}
+                                            showCancellationButton={true}
                                             isLoading={cancelBookingMutation.isPending}
                                         />
                                     ))}
@@ -211,7 +228,7 @@ const MyBookings: React.FC = () => {
                                         <BookingCard
                                             key={booking.id}
                                             booking={booking}
-                                            showCancelButton={false}
+                                            showCancellationButton={false}
                                         />
                                     ))}
                                 </Stack>
@@ -234,7 +251,18 @@ const MyBookings: React.FC = () => {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-        </Container>
+
+            <NegativeActionConfirmationModal
+                open={!!bookingToCancel}
+                onClose={handleCancelCancelBooking}
+                onConfirm={handleConfirmCancelBooking}
+                isLoading={cancelBookingMutation.isPending}
+                title="Foglalás lemondása"
+                content={bookingToCancel ? `Biztosan le szeretnéd mondani a foglalást ${bookingToCancel.teacherName} oktatóval ${bookingToCancel.time} időpontban?` : ''}
+                confirmButtonText="Lemondás"
+                confirmButtonLoadingText="Lemondás..."
+            />
+        </Box>
     );
 };
 

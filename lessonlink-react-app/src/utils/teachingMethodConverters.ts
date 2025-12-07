@@ -1,39 +1,37 @@
-import { TeachingMethod } from '../enums/TeachingMethod';
+import { TeachingMethod } from "./enums";
 
 /**
- * Converts acceptsOnline and acceptsInPerson boolean values to TeachingMethod enum
- * for UI display (radio buttons)
+ * Converts acceptsOnline and acceptsInPerson boolean values to TeachingMethod enum for UI display.
  */
 export const convertBoolsToTeachingMethod = (
-    acceptsOnline: boolean | undefined, 
+    acceptsOnline: boolean | undefined,
     acceptsInPerson: boolean | undefined
 ): TeachingMethod => {
     if (acceptsOnline && !acceptsInPerson) {
-        return TeachingMethod.ONLINE;
+        return TeachingMethod.Online;
     }
 
     if (!acceptsOnline && acceptsInPerson) {
-        return TeachingMethod.IN_PERSON;
+        return TeachingMethod.InPerson;
     }
 
-    return TeachingMethod.BOTH;
+    return TeachingMethod.Both;
 };
 
 /**
- * Converts TeachingMethod enum to acceptsOnline and acceptsInPerson boolean values
- * for backend API calls
+ * Converts TeachingMethod enum to acceptsOnline and acceptsInPerson boolean values for backend API calls.
  */
 export const convertTeachingMethodToBools = (method: TeachingMethod): {
-    acceptsOnline: boolean;
-    acceptsInPerson: boolean;
+    acceptsOnline: boolean | undefined;
+    acceptsInPerson: boolean | undefined;
 } => {
     switch (method) {
-        case TeachingMethod.ONLINE:
-            return { acceptsOnline: true, acceptsInPerson: false };
-        case TeachingMethod.IN_PERSON:
-            return { acceptsOnline: false, acceptsInPerson: true };
-        case TeachingMethod.BOTH:
+        case TeachingMethod.Online:
+            return { acceptsOnline: true, acceptsInPerson: undefined };
+        case TeachingMethod.InPerson:
+            return { acceptsOnline: undefined, acceptsInPerson: true };
+        case TeachingMethod.Both:
         default:
-            return { acceptsOnline: true, acceptsInPerson: true };
+            return { acceptsOnline: undefined, acceptsInPerson: undefined };
     }
 };

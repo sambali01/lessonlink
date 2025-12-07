@@ -12,6 +12,5 @@ public class TeacherGetDto
     public string? Location { get; set; }
     public int? HourlyRate { get; set; }
     public string? Description { get; set; }
-    public double? Rating { get; set; }
     public List<string> Subjects { get; set; } = new List<string>();
 }

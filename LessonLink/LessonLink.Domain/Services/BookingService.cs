@@ -73,7 +73,7 @@ public class BookingService
         {
             if (string.IsNullOrEmpty(studentId))
             {
-                return ServiceResult<BookingGetDto>.Failure("Student not found.", 401);
+                return ServiceResult<BookingGetDto>.Failure("You are not authenticated.", 401);
             }
 
             // Check if available slot exists and is available

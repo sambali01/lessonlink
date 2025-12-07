@@ -1,6 +1,7 @@
 ﻿using LessonLink.BusinessLogic.DTOs.User;
 using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LessonLink.WebApi.Controllers;
@@ -34,6 +35,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout()
     {
         var logoutResult = await _authService.LogoutAsync();

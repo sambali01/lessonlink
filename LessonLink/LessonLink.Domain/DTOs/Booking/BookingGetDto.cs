@@ -8,8 +8,8 @@ public class BookingGetDto
     public required string StudentId { get; set; }
     public required string StudentName { get; set; }
     public int AvailableSlotId { get; set; }
-    public DateTime SlotStartTime { get; set; }
-    public DateTime SlotEndTime { get; set; }
+    public required DateTime SlotStartTime { get; set; }
+    public required DateTime SlotEndTime { get; set; }
     public required string TeacherId { get; set; }
     public required string TeacherName { get; set; }
     public BookingStatus Status { get; set; }

@@ -1,35 +1,42 @@
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
     Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Typography
 } from '@mui/material';
+import { FunctionComponent } from 'react';
 
-interface DeleteConfirmationModalProps {
+interface NegativeActionConfirmationModalProps {
     open: boolean;
     onClose: () => void;
     onConfirm: () => void;
-    slotTime: string;
     isLoading: boolean;
+    title: string;
+    content: string;
+    confirmButtonText: string;
+    confirmButtonLoadingText: string;
 }
 
-const DeleteConfirmationModal = ({
+const NegativeActionConfirmationModal: FunctionComponent<NegativeActionConfirmationModalProps> = ({
     open,
     onClose,
     onConfirm,
-    slotTime,
-    isLoading
-}: DeleteConfirmationModalProps) => {
+    isLoading,
+    title,
+    content,
+    confirmButtonText,
+    confirmButtonLoadingText
+}) => {
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>
-                Időpont törlése
+                {title}
             </DialogTitle>
             <DialogContent>
                 <Typography>
-                    Biztosan törölni szeretnéd a(z) "{slotTime}" időpontot?
+                    {content}
                 </Typography>
             </DialogContent>
             <DialogActions>
@@ -42,11 +49,11 @@ const DeleteConfirmationModal = ({
                     color="error"
                     disabled={isLoading}
                 >
-                    {isLoading ? 'Törlés...' : 'Törlés'}
+                    {isLoading ? confirmButtonLoadingText : confirmButtonText}
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
 
-export default DeleteConfirmationModal;
+export default NegativeActionConfirmationModal;

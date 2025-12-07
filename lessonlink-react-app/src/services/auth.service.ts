@@ -16,13 +16,10 @@ export const login = async (email: string, password: string) => {
 };
 
 export const refresh = async () => {
-    try {
-        const response = await axiosInstance
-            .post(AUTH_API + "/refresh");
-        return response.data;
-    } catch {
-        throw new Error("Refresh failed.");
-    }
+    return await axiosInstance
+        .post(AUTH_API + "/refresh")
+        .then((response) => { return response.data; })
+        .catch((error) => { throw new Error(error.response); });
 }
 
 export const logout = async () => {

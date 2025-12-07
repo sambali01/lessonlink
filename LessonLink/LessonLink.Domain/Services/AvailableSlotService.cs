@@ -113,11 +113,11 @@ public class AvailableSlotService
             // Start time is before end time
             if (createDto.StartTime >= createDto.EndTime)
             {
-                return ServiceResult<AvailableSlot>.Failure("A kezdési időnek korábban kell lennie, mint a befejezési időnek", 400);
+                return ServiceResult<AvailableSlot>.Failure("The start time must be earlier than the end time.", 400);
             }
             if (createDto.StartTime < DateTime.Now)
             {
-                return ServiceResult<AvailableSlot>.Failure("Nem adhatsz múltbeli időpontot", 400);
+                return ServiceResult<AvailableSlot>.Failure("You cannot provide a time in the past.", 400);
             }
 
             // No overlap
@@ -125,7 +125,7 @@ public class AvailableSlotService
                 teacherId, createDto.StartTime, createDto.EndTime);
             if (hasOverlap)
             {
-                return ServiceResult<AvailableSlot>.Failure("Az időpont átfedésben van egy már meglévő időponttal", 400);
+                return ServiceResult<AvailableSlot>.Failure("The slot overlaps with an existing slot.", 400);
             }
 
             var slot = new AvailableSlot
@@ -150,24 +150,24 @@ public class AvailableSlotService
         {
             if (string.IsNullOrEmpty(teacherId))
             {
-                return ServiceResult<bool>.Failure("Tanár nem található.", 401);
+                return ServiceResult<bool>.Failure("You are not authenticated.", 401);
             }
 
             var slot = await _availableSlotRepository.GetByIdAsync(slotId);
             if (slot == null)
             {
-                return ServiceResult<bool>.Failure("Az időpont nem található.", 404);
+                return ServiceResult<bool>.Failure("Slot not found.", 404);
             }
 
             if (slot.TeacherId != teacherId)
             {
-                return ServiceResult<bool>.Failure("Nincs jogosultságod törölni ezt az időpontot.", 403);
+                return ServiceResult<bool>.Failure("You do not have permission to delete this slot.", 403);
             }
 
             var hasBooking = await _availableSlotRepository.HasBookingAsync(slotId);
             if (hasBooking)
             {
-                return ServiceResult<bool>.Failure("Nem törölhető az időpont, mert már van foglalás rá.", 400);
+                return ServiceResult<bool>.Failure("The slot cannot be deleted because it already has a booking.", 400);
             }
 
             await _availableSlotRepository.DeleteAsync(slot);
@@ -185,18 +185,18 @@ public class AvailableSlotService
         {
             if (string.IsNullOrEmpty(teacherId))
             {
-                return ServiceResult<AvailableSlotDetailsDto>.Failure("Tanár nem található.", 401);
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("Teacher not found.", 401);
             }
 
             var slot = await _availableSlotRepository.GetByIdWithBookingAsync(slotId);
             if (slot == null)
             {
-                return ServiceResult<AvailableSlotDetailsDto>.Failure("Az időpont nem található.", 404);
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("Slot not found.", 404);
             }
 
             if (slot.TeacherId != teacherId)
             {
-                return ServiceResult<AvailableSlotDetailsDto>.Failure("Nincs jogosultságod megtekinteni ezt az időpontot.", 403);
+                return ServiceResult<AvailableSlotDetailsDto>.Failure("You do not have permission to view this slot.", 403);
             }
 
             var detailsDto = new AvailableSlotDetailsDto

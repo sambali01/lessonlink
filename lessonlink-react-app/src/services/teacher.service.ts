@@ -27,11 +27,27 @@ export const searchTeachers = async (filters: TeacherSearchRequest): Promise<Pag
     try {
         const response = await axiosInstance.get<PaginatedResponse<TeacherDto>>(
             `${TEACHER_API}/search`,
-            { params: filters }
+            {
+                params: filters,
+
+                // Custom params serializer to handle array parameters
+                paramsSerializer: (params) => {
+                    const searchParams = new URLSearchParams();
+
+                    Object.entries(params).forEach(([key, value]) => {
+                        if (Array.isArray(value)) {
+                            value.forEach(item => searchParams.append(key, item));
+                        } else if (value !== undefined && value !== null && value !== '') {
+                            searchParams.append(key, String(value));
+                        }
+                    });
+
+                    return searchParams.toString();
+                }
+            }
         );
         return response.data;
     } catch (error) {
-        console.log("Error teacher!");
         throw new Error('Error searching teachers: ' + error);
     }
 };

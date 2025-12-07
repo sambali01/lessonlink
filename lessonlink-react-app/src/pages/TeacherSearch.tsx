@@ -1,6 +1,5 @@
 import {
     Box,
-    Container,
     Pagination,
     Paper,
     Skeleton,
@@ -13,23 +12,23 @@ import { useSearchTeachers } from "../hooks/teacherQueries";
 import { TeacherSearchRequest } from "../models/TeacherSearchRequest";
 import TeacherFilters from "../components/features/teacher/TeacherFilters";
 import TeacherCard from "../components/features/teacher/TeacherCard";
-import { DEFAULT_TEACHER_SEARCH_FILTERS, PAGE_SIZE } from "../constants/searchDefaults";
+import { TEACHER_SEARCH_PAGE_SIZE } from "../utils/constants";
 
 const TeacherSearch: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const [searchFilters, setSearchFilters] = useState<TeacherSearchRequest>(DEFAULT_TEACHER_SEARCH_FILTERS);
+    const [searchFilters, setSearchFilters] = useState<TeacherSearchRequest>({ page: 1, pageSize: TEACHER_SEARCH_PAGE_SIZE });
 
     const { data: paginatedData, isLoading, isError } = useSearchTeachers(searchFilters);
     const teachers = paginatedData?.items ?? [];
-    const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / PAGE_SIZE) : 0;
+    const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / TEACHER_SEARCH_PAGE_SIZE) : 0;
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
         setSearchFilters(prev => ({ ...prev, page }));
     };
 
     return (
-        <Container maxWidth="xl" sx={{ py: 2 }}>
+        <Box sx={{ p: { xs: 1, sm: 2 } }}>
             <Typography
                 variant="h2"
                 component="h1"
@@ -60,35 +59,44 @@ const TeacherSearch: FunctionComponent = () => {
 
                 {/* Results */}
                 <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                        xs: '1fr',
-                        sm: 'repeat(2, 1fr)',
-                        lg: 'repeat(3, 1fr)'
-                    },
-                    gap: 4,
-                    alignContent: 'start'
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-start',
+                    gap: 4
                 }}>
                     {isError ? (
-                        <Typography color="error">
+                        <Typography color="error" sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 4 }}>
                             Hiba történt az adatok betöltése közben
                         </Typography>
+                    ) : isLoading ? (
+                        Array.from(new Array(6)).map((_, index) => (
+                            <Skeleton
+                                key={`skeleton-${index}`}
+                                variant="rectangular"
+                                height={400}
+                                sx={{ borderRadius: theme.shape.borderRadius }}
+                            />
+                        ))
+                    ) : teachers.length === 0 ? (
+                        <Typography
+                            variant="h6"
+                            color="text.secondary"
+                            sx={{
+                                gridColumn: '1 / -1',
+                                textAlign: 'center',
+                                py: 8,
+                                fontStyle: 'italic'
+                            }}
+                        >
+                            Nincs találat a megadott szűrési feltételekkel.
+                        </Typography>
                     ) : (
-                        (isLoading ? Array.from(new Array(6)) : teachers).map((teacher, index) => (
-                            isLoading ? (
-                                <Skeleton
-                                    key={`skeleton-${index}`}
-                                    variant="rectangular"
-                                    height={400}
-                                    sx={{ borderRadius: theme.shape.borderRadius }}
-                                />
-                            ) : (
-                                <TeacherCard
-                                    key={teacher.userId}
-                                    teacher={teacher}
-                                    onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
-                                />
-                            )
+                        teachers.map(teacher => (
+                            <TeacherCard
+                                key={teacher.userId}
+                                teacher={teacher}
+                                onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
+                            />
                         ))
                     )}
                 </Box>
@@ -108,7 +116,7 @@ const TeacherSearch: FunctionComponent = () => {
                     color="primary"
                 />
             </Box>
-        </Container>
+        </Box>
     );
 };
 

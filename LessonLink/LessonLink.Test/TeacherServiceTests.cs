@@ -30,10 +30,9 @@ public class TeacherServiceTests
         var searchRequest = new TeacherSearchRequest
         {
             SearchText = "John",
-            Subjects = new List<string> { "Mathematics" },
+            Subjects = ["Mathematics"],
             MinPrice = 1000,
             MaxPrice = 5000,
-            MinRating = 4.0,
             AcceptsOnline = true,
             Page = 1,
             PageSize = 10
@@ -52,7 +51,6 @@ public class TeacherServiceTests
                     NickName = "JohnS"
                 },
                 HourlyRate = 2000,
-                Rating = 4.5,
                 AcceptsOnline = true,
                 Description = "Math teacher"
             }
@@ -66,7 +64,6 @@ public class TeacherServiceTests
                 searchRequest.Subjects,
                 searchRequest.MinPrice,
                 searchRequest.MaxPrice,
-                searchRequest.MinRating,
                 searchRequest.AcceptsOnline,
                 searchRequest.AcceptsInPerson,
                 searchRequest.Location,
@@ -213,7 +210,6 @@ public class TeacherServiceTests
                 searchRequest.Subjects,
                 searchRequest.MinPrice,
                 searchRequest.MaxPrice,
-                searchRequest.MinRating,
                 searchRequest.AcceptsOnline,
                 searchRequest.AcceptsInPerson,
                 searchRequest.Location,

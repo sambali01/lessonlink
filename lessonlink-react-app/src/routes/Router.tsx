@@ -10,9 +10,10 @@ import TeacherDetails from "../pages/TeacherDetails";
 import TeacherSearch from "../pages/TeacherSearch";
 import MyBookings from "../pages/MyBookings";
 import BookingDetails from "../pages/BookingDetails";
+import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import { UnauthenticatedRoute } from "./UnauthenticatedRoute";
-import TeacherSlotsCalendar from "../pages/TeacherSlotsCalendar";
+import MySlots from "../pages/MySlots";
 
 export default function Router() {
     const router = createBrowserRouter([
@@ -63,7 +64,7 @@ export default function Router() {
                 {
                     path: '/my-slots',
                     element: <ProtectedRoute allowedRoles={[Role.Teacher]}>
-                        <TeacherSlotsCalendar />
+                        <MySlots />
                     </ProtectedRoute>
                 },
                 {
@@ -77,6 +78,10 @@ export default function Router() {
                     element: <ProtectedRoute allowedRoles={[Role.Student]}>
                         <MyBookings />
                     </ProtectedRoute>
+                },
+                {
+                    path: '*',
+                    element: <NotFound />
                 }
             ]
         }

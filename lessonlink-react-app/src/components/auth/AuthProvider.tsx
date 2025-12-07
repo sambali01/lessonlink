@@ -1,12 +1,12 @@
 import { PropsWithChildren, useEffect, useLayoutEffect, useState } from "react";
 import { axiosInstance } from "../../configs/axiosConfig";
 import { AuthContext } from "../../contexts/AuthContext";
-import { AuthDto } from "../../dtos/AuthDto";
+import { UserAuth } from "../../models/UserAuth";
 import { login, logout, refresh } from "../../services/auth.service";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
     const [token, setToken] = useState<string | null>();
-    const [currentUserAuth, setCurrentUserAuth] = useState<AuthDto | null>();
+    const [currentUserAuth, setCurrentUserAuth] = useState<UserAuth | null>();
 
     useEffect(() => {
         (async function () {
@@ -50,7 +50,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             async error => {
                 const originalRequest = error.config;
 
-                if (error.response.status === 401 && error.response.data.message === 'Unauthorized') {
+                if (error.response.status === 401 && !originalRequest.url?.includes('/Auth/refresh')) {
                     try {
                         const data = await refresh();
                         if (data?.token) {
@@ -84,7 +84,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             await login(email, password).then((data) => {
                 if (data) {
                     const tokenStr = data.token;
-                    const currentUserAuthObj = {
+                    const currentUserAuthObj: UserAuth = {
                         userId: data.id,
                         roles: data.roles
                     }

@@ -2,22 +2,20 @@ import {
     Autocomplete,
     Box,
     Button,
-    Chip,
     FormControlLabel,
     FormLabel,
     Radio,
     RadioGroup,
-    Rating,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
-import { PAGE_SIZE } from "../../../constants/searchDefaults";
-import { TeachingMethod } from "../../../enums/TeachingMethod";
-import { TeacherSearchRequest } from "../../../models/TeacherSearchRequest";
-import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../../../utils/teachingMethodConverters";
 import { useSubjects } from "../../../hooks/subjectQueries";
+import { TeacherSearchRequest } from "../../../models/TeacherSearchRequest";
+import { TEACHER_SEARCH_PAGE_SIZE } from "../../../utils/constants";
+import { TeachingMethod } from "../../../utils/enums";
+import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../../../utils/teachingMethodConverters";
 import PriceSlider from "../../common/PriceSlider";
 
 interface TeacherFiltersProps {
@@ -30,34 +28,34 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
     onSearch
 }) => {
     const theme = useTheme();
+
     const { data: subjectsOptions = [] } = useSubjects();
+    const [resetTrigger, setResetTrigger] = useState(0);
 
     // Filter states
-    const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || '');
+    const [searchText, setSearchText] = useState(initialFilters.searchText || '');
     const [subjects, setSubjects] = useState(initialFilters.subjects || []);
     const [minPrice, setMinPrice] = useState(initialFilters.minPrice || 0);
     const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || 20000);
-    const [minRating, setMinRating] = useState(initialFilters.minRating || 0);
     const [location, setLocation] = useState(initialFilters.location || '');
-    const [teachingMethod, setTeachingMethod] = useState(
-        convertBoolsToTeachingMethod(initialFilters.acceptsOnline, initialFilters.acceptsInPerson)
-    );
+
+    const initialTeachingMethod = convertBoolsToTeachingMethod(initialFilters.acceptsOnline, initialFilters.acceptsInPerson);
+    const [teachingMethod, setTeachingMethod] = useState(initialTeachingMethod);
 
     // Handle search button click
     const handleSearchClick = () => {
         const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToBools(teachingMethod);
 
         const searchFilters: TeacherSearchRequest = {
-            searchQuery,
+            searchText,
             subjects,
             minPrice,
             maxPrice,
-            minRating,
             acceptsOnline,
             acceptsInPerson,
             location,
             page: 1,
-            pageSize: PAGE_SIZE
+            pageSize: TEACHER_SEARCH_PAGE_SIZE
         };
 
         onSearch(searchFilters);
@@ -65,13 +63,11 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
 
     // Handle clear filters
     const handleClearFilters = () => {
-        setSearchQuery('');
+        setSearchText('');
         setSubjects([]);
-        setMinPrice(0);
-        setMaxPrice(20000);
-        setMinRating(0);
+        setResetTrigger(prev => prev + 1);
         setLocation('');
-        setTeachingMethod(TeachingMethod.BOTH);
+        setTeachingMethod(initialTeachingMethod);
     };
 
     return (
@@ -90,8 +86,8 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
                 fullWidth
                 label="Név"
                 variant="outlined"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Írj be egy nevet"
                 sx={{ mb: 2 }}
             />
@@ -107,20 +103,15 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
                         label="Tantárgyak"
                     />
                 )}
-                renderValue={(value, getTagProps) =>
-                    value.map((option, index) => (
-                        <Chip
-                            {...getTagProps({ index })}
-                            key={option}
-                            label={option}
-                            size="small"
-                            sx={{
-                                bgcolor: theme.palette.primary.light,
-                                color: theme.palette.getContrastText(theme.palette.primary.light)
-                            }}
-                        />
-                    ))
-                }
+                slotProps={{
+                    chip: {
+                        size: "small",
+                        sx: {
+                            bgcolor: theme.palette.primary.main,
+                            color: theme.palette.getContrastText(theme.palette.primary.main)
+                        }
+                    }
+                }}
                 sx={{ mb: 2 }}
             />
 
@@ -134,16 +125,7 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
                         setMinPrice(newBoundaries[0]);
                         setMaxPrice(newBoundaries[1]);
                     }}
-                />
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-                <Typography sx={{ mb: 1 }}>Minimum értékelés</Typography>
-                <Rating
-                    value={minRating}
-                    onChange={(_, newValue) => {
-                        setMinRating(newValue ?? 0);
-                    }}
+                    resetTrigger={resetTrigger}
                 />
             </Box>
 
@@ -154,24 +136,24 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
                     onChange={(e) => setTeachingMethod(e.target.value as TeachingMethod)}
                 >
                     <FormControlLabel
-                        value={TeachingMethod.ONLINE}
+                        value={TeachingMethod.Online}
                         control={<Radio />}
                         label="Csak online"
                     />
                     <FormControlLabel
-                        value={TeachingMethod.IN_PERSON}
+                        value={TeachingMethod.InPerson}
                         control={<Radio />}
                         label="Csak személyesen"
                     />
                     <FormControlLabel
-                        value={TeachingMethod.BOTH}
+                        value={TeachingMethod.Both}
                         control={<Radio />}
                         label="Online vagy személyesen"
                     />
                 </RadioGroup>
             </Box>
 
-            {(teachingMethod === TeachingMethod.IN_PERSON || teachingMethod === TeachingMethod.BOTH) && (
+            {(teachingMethod === TeachingMethod.InPerson || teachingMethod === TeachingMethod.Both) && (
                 <Box sx={{ mb: 2 }}>
                     <TextField
                         fullWidth

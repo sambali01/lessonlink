@@ -1,20 +1,18 @@
-import React from 'react';
-import {
-    Box,
-    Typography,
-    useTheme,
-    CircularProgress,
-    Alert,
-    Paper,
-    Stack,
-    Button
-} from '@mui/material';
 import {
     CalendarToday as CalendarIcon,
-    AccessTime as TimeIcon,
     Event as EventIcon
 } from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    CircularProgress,
+    Paper,
+    Typography,
+    useTheme,
+} from '@mui/material';
+import { FunctionComponent } from 'react';
 import { AvailableSlot } from '../../../models/AvailableSlot';
+import ScheduleDayCard from './ScheduleDayCard';
 
 interface TeacherScheduleViewProps {
     slots: AvailableSlot[];
@@ -24,117 +22,11 @@ interface TeacherScheduleViewProps {
     showBookingButtons?: boolean;
 }
 
-interface ScheduleDayCardProps {
-    date: string;
-    slots: AvailableSlot[];
-    onBookSlot?: (slot: AvailableSlot) => void;
-    showBookingButtons?: boolean;
-}
-
-const ScheduleDayCard: React.FC<ScheduleDayCardProps> = ({
-    date,
-    slots,
-    onBookSlot,
-    showBookingButtons = false
-}) => {
-    const theme = useTheme();
-
-    const formattedDate = new Date(date).toLocaleDateString('hu-HU', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-
-    const formatTime = (dateTime: string) => {
-        return new Date(dateTime).toLocaleTimeString('hu-HU', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    return (
-        <Paper sx={{
-            p: 3,
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            transition: 'all 0.2s ease',
-            '&:hover': {
-                boxShadow: theme.shadows[4],
-                transform: 'translateY(-2px)'
-            }
-        }}>
-            <Typography
-                variant="h6"
-                sx={{
-                    color: theme.palette.primary.main,
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    fontWeight: 'bold'
-                }}
-            >
-                <CalendarIcon />
-                {formattedDate}
-            </Typography>
-
-            <Stack spacing={1.5}>
-                {slots.map((slot) => (
-                    <Box
-                        key={slot.id}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 2,
-                            borderRadius: 1,
-                            backgroundColor: theme.palette.mode === 'dark'
-                                ? theme.palette.grey[800]
-                                : theme.palette.grey[50],
-                            border: `1px solid ${theme.palette.divider}`
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TimeIcon
-                                sx={{
-                                    color: theme.palette.secondary.main,
-                                    fontSize: '1.2rem'
-                                }}
-                            />
-                            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                                {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                            </Typography>
-                        </Box>
-
-                        {showBookingButtons && onBookSlot && (
-                            <Button
-                                variant="contained"
-                                size="small"
-                                onClick={() => onBookSlot(slot)}
-                                sx={{
-                                    backgroundColor: theme.palette.secondary.main,
-                                    '&:hover': {
-                                        backgroundColor: theme.palette.secondary.dark
-                                    }
-                                }}
-                            >
-                                Foglalás
-                            </Button>
-                        )}
-                    </Box>
-                ))}
-            </Stack>
-        </Paper>
-    );
-};
-
-const TeacherScheduleView: React.FC<TeacherScheduleViewProps> = ({
+const TeacherScheduleView: FunctionComponent<TeacherScheduleViewProps> = ({
     slots,
     isLoading,
     error,
-    onBookSlot,
-    showBookingButtons = false
+    onBookSlot
 }) => {
     const theme = useTheme();
 
@@ -241,7 +133,6 @@ const TeacherScheduleView: React.FC<TeacherScheduleViewProps> = ({
                                     date={date}
                                     slots={daySlots}
                                     onBookSlot={onBookSlot}
-                                    showBookingButtons={showBookingButtons}
                                 />
                             ))
                         }

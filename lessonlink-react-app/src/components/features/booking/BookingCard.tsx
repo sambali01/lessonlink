@@ -23,14 +23,14 @@ import { Booking, BookingStatus } from '../../../models/Booking';
 interface BookingCardProps {
     booking: Booking;
     onCancel?: (bookingId: number) => void;
-    showCancelButton?: boolean;
+    showCancellationButton?: boolean;
     isLoading?: boolean;
 }
 
 const BookingCard: FunctionComponent<BookingCardProps> = ({
     booking,
     onCancel,
-    showCancelButton = true,
+    showCancellationButton: showCancelButton = true,
     isLoading = false
 }) => {
     const theme = useTheme();

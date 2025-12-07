@@ -1,11 +1,10 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 import {
     Avatar,
     Box,
     Chip,
     Divider,
     Paper,
-    Rating,
     Skeleton,
     Typography,
     useTheme,
@@ -25,7 +24,7 @@ interface TeacherProfileProps {
     isLoading: boolean;
 }
 
-const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, isLoading }) => {
+const TeacherProfile: FunctionComponent<TeacherProfileProps> = ({ teacher, isLoading }) => {
     const theme = useTheme();
 
     if (isLoading) {
@@ -80,18 +79,6 @@ const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, isLoading }) =
                                 </Typography>
                             )}
                         </Typography>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Rating
-                                value={Number(teacher.rating) || 0}
-                                precision={0.5}
-                                readOnly
-                                size="large"
-                            />
-                            <Typography variant="body1" sx={{ ml: 2 }}>
-                                ({teacher.rating || 'Nincs értékelés'})
-                            </Typography>
-                        </Box>
 
                         {/* Teaching Methods */}
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

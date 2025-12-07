@@ -84,7 +84,6 @@ public class TeacherService
                 request.Subjects,
                 request.MinPrice,
                 request.MaxPrice,
-                request.MinRating,
                 request.AcceptsOnline,
                 request.AcceptsInPerson,
                 request.Location,
