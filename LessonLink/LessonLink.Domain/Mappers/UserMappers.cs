@@ -5,7 +5,7 @@ namespace LessonLink.BusinessLogic.Mappers;
 
 public static class UserMappers
 {
-    public static User RegisterStudentDtoToUser(RegisterStudentDto registerDto)
+    public static User RegisterStudentRequestToUser(RegisterStudentRequest registerDto)
     {
         return new User
         {
@@ -17,7 +17,7 @@ public static class UserMappers
         };
     }
 
-    public static User RegisterTeacherDtoToUser(RegisterTeacherDto registerDto)
+    public static User RegisterTeacherRequestToUser(RegisterTeacherRequest registerDto)
     {
         return new User
         {

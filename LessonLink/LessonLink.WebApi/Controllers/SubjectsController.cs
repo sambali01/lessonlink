@@ -1,6 +1,4 @@
 ﻿using LessonLink.BusinessLogic.DTOs.Subject;
-using LessonLink.BusinessLogic.Helpers;
-using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,9 +21,9 @@ public class SubjectsController(SubjectService subjectService) : BaseApiControll
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostSubject([FromBody] SubjectCreateDto subjectCreateDto)
+    public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectRequest createSubjectRequest)
     {
-        var result = await subjectService.CreateAsync(subjectCreateDto);
+        var result = await subjectService.CreateAsync(createSubjectRequest);
         return HandleServiceResult(result);
     }
 }

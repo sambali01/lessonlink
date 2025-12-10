@@ -73,7 +73,6 @@ const FeaturedTeachers: FunctionComponent = () => {
                                 <TeacherCard
                                     key={teacher.userId}
                                     teacher={teacher}
-                                    picturePath={`src/assets/images/blank-profile-picture.webp`}
                                     onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
                                 />
                             )

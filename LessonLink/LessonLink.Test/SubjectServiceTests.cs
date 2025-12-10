@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using LessonLink.BusinessLogic.DTOs.Subject;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
@@ -25,7 +25,7 @@ public class SubjectServiceTests
     public async Task CreateAsync_WithValidData_ShouldReturnSuccessResult()
     {
         // Arrange
-        var subjectCreateDto = new SubjectCreateDto
+        var subjectCreateDto = new CreateSubjectRequest
         {
             Name = "Mathematics"
         };
@@ -64,7 +64,7 @@ public class SubjectServiceTests
     public async Task CreateAsync_WithExistingSubjectName_ShouldReturnFailure()
     {
         // Arrange
-        var subjectCreateDto = new SubjectCreateDto
+        var subjectCreateDto = new CreateSubjectRequest
         {
             Name = "Mathematics"
         };

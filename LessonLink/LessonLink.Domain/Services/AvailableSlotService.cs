@@ -9,16 +9,16 @@ namespace LessonLink.BusinessLogic.Services;
 
 public class AvailableSlotService(IUnitOfWork unitOfWork)
 {
-    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>> GetMySlotsAsync(string teacherId)
+    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlotResponse>>> GetMySlotsAsync(string teacherId)
     {
         if (string.IsNullOrEmpty(teacherId))
         {
-            return ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>.Failure("Teacher not found.", 401);
+            return ServiceResult<IReadOnlyCollection<AvailableSlotResponse>>.Failure("Teacher not found.", 401);
         }
 
         var slots = await unitOfWork.AvailableSlotRepository.GetByTeacherIdWithBookingsAsync(teacherId);
 
-        var slotDtos = slots.Select(slot => new AvailableSlotWithBookingsDto
+        var slotDtos = slots.Select(slot => new AvailableSlotResponse
         {
             Id = slot.Id,
             TeacherId = slot.TeacherId,
@@ -26,22 +26,22 @@ public class AvailableSlotService(IUnitOfWork unitOfWork)
             EndTime = slot.EndTime,
             Bookings = [.. slot.Bookings
                 .Where(booking => booking.Status != BookingStatus.Cancelled)
-                .Select(booking => booking.ToGetDto())]
+                .Select(BookingMappers.BookingToResponse)]
         }).ToList();
 
-        return ServiceResult<IReadOnlyCollection<AvailableSlotWithBookingsDto>>.Success(slotDtos);
+        return ServiceResult<IReadOnlyCollection<AvailableSlotResponse>>.Success(slotDtos);
     }
 
-    public async Task<ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>> GetMySlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
+    public async Task<ServiceResult<PaginatedResponse<AvailableSlotResponse>>> GetMySlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
     {
         if (string.IsNullOrEmpty(teacherId))
         {
-            return ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>.Failure("Teacher not found.", 401);
+            return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Failure("Teacher not found.", 401);
         }
 
         var paginatedSlots = await unitOfWork.AvailableSlotRepository.GetByTeacherIdWithBookingsPaginatedAsync(teacherId, page, pageSize);
 
-        var slotDtos = paginatedSlots.Items.Select(slot => new AvailableSlotWithBookingsDto
+        var slotDtos = paginatedSlots.Items.Select(slot => new AvailableSlotResponse
         {
             Id = slot.Id,
             TeacherId = slot.TeacherId,
@@ -49,10 +49,10 @@ public class AvailableSlotService(IUnitOfWork unitOfWork)
             EndTime = slot.EndTime,
             Bookings = [.. slot.Bookings
                 .Where(booking => booking.Status != BookingStatus.Cancelled)
-                .Select(booking => booking.ToGetDto())]
+                .Select(BookingMappers.BookingToResponse)]
         }).ToList();
 
-        var result = new PaginatedResponse<AvailableSlotWithBookingsDto>
+        var result = new PaginatedResponse<AvailableSlotResponse>
         {
             Items = slotDtos,
             TotalCount = paginatedSlots.TotalCount,
@@ -61,40 +61,37 @@ public class AvailableSlotService(IUnitOfWork unitOfWork)
             TotalPages = paginatedSlots.TotalPages
         };
 
-        return ServiceResult<PaginatedResponse<AvailableSlotWithBookingsDto>>.Success(result);
+        return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Success(result);
     }
 
-    public async Task<ServiceResult<AvailableSlotDetailsDto>> GetSlotDetailsAsync(string teacherId, int slotId)
+    public async Task<ServiceResult<AvailableSlotResponse>> GetSlotDetailsAsync(string teacherId, int slotId)
     {
         if (string.IsNullOrEmpty(teacherId))
         {
-            return ServiceResult<AvailableSlotDetailsDto>.Failure("Teacher not found.", 401);
+            return ServiceResult<AvailableSlotResponse>.Failure("Teacher not found.", 401);
         }
 
         var slot = await unitOfWork.AvailableSlotRepository.GetByIdWithBookingAsync(slotId);
         if (slot == null)
         {
-            return ServiceResult<AvailableSlotDetailsDto>.Failure("Slot not found.", 404);
+            return ServiceResult<AvailableSlotResponse>.Failure("Slot not found.", 404);
         }
 
         if (slot.TeacherId != teacherId)
         {
-            return ServiceResult<AvailableSlotDetailsDto>.Failure("You do not have permission to view this slot.", 403);
+            return ServiceResult<AvailableSlotResponse>.Failure("You do not have permission to view this slot.", 403);
         }
 
-        var detailsDto = new AvailableSlotDetailsDto
+        var availableSlotResponse = new AvailableSlotResponse
         {
             Id = slot.Id,
             TeacherId = slot.TeacherId,
-            TeacherName = slot.Teacher?.User != null
-                ? $"{slot.Teacher.User.SurName} {slot.Teacher.User.FirstName}"
-                : string.Empty,
             StartTime = slot.StartTime,
             EndTime = slot.EndTime,
-            Booking = slot.Bookings?.FirstOrDefault()?.ToGetDto()
+            Bookings = [.. slot.Bookings.Select(BookingMappers.BookingToResponse)]
         };
 
-        return ServiceResult<AvailableSlotDetailsDto>.Success(detailsDto);
+        return ServiceResult<AvailableSlotResponse>.Success(availableSlotResponse);
     }
 
     public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetNotBookedSlotsByTeacherIdAsync(string teacherId)
@@ -103,7 +100,7 @@ public class AvailableSlotService(IUnitOfWork unitOfWork)
         return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Success(slots);
     }
 
-    public async Task<ServiceResult<AvailableSlot>> CreateSlotAsync(string teacherId, AvailableSlotCreateDto createDto)
+    public async Task<ServiceResult<AvailableSlot>> CreateSlotAsync(string teacherId, CreateAvailableSlotRequest createDto)
     {
         if (string.IsNullOrEmpty(teacherId))
         {

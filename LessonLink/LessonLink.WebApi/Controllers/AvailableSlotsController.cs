@@ -1,5 +1,4 @@
 ﻿using LessonLink.BusinessLogic.DTOs.AvailableSlot;
-using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Services;
 using LessonLink.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -41,9 +40,9 @@ public class AvailableSlotsController : BaseApiController
 
     [HttpPost]
     [Authorize(Roles = "Teacher")]
-    public async Task<IActionResult> CreateSlot([FromBody] AvailableSlotCreateDto createDto)
+    public async Task<IActionResult> CreateSlot([FromBody] CreateAvailableSlotRequest createRequest)
     {
-        var result = await _availableSlotService.CreateSlotAsync(User.GetUserId(), createDto);
+        var result = await _availableSlotService.CreateSlotAsync(User.GetUserId(), createRequest);
         return HandleServiceResult(result);
     }
 

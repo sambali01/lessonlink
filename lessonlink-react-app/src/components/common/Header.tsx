@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useFindUserById } from "../../hooks/userQueries";
 import ThemeSwitcher from "./ThemeSwitcher";
-import { Role } from "../../models/Role";
+import { Role } from "../../models/User";
 
 const Header: FunctionComponent = () => {
     const theme = useTheme();
@@ -144,7 +144,7 @@ const Header: FunctionComponent = () => {
                                         }
                                     }}
                                 >
-                                    {user?.firstName?.[0]}{user?.surName?.[0]}
+                                    {user?.surName?.[0]}{user?.firstName?.[0]}
                                 </Avatar>
                             </IconButton>
                             <Menu

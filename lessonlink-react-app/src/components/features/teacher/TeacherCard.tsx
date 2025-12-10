@@ -1,24 +1,25 @@
 import {
+    Person as InPersonIcon,
+    Language as OnlineIcon
+} from '@mui/icons-material';
+import {
     Box,
     Card,
     CardActionArea,
     CardContent,
     CardMedia,
     Chip,
+    Stack,
     Typography,
-    useTheme,
-    Stack
+    useTheme
 } from "@mui/material";
-import {
-    Language as OnlineIcon,
-    Person as InPersonIcon
-} from '@mui/icons-material';
 import { FunctionComponent } from "react";
-import { TeacherDto } from "../../../dtos/TeacherDto";
+import { Teacher } from "../../../models/Teacher";
 import { BLANK_PROFILE_PICTURE_PATH } from "../../../utils/constants";
+import { Subject } from '../../../models/Subject';
 
 interface TeacherCardProps {
-    teacher: TeacherDto;
+    teacher: Teacher;
     onCardClick?: () => void;
 }
 
@@ -83,10 +84,10 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick
                     </Stack>
 
                     <Box sx={{ mb: 2 }}>
-                        {teacher.subjects.map((subject: string, index: number) => (
+                        {teacher.subjects.map((subject: Subject, index: number) => (
                             <Chip
                                 key={index}
-                                label={subject}
+                                label={subject.name}
                                 size="small"
                                 sx={{
                                     mr: 0.5,

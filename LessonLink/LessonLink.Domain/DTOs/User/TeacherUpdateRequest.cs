@@ -2,7 +2,7 @@
 
 namespace LessonLink.BusinessLogic.DTOs.User;
 
-public class TeacherUpdateDto
+public class TeacherUpdateRequest
 {
     public string? NickName { get; set; }
     public IFormFile? ProfilePicture { get; set; }

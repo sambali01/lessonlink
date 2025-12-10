@@ -1,11 +1,10 @@
 import { axiosInstance } from "../configs/axiosConfig";
-import { TeacherDto } from "../dtos/TeacherDto";
 import { PaginatedResponse } from "../models/PaginatedResponse";
-import { TeacherSearchRequest } from "../models/TeacherSearchRequest";
+import { Teacher, TeacherSearchRequest } from "../models/Teacher";
 
 const TEACHER_API = '/Teachers';
 
-export const getFeaturedTeachers = async (): Promise<TeacherDto[]> => {
+export const getFeaturedTeachers = async (): Promise<Teacher[]> => {
     try {
         const response = await axiosInstance.get(TEACHER_API + '/featuredteachers');
         return response.data;
@@ -14,7 +13,7 @@ export const getFeaturedTeachers = async (): Promise<TeacherDto[]> => {
     }
 };
 
-export const getTeacherById = async (userId: string): Promise<TeacherDto> => {
+export const getTeacherById = async (userId: string): Promise<Teacher> => {
     try {
         const response = await axiosInstance.get(`${TEACHER_API}/${userId}`);
         return response.data;
@@ -23,9 +22,9 @@ export const getTeacherById = async (userId: string): Promise<TeacherDto> => {
     }
 };
 
-export const searchTeachers = async (filters: TeacherSearchRequest): Promise<PaginatedResponse<TeacherDto>> => {
+export const searchTeachers = async (filters: TeacherSearchRequest): Promise<PaginatedResponse<Teacher>> => {
     try {
-        const response = await axiosInstance.get<PaginatedResponse<TeacherDto>>(
+        const response = await axiosInstance.get<PaginatedResponse<Teacher>>(
             `${TEACHER_API}/search`,
             {
                 params: filters,

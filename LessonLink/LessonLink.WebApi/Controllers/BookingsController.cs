@@ -1,5 +1,4 @@
-using LessonLink.BusinessLogic.DTOs.Booking;
-using LessonLink.BusinessLogic.Helpers;
+﻿using LessonLink.BusinessLogic.DTOs.Booking;
 using LessonLink.BusinessLogic.Services;
 using LessonLink.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
@@ -28,17 +27,17 @@ public class BookingsController(BookingService bookingService) : BaseApiControll
 
     [HttpPost]
     [Authorize(Roles = "Student")]
-    public async Task<IActionResult> CreateBooking([FromBody] BookingCreateDto createDto)
+    public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest createBookingRequest)
     {
-        var result = await bookingService.CreateBookingAsync(User.GetUserId(), createDto);
+        var result = await bookingService.CreateBookingAsync(User.GetUserId(), createBookingRequest);
         return HandleServiceResult(result);
     }
 
-    [HttpPut("{id}/status")]
+    [HttpPut("{bookingId}/status")]
     [Authorize(Roles = "Teacher")]
-    public async Task<IActionResult> UpdateBookingStatus(int id, [FromBody] BookingUpdateStatusDto updateDto)
+    public async Task<IActionResult> DecideBookingAcceptance(int bookingId, [FromBody] BookingAcceptanceRequest bookingAcceptanceRequest)
     {
-        var result = await bookingService.UpdateBookingStatusAsync(User.GetUserId(), id, updateDto);
+        var result = await bookingService.UpdateBookingStatusAsync(User.GetUserId(), bookingId, bookingAcceptanceRequest);
         return HandleServiceResult(result);
     }
 

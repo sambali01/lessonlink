@@ -1,25 +1,10 @@
 import { axiosInstance } from '../configs/axiosConfig';
-import { AvailableSlot } from '../models/AvailableSlot';
-import { Booking } from '../models/Booking';
+import { AvailableSlot, CreateAvailableSlotRequest } from '../models/AvailableSlot';
 import { PaginatedResponse } from '../models/PaginatedResponse';
-
-export interface AvailableSlotCreateDto {
-    startTime: string; // ISO string
-    endTime: string;   // ISO string
-}
-
-export interface AvailableSlotDetailsDto {
-    id: number;
-    teacherId: string;
-    teacherName: string;
-    startTime: string;
-    endTime: string;
-    booking?: Booking;
-}
 
 const AVAILABLESLOT_API = '/AvailableSlots';
 
-export const getMyAvailableSlots = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<AvailableSlot>> => {
+export const getMySlots = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<AvailableSlot>> => {
     try {
         const response = await axiosInstance.get(`${AVAILABLESLOT_API}/my-slots?page=${page}&pageSize=${pageSize}`);
         return response.data;
@@ -37,7 +22,7 @@ export const getAvailableSlotsByTeacherId = async (teacherId: string): Promise<A
     }
 };
 
-export const createAvailableSlot = async (data: AvailableSlotCreateDto): Promise<AvailableSlot> => {
+export const createAvailableSlot = async (data: CreateAvailableSlotRequest): Promise<AvailableSlot> => {
     return await axiosInstance.post(`${AVAILABLESLOT_API}`, data)
         .then((response) => { return response.data; })
         .catch((error) => { throw new Error(error.response); });
@@ -51,7 +36,7 @@ export const deleteAvailableSlot = async (slotId: number): Promise<void> => {
     }
 };
 
-export const getAvailableSlotDetails = async (slotId: number): Promise<AvailableSlotDetailsDto> => {
+export const getAvailableSlotDetails = async (slotId: number): Promise<AvailableSlot> => {
     try {
         const response = await axiosInstance.get(`${AVAILABLESLOT_API}/${slotId}/details`);
         return response.data;

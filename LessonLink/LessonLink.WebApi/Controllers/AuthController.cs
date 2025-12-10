@@ -17,16 +17,16 @@ public class AuthController(
 ) : BaseApiController
 {
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
         // Check login data
-        var user = await userManager.FindByEmailAsync(loginDto.Email);
+        var user = await userManager.FindByEmailAsync(loginRequest.Email);
         if (user == null)
         {
             return Unauthorized("There is no user with the email provided.");
         }
 
-        var passwordCheck = await signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+        var passwordCheck = await signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
         if (!passwordCheck.Succeeded)
         {
             return Unauthorized("Incorrect email or password.");
@@ -39,31 +39,31 @@ public class AuthController(
         var accessTokenValue = accessTokenResult.Data;
         if (accessTokenValue == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(accessTokenResult.Errors, accessTokenResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(accessTokenResult.Errors, accessTokenResult.StatusCode));
         }
 
         var refreshTokenResult = await tokenService.GenerateRefreshTokenAsync(user);
         var refreshToken = refreshTokenResult.Data;
         if (refreshToken == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(refreshTokenResult.Errors, refreshTokenResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(refreshTokenResult.Errors, refreshTokenResult.StatusCode));
         }
 
         // Put generated refresh token value in cookie
         var setCookieResult = tokenService.SetRefreshTokenResponseCookie(refreshToken);
         if (!setCookieResult.Succeeded)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(setCookieResult.Errors, setCookieResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(setCookieResult.Errors, setCookieResult.StatusCode));
         }
 
-        var authDto = new AuthDto
+        var userAuthResponse = new UserAuthResponse
         {
             Id = user.Id,
             Token = accessTokenValue,
             Roles = userRoles
         };
 
-        return Ok(authDto);
+        return Ok(userAuthResponse);
     }
 
     [HttpPost("refresh")]
@@ -74,7 +74,7 @@ public class AuthController(
         var refreshTokenValueFromCookie = refreshTokenFromCookieResult.Data;
         if (refreshTokenValueFromCookie == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(refreshTokenFromCookieResult.Errors, refreshTokenFromCookieResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(refreshTokenFromCookieResult.Errors, refreshTokenFromCookieResult.StatusCode));
         }
 
         // Hash the token value from cookie
@@ -86,7 +86,7 @@ public class AuthController(
         var refreshTokenFromDb = refreshTokenFromDbResult.Data;
         if (refreshTokenFromDb == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(refreshTokenFromDbResult.Errors, refreshTokenFromDbResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(refreshTokenFromDbResult.Errors, refreshTokenFromDbResult.StatusCode));
         }
 
         // Get user who owns the refresh token
@@ -103,31 +103,31 @@ public class AuthController(
         var accessTokenValue = accessTokenResult.Data;
         if (accessTokenValue == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(accessTokenResult.Errors, accessTokenResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(accessTokenResult.Errors, accessTokenResult.StatusCode));
         }
 
         var refreshTokenResult = await tokenService.GenerateRefreshTokenAsync(user);
         var refreshToken = refreshTokenResult.Data;
         if (refreshToken == null)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(refreshTokenResult.Errors, refreshTokenResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(refreshTokenResult.Errors, refreshTokenResult.StatusCode));
         }
 
         // Put generated refresh token value in cookie
         var setCookieResult = tokenService.SetRefreshTokenResponseCookie(refreshToken);
         if (!setCookieResult.Succeeded)
         {
-            return HandleServiceResult(ServiceResult<AuthDto>.Failure(setCookieResult.Errors, setCookieResult.StatusCode));
+            return HandleServiceResult(ServiceResult<UserAuthResponse>.Failure(setCookieResult.Errors, setCookieResult.StatusCode));
         }
 
-        var authDto = new AuthDto
+        var userAuthResponse = new UserAuthResponse
         {
             Id = user.Id,
             Token = accessTokenValue,
             Roles = userRoles
         };
 
-        return Ok(authDto);
+        return Ok(userAuthResponse);
     }
 
     [HttpPost("logout")]

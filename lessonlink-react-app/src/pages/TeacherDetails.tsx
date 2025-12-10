@@ -46,10 +46,7 @@ const TeacherDetails: FunctionComponent = () => {
 
     const handleBookSlot = async (slot: AvailableSlot) => {
         try {
-            await createBookingMutation.mutateAsync({
-                availableSlotId: slot.id,
-                notes: `Foglalás: ${new Date(slot.startTime).toLocaleString('hu-HU')} - ${new Date(slot.endTime).toLocaleString('hu-HU')}`
-            });
+            await createBookingMutation.mutateAsync({ availableSlotId: slot.id });
             // Show success message or navigate to bookings page
             navigate('/dashboard');
         } catch (error) {

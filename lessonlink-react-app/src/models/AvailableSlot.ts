@@ -5,5 +5,10 @@ export type AvailableSlot = {
     teacherId: string;
     startTime: string;
     endTime: string;
-    bookings?: Booking[];
+    bookings: Booking[];
+}
+
+export type CreateAvailableSlotRequest = {
+    startTime: string;
+    endTime: string;
 }

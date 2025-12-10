@@ -11,6 +11,14 @@ export type Booking = {
     createdAt: string;
 }
 
+export interface CreateBookingRequest {
+    availableSlotId: number;
+}
+
+export interface BookingAcceptanceRequest {
+    status: BookingStatus;
+}
+
 export enum BookingStatus {
     Pending = 0,
     Confirmed = 1,

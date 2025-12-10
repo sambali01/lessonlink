@@ -21,7 +21,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAvailableSlotDetails } from '../hooks/avaliableSlotQueries';
-import { useUpdateBookingStatus } from '../hooks/bookingQueries';
+import { useDecideBookingAcceptance } from '../hooks/bookingQueries';
 import { BookingStatus } from '../models/Booking';
 
 const BookingDetails = () => {
@@ -29,8 +29,8 @@ const BookingDetails = () => {
     const navigate = useNavigate();
     const theme = useTheme();
 
-    const { data: slotDetails, isLoading, error } = useAvailableSlotDetails(Number(slotId));
-    const updateStatusMutation = useUpdateBookingStatus();
+    const { data: slot, isLoading, error } = useAvailableSlotDetails(Number(slotId));
+    const decideBookingAcceptanceMutation = useDecideBookingAcceptance();
 
     const [snackbar, setSnackbar] = useState<{
         open: boolean;
@@ -78,18 +78,18 @@ const BookingDetails = () => {
             case BookingStatus.Confirmed:
                 return 'Elfogadva';
             case BookingStatus.Cancelled:
-                return 'Visszamondva';
+                return 'Lemondva';
             default:
                 return 'Ismeretlen';
         }
     };
 
     const handleAcceptBooking = async () => {
-        if (!slotDetails?.booking) return;
+        if (!slot || slot.bookings.length === 0) return;
 
         try {
-            await updateStatusMutation.mutateAsync({
-                bookingId: slotDetails.booking.id,
+            await decideBookingAcceptanceMutation.mutateAsync({
+                bookingId: slot.bookings[0].id,
                 data: { status: BookingStatus.Confirmed }
             });
 
@@ -119,7 +119,7 @@ const BookingDetails = () => {
         );
     }
 
-    if (error || !slotDetails) {
+    if (error || !slot) {
         return (
             <Box sx={{ p: 2 }}>
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -136,8 +136,8 @@ const BookingDetails = () => {
         );
     }
 
-    const startDateTime = formatDateTime(slotDetails.startTime);
-    const endDateTime = formatDateTime(slotDetails.endTime);
+    const startDateTime = formatDateTime(slot.startTime);
+    const endDateTime = formatDateTime(slot.endTime);
 
     return (
         <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, maxWidth: 1200, mx: 'auto' }}>
@@ -233,14 +233,14 @@ const BookingDetails = () => {
                                 Jelentkező
                             </Typography>
 
-                            {slotDetails.booking ? (
+                            {slot.bookings[0] ? (
                                 <>
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Diák neve
                                         </Typography>
                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                            {slotDetails.booking.studentName}
+                                            {slot.bookings[0].studentName}
                                         </Typography>
                                     </Box>
 
@@ -249,7 +249,7 @@ const BookingDetails = () => {
                                             Jelentkezés ideje
                                         </Typography>
                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                            {new Date(slotDetails.booking.createdAt).toLocaleDateString('hu-HU', {
+                                            {new Date(slot.bookings[0].createdAt).toLocaleDateString('hu-HU', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric',
@@ -264,47 +264,26 @@ const BookingDetails = () => {
                                             Állapot
                                         </Typography>
                                         <Chip
-                                            label={getStatusLabel(slotDetails.booking.status)}
-                                            color={getStatusColor(slotDetails.booking.status)}
+                                            label={getStatusLabel(slot.bookings[0].status)}
+                                            color={getStatusColor(slot.bookings[0].status)}
                                             size="small"
                                         />
                                     </Box>
 
-                                    {slotDetails.booking.notes && (
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                Megjegyzés
-                                            </Typography>
-                                            <Typography
-                                                variant="body1"
-                                                sx={{
-                                                    fontStyle: 'italic',
-                                                    padding: 1.5,
-                                                    backgroundColor: theme.palette.background.default,
-                                                    borderRadius: 1,
-                                                    color: theme.palette.text.primary,
-                                                    border: `1px solid ${theme.palette.grey[300]}`
-                                                }}
-                                            >
-                                                {slotDetails.booking.notes}
-                                            </Typography>
-                                        </Box>
-                                    )}
-
                                     <Divider sx={{ my: 2 }} />
 
                                     {/* Accept Button */}
-                                    {slotDetails.booking.status === BookingStatus.Pending && (
+                                    {slot.bookings[0].status === BookingStatus.Pending && (
                                         <Button
                                             variant="contained"
                                             color="success"
                                             startIcon={<CheckIcon />}
                                             onClick={handleAcceptBooking}
-                                            disabled={updateStatusMutation.isPending}
+                                            disabled={decideBookingAcceptanceMutation.isPending}
                                             fullWidth
                                             sx={{ textTransform: 'none' }}
                                         >
-                                            {updateStatusMutation.isPending ? 'Elfogadás...' : 'Foglalás elfogadása'}
+                                            {decideBookingAcceptanceMutation.isPending ? 'Elfogadás...' : 'Foglalás elfogadása'}
                                         </Button>
                                     )}
                                 </>

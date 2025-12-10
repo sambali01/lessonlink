@@ -18,13 +18,12 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { StudentUpdateDto } from "../dtos/StudentUpdateDto";
-import { TeacherUpdateDto } from "../dtos/TeacherUpdateDto";
 import { useSubjects } from "../hooks/subjectQueries";
 import { useTeacherDetails } from "../hooks/teacherQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useFindUserById, useUpdateStudent, useUpdateTeacher } from "../hooks/userQueries";
-import { Role } from "../models/Role";
+import { Subject } from "../models/Subject";
+import { Role, StudentUpdateRequest, TeacherUpdateRequest } from "../models/User";
 import { TeachingMethod } from "../utils/enums";
 import { convertBoolsToTeachingMethod, convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
 
@@ -51,7 +50,8 @@ const Profile: FunctionComponent = () => {
     const updateStudentMutation = useUpdateStudent(currentUserAuth?.userId || '');
     const updateTeacherMutation = useUpdateTeacher(currentUserAuth?.userId || '');
 
-    const { data: allSubjects = [] } = useSubjects();
+    const { data: allSubjects } = useSubjects();
+    const subjectNames = allSubjects ? allSubjects.map((s: Subject) => s.name) : [];
     const isTeacher = currentUserAuth?.roles.includes(Role.Teacher);
 
     const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProfileForm>({
@@ -89,7 +89,7 @@ const Profile: FunctionComponent = () => {
             setValue('hourlyRate', teacher.hourlyRate || 0);
             setValue('description', teacher.description || '');
             setValue('contact', teacher.contact || '');
-            setValue('subjectNames', teacher.subjects || []);
+            setValue('subjectNames', teacher.subjects.map((s: Subject) => s.name) || []);
         }
     }, [user, teacher, setValue]);
 
@@ -118,7 +118,7 @@ const Profile: FunctionComponent = () => {
         if (isTeacher) {
             const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToExplicitBools(data.teachingMethod!);
 
-            const updateData: TeacherUpdateDto = {
+            const updateData: TeacherUpdateRequest = {
                 nickName: data.nickName !== user?.nickName ? data.nickName : undefined,
                 profilePicture: data.profilePicture || undefined,
                 acceptsOnline: acceptsOnline !== teacher?.acceptsOnline ? acceptsOnline : undefined,
@@ -132,7 +132,7 @@ const Profile: FunctionComponent = () => {
 
             updateTeacherMutation.mutate(updateData, { onSuccess, onError });
         } else {
-            const updateData: StudentUpdateDto = {
+            const updateData: StudentUpdateRequest = {
                 nickName: data.nickName !== user?.nickName ? data.nickName : undefined,
                 profilePicture: data.profilePicture || undefined
             };
@@ -156,7 +156,7 @@ const Profile: FunctionComponent = () => {
             setValue('hourlyRate', teacher.hourlyRate || 0);
             setValue('description', teacher.description || '');
             setValue('contact', teacher.contact || '');
-            setValue('subjectNames', teacher.subjects || []);
+            setValue('subjectNames', teacher.subjects.map((s: Subject) => s.name) || []);
         }
     };
 
@@ -211,7 +211,7 @@ const Profile: FunctionComponent = () => {
                                 mb: 2,
                             }}
                         >
-                            {!user?.imageUrl && `${user?.firstName?.[0]}${user?.surName?.[0]}`}
+                            {!user?.imageUrl && `${user?.surName?.[0]}${user?.firstName?.[0]}`}
                         </Avatar>
                         {isEditing && (
                             <Button
@@ -232,7 +232,7 @@ const Profile: FunctionComponent = () => {
                         )}
                     </Box>
                     <Typography variant="h4" color="text.primary">
-                        {user?.firstName} {user?.surName}
+                        {user?.surName} {user?.firstName}
                     </Typography>
                 </Box>
 
@@ -422,7 +422,7 @@ const Profile: FunctionComponent = () => {
                                         <Autocomplete
                                             {...field}
                                             multiple
-                                            options={allSubjects}
+                                            options={subjectNames}
                                             value={field.value || []}
                                             onChange={(_, newValue) => field.onChange(newValue)}
                                             disabled={!isEditing}

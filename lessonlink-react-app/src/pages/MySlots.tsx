@@ -1,20 +1,19 @@
-import {
-    Box,
-    Typography,
-    useTheme,
-    CircularProgress,
-    Alert,
-    Button,
-    Snackbar,
-    Pagination
-} from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Pagination,
+    Snackbar,
+    Typography,
+    useTheme
+} from '@mui/material';
 import { FunctionComponent, useEffect, useState } from 'react';
-import { AvailableSlot } from '../models/AvailableSlot';
-import { useMyAvailableSlots, useCreateAvailableSlot, useDeleteAvailableSlot } from '../hooks/avaliableSlotQueries';
-import { AvailableSlotCreateDto } from '../services/availableSlot.service';
-import MonthSection from '../components/features/calendar/MonthSection';
 import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
+import MonthSection from '../components/features/calendar/MonthSection';
+import { useCreateAvailableSlot, useDeleteAvailableSlot, useMyAvailableSlots } from '../hooks/avaliableSlotQueries';
+import { AvailableSlot, CreateAvailableSlotRequest } from '../models/AvailableSlot';
 import { MY_SLOTS_PAGE_SIZE } from '../utils/constants';
 
 const MySlots: FunctionComponent = () => {
@@ -41,7 +40,7 @@ const MySlots: FunctionComponent = () => {
         }
     }, [deleteSlotMutation.error]);
 
-    const handleCreateSlot = async (data: AvailableSlotCreateDto) => {
+    const handleCreateSlot = async (data: CreateAvailableSlotRequest) => {
         try {
             await createSlotMutation.mutateAsync(data);
             setIsModalOpen(false);

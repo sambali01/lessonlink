@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useLayoutEffect, useState } from "react";
 import { axiosInstance } from "../../configs/axiosConfig";
 import { AuthContext } from "../../contexts/AuthContext";
-import { UserAuth } from "../../models/UserAuth";
+import { UserAuth } from "../../models/User";
 import { login, logout, refresh } from "../../services/auth.service";
 
 export default function AuthProvider({ children }: PropsWithChildren) {

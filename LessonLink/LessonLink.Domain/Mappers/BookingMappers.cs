@@ -1,42 +1,24 @@
-using LessonLink.BusinessLogic.DTOs.Booking;
+﻿using LessonLink.BusinessLogic.DTOs.Booking;
 using LessonLink.BusinessLogic.Models;
 
 namespace LessonLink.BusinessLogic.Mappers;
 
 public static class BookingMappers
 {
-    public static Booking CreateDtoToBooking(BookingCreateDto createDto, string studentId)
+    public static BookingResponse BookingToResponse(Booking booking)
     {
-        return new Booking
-        {
-            StudentId = studentId,
-            AvailableSlotId = createDto.AvailableSlotId,
-            Status = BookingStatus.Pending,
-            CreatedAt = DateTime.UtcNow
-        };
-    }
-
-    public static BookingGetDto BookingToGetDto(Booking booking)
-    {
-        return new BookingGetDto
+        return new BookingResponse
         {
             Id = booking.Id,
             StudentId = booking.StudentId,
-            StudentName = $"{booking.Student?.FirstName} {booking.Student?.SurName}",
+            StudentName = $"{booking.Student.SurName} {booking.Student.FirstName}",
             AvailableSlotId = booking.AvailableSlotId,
-            SlotStartTime = booking.AvailableSlot?.StartTime ?? default,
-            SlotEndTime = booking.AvailableSlot?.EndTime ?? default,
-            TeacherId = booking.AvailableSlot?.TeacherId ?? string.Empty,
-            TeacherName = booking.AvailableSlot?.Teacher?.User != null
-                ? $"{booking.AvailableSlot.Teacher.User.SurName} {booking.AvailableSlot.Teacher.User.FirstName}"
-                : string.Empty,
+            SlotStartTime = booking.AvailableSlot.StartTime,
+            SlotEndTime = booking.AvailableSlot.EndTime,
+            TeacherId = booking.AvailableSlot.TeacherId,
+            TeacherName = $"{booking.AvailableSlot.Teacher.User.SurName} {booking.AvailableSlot.Teacher.User.FirstName}",
             Status = booking.Status,
             CreatedAt = booking.CreatedAt
         };
-    }
-
-    public static BookingGetDto ToGetDto(this Booking booking)
-    {
-        return BookingToGetDto(booking);
     }
 }

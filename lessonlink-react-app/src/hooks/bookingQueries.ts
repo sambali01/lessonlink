@@ -1,19 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Booking } from '../models/Booking';
+import { Booking, BookingAcceptanceRequest, CreateBookingRequest } from '../models/Booking';
 import {
     createBooking,
     getMyBookingsAsStudent,
     getMyBookingsAsTeacher,
-    updateBookingStatus,
-    cancelBooking,
-    BookingCreateDto,
-    BookingUpdateStatusDto
+    decideBookingAcceptance,
+    cancelBooking
 } from '../services/booking.service';
 
 export const useCreateBooking = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<Booking, Error, BookingCreateDto>({
+    return useMutation<Booking, Error, CreateBookingRequest>({
         mutationFn: createBooking,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['myBookings', 'student'] });
@@ -37,11 +35,11 @@ export const useMyBookingsAsTeacher = () => {
     });
 };
 
-export const useUpdateBookingStatus = () => {
+export const useDecideBookingAcceptance = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<Booking, Error, { bookingId: number; data: BookingUpdateStatusDto }>({
-        mutationFn: ({ bookingId, data }) => updateBookingStatus(bookingId, data),
+    return useMutation<Booking, Error, { bookingId: number; data: BookingAcceptanceRequest }>({
+        mutationFn: ({ bookingId, data }) => decideBookingAcceptance(bookingId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['myBookings'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlotDetails'] });

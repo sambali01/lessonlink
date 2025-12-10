@@ -1,32 +1,28 @@
 import { AxiosResponse } from "axios";
 import { axiosInstance } from "../configs/axiosConfig";
-import { UserDto } from "../dtos/UserDto";
-import { RegisterStudentDto } from "../dtos/RegisterStudentDto";
-import { RegisterTeacherDto } from "../dtos/RegisterTeacherDto";
-import { StudentUpdateDto } from "../dtos/StudentUpdateDto";
-import { TeacherUpdateDto } from "../dtos/TeacherUpdateDto";
+import { RegisterStudentRequest, RegisterTeacherRequest, StudentUpdateRequest, TeacherUpdateRequest, User } from "../models/User";
 
 const USER_API = "/Users";
 
-export const registerStudent = async (data: RegisterStudentDto) => {
+export const registerStudent = async (data: RegisterStudentRequest) => {
     return await axiosInstance.post(USER_API + "/register-student", data);
 };
 
-export const registerTeacher = async (data: RegisterTeacherDto) => {
+export const registerTeacher = async (data: RegisterTeacherRequest) => {
     return await axiosInstance.post(USER_API + "/register-teacher", data);
 };
 
-export const findUserById = async (userId: string): Promise<AxiosResponse<UserDto>> => {
-    return await axiosInstance.get<UserDto>(USER_API + "/" + userId);
+export const findUserById = async (userId: string): Promise<AxiosResponse<User>> => {
+    return await axiosInstance.get<User>(USER_API + "/" + userId);
 };
 
-export const updateStudent = async (userId: string, data: StudentUpdateDto) => {
+export const updateStudent = async (userId: string, data: StudentUpdateRequest) => {
     const formData = new FormData();
 
     if (data.nickName) formData.append('nickName', data.nickName);
     if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
 
-    const response = await axiosInstance.put<UserDto>(`${USER_API}/update-student/${userId}`, formData, {
+    const response = await axiosInstance.put<User>(`${USER_API}/update-student/${userId}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -34,7 +30,7 @@ export const updateStudent = async (userId: string, data: StudentUpdateDto) => {
     return response.data;
 };
 
-export const updateTeacher = async (userId: string, data: TeacherUpdateDto): Promise<UserDto> => {
+export const updateTeacher = async (userId: string, data: TeacherUpdateRequest): Promise<User> => {
     const formData = new FormData();
 
     if (data.nickName) formData.append('nickName', data.nickName);
@@ -51,7 +47,7 @@ export const updateTeacher = async (userId: string, data: TeacherUpdateDto): Pro
         });
     }
 
-    const response = await axiosInstance.put<UserDto>(`${USER_API}/update-teacher/${userId}`, formData, {
+    const response = await axiosInstance.put<User>(`${USER_API}/update-teacher/${userId}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }

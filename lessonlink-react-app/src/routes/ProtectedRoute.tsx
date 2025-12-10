@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { UserAuth } from '../models/UserAuth.ts';
+import { UserAuth } from '../models/User.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { Navigate } from 'react-router-dom';
 import PermissionDenied from '../pages/PermissionDenied.tsx';

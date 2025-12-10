@@ -1,4 +1,10 @@
-import { FunctionComponent } from 'react';
+import {
+    Person as InPersonIcon,
+    LocationOn as LocationIcon,
+    Language as OnlineIcon,
+    AttachMoney as PriceIcon,
+    School as SubjectIcon
+} from '@mui/icons-material';
 import {
     Avatar,
     Box,
@@ -6,21 +12,15 @@ import {
     Divider,
     Paper,
     Skeleton,
+    Stack,
     Typography,
-    useTheme,
-    Stack
+    useTheme
 } from '@mui/material';
-import {
-    LocationOn as LocationIcon,
-    Language as OnlineIcon,
-    Person as InPersonIcon,
-    School as SubjectIcon,
-    AttachMoney as PriceIcon
-} from '@mui/icons-material';
-import { TeacherDto } from '../../../dtos/TeacherDto';
+import { FunctionComponent } from 'react';
+import { Teacher } from '../../../models/Teacher';
 
 interface TeacherProfileProps {
-    teacher: TeacherDto;
+    teacher: Teacher;
     isLoading: boolean;
 }
 
@@ -137,7 +137,7 @@ const TeacherProfile: FunctionComponent<TeacherProfileProps> = ({ teacher, isLoa
                             teacher.subjects.map((subject, index) => (
                                 <Chip
                                     key={index}
-                                    label={subject}
+                                    label={subject.name}
                                     sx={{
                                         bgcolor: theme.palette.primary.light,
                                         color: theme.palette.getContrastText(theme.palette.primary.light),

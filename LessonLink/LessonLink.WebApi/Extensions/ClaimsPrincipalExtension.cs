@@ -2,7 +2,7 @@
 
 namespace LessonLink.WebApi.Extensions;
 
-public static class ClaimsPrincipalExtensions
+public static class ClaimsPrincipalExtension
 {
     public static string GetUserId(this ClaimsPrincipal user)
     {

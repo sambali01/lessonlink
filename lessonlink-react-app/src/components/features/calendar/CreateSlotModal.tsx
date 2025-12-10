@@ -1,23 +1,23 @@
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    Box,
     Alert,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Typography
 } from '@mui/material';
-import { useState } from 'react';
-import { AvailableSlotCreateDto } from '../../../services/availableSlot.service';
-import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { hu } from 'date-fns/locale';
+import { useState } from 'react';
+import { CreateAvailableSlotRequest } from '../../../models/AvailableSlot';
 
 interface CreateSlotModalProps {
     open: boolean;
     onClose: () => void;
-    onCreate: (data: AvailableSlotCreateDto) => void;
+    onCreate: (data: CreateAvailableSlotRequest) => void;
     isLoading: boolean;
     error?: string;
 }

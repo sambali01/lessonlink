@@ -1,6 +1,8 @@
-﻿namespace LessonLink.BusinessLogic.DTOs.Teacher;
+﻿using LessonLink.BusinessLogic.DTOs.Subject;
 
-public class TeacherGetDto
+namespace LessonLink.BusinessLogic.DTOs.Teacher;
+
+public class TeacherResponse
 {
     public required string UserId { get; set; }
     public required string FirstName { get; set; }
@@ -13,5 +15,5 @@ public class TeacherGetDto
     public int HourlyRate { get; set; }
     public string Description { get; set; } = string.Empty;
     public required string Contact { get; set; }
-    public List<string> Subjects { get; set; } = [];
+    public List<SubjectResponse> Subjects { get; set; } = [];
 }

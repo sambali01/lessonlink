@@ -1,60 +1,68 @@
-using LessonLink.BusinessLogic.DTOs.Booking;
+﻿using LessonLink.BusinessLogic.DTOs.Booking;
 using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Mappers;
+using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 
 namespace LessonLink.BusinessLogic.Services;
 
 public class BookingService(IUnitOfWork unitOfWork)
 {
-    public async Task<ServiceResult<BookingGetDto[]>> GetMyBookingsAsStudentAsync(string studentId)
+    public async Task<ServiceResult<BookingResponse[]>> GetMyBookingsAsStudentAsync(string studentId)
     {
         if (string.IsNullOrEmpty(studentId))
         {
-            return ServiceResult<BookingGetDto[]>.Failure("Student not found.", 401);
+            return ServiceResult<BookingResponse[]>.Failure("Student not found.", 401);
         }
 
         var bookings = await unitOfWork.BookingRepository.GetByStudentIdAsync(studentId);
 
         var bookingDtos = bookings
-            .Select(BookingMappers.BookingToGetDto)
+            .Select(BookingMappers.BookingToResponse)
             .ToArray();
 
-        return ServiceResult<BookingGetDto[]>.Success(bookingDtos);
+        return ServiceResult<BookingResponse[]>.Success(bookingDtos);
     }
 
-    public async Task<ServiceResult<BookingGetDto[]>> GetMyBookingsAsTeacherAsync(string teacherId)
+    public async Task<ServiceResult<BookingResponse[]>> GetMyBookingsAsTeacherAsync(string teacherId)
     {
         if (string.IsNullOrEmpty(teacherId))
         {
-            return ServiceResult<BookingGetDto[]>.Failure("Teacher not found.", 401);
+            return ServiceResult<BookingResponse[]>.Failure("Teacher not found.", 401);
         }
 
         var bookings = await unitOfWork.BookingRepository.GetByTeacherIdAsync(teacherId);
 
         var bookingDtos = bookings
-            .Select(BookingMappers.BookingToGetDto)
+            .Select(BookingMappers.BookingToResponse)
             .ToArray();
 
-        return ServiceResult<BookingGetDto[]>.Success(bookingDtos);
+        return ServiceResult<BookingResponse[]>.Success(bookingDtos);
     }
 
-    public async Task<ServiceResult<BookingGetDto>> CreateBookingAsync(string studentId, BookingCreateDto createDto)
+    public async Task<ServiceResult<BookingResponse>> CreateBookingAsync(string studentId, CreateBookingRequest createRequest)
     {
         if (string.IsNullOrEmpty(studentId))
         {
-            return ServiceResult<BookingGetDto>.Failure("You are not authenticated.", 401);
+            return ServiceResult<BookingResponse>.Failure("You are not authenticated.", 401);
         }
 
         // Check if available slot exists and is available
-        var availableSlot = await unitOfWork.AvailableSlotRepository.GetByIdAsync(createDto.AvailableSlotId);
+        var availableSlot = await unitOfWork.AvailableSlotRepository.GetByIdAsync(createRequest.AvailableSlotId);
         if (availableSlot == null)
         {
-            return ServiceResult<BookingGetDto>.Failure("Available slot not found.", 404);
+            return ServiceResult<BookingResponse>.Failure("Available slot not found.", 404);
         }
 
         // Create booking
-        var booking = BookingMappers.CreateDtoToBooking(createDto, studentId);
+        var booking = new Booking
+        {
+            StudentId = studentId,
+            AvailableSlotId = createRequest.AvailableSlotId,
+            Status = BookingStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
         var createdBooking = unitOfWork.BookingRepository.CreateAsync(booking);
 
         if (await unitOfWork.CompleteAsync())
@@ -63,41 +71,41 @@ public class BookingService(IUnitOfWork unitOfWork)
             var fullBooking = await unitOfWork.BookingRepository.GetByIdAsync(createdBooking.Id);
             if (fullBooking == null)
             {
-                return ServiceResult<BookingGetDto>.Failure("Error retrieving created booking.", 500);
+                return ServiceResult<BookingResponse>.Failure("Error retrieving created booking.", 500);
             }
 
-            var bookingDto = BookingMappers.BookingToGetDto(fullBooking);
+            var bookingDto = BookingMappers.BookingToResponse(fullBooking);
 
-            return ServiceResult<BookingGetDto>.Success(bookingDto, 201);
+            return ServiceResult<BookingResponse>.Success(bookingDto, 201);
         }
 
-        return ServiceResult<BookingGetDto>.Failure("An error occurred while creating the booking.", 500);
+        return ServiceResult<BookingResponse>.Failure("An error occurred while creating the booking.", 500);
     }
 
-    public async Task<ServiceResult<BookingGetDto>> UpdateBookingStatusAsync(string userId, int bookingId, BookingUpdateStatusDto updateDto)
+    public async Task<ServiceResult<BookingResponse>> UpdateBookingStatusAsync(string userId, int bookingId, BookingAcceptanceRequest acceptanceRequest)
     {
         var booking = await unitOfWork.BookingRepository.GetByIdAsync(bookingId);
         if (booking == null)
         {
-            return ServiceResult<BookingGetDto>.Failure("Booking not found.", 404);
+            return ServiceResult<BookingResponse>.Failure("Booking not found.", 404);
         }
 
         // Check if the user is the teacher of this booking's slot
         if (booking.AvailableSlot.TeacherId != userId)
         {
-            return ServiceResult<BookingGetDto>.Failure("Unauthorized to modify this booking.", 403);
+            return ServiceResult<BookingResponse>.Failure("Unauthorized to modify this booking.", 403);
         }
 
-        booking.Status = updateDto.Status;
+        booking.Status = acceptanceRequest.Status;
         unitOfWork.BookingRepository.UpdateAsync(booking);
 
         if (await unitOfWork.CompleteAsync())
         {
-            var bookingDto = BookingMappers.BookingToGetDto(booking);
-            return ServiceResult<BookingGetDto>.Success(bookingDto);
+            var bookingDto = BookingMappers.BookingToResponse(booking);
+            return ServiceResult<BookingResponse>.Success(bookingDto);
         }
 
-        return ServiceResult<BookingGetDto>.Failure("An error occurred while updating the booking.", 500);
+        return ServiceResult<BookingResponse>.Failure("An error occurred while updating the booking.", 500);
     }
 
     public async Task<ServiceResult<object>> CancelBookingAsync(string userId, int bookingId)

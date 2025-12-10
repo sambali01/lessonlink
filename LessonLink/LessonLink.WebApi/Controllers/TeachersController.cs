@@ -1,6 +1,4 @@
 ﻿using LessonLink.BusinessLogic.DTOs.Teacher;
-using LessonLink.BusinessLogic.Helpers;
-using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,9 +28,9 @@ public class TeachersController(TeacherService teacherService) : BaseApiControll
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> SearchTeachers([FromQuery] TeacherSearchRequest request)
+    public async Task<IActionResult> SearchTeachers([FromQuery] TeacherSearchRequest searchRequest)
     {
-        var result = await teacherService.SearchAsync(request);
+        var result = await teacherService.SearchAsync(searchRequest);
         return HandleServiceResult(result);
     }
 }

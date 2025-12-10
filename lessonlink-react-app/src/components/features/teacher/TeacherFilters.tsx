@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useSubjects } from "../../../hooks/subjectQueries";
-import { TeacherSearchRequest } from "../../../models/TeacherSearchRequest";
+import { TeacherSearchRequest } from "../../../models/Teacher";
 import { TEACHER_SEARCH_PAGE_SIZE } from "../../../utils/constants";
 import { TeachingMethod } from "../../../utils/enums";
 import { convertBoolsToTeachingMethod, convertTeachingMethodToFilterBools } from "../../../utils/teachingMethodConverters";
@@ -29,8 +29,12 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
 }) => {
     const theme = useTheme();
 
-    const { data: subjectsOptions = [] } = useSubjects();
+    // State to trigger filters reset
     const [resetTrigger, setResetTrigger] = useState(0);
+
+    // Fetch subject options
+    const { data: allSubjects } = useSubjects();
+    const subjectNames = allSubjects ? allSubjects.map((s) => s.name) : [];
 
     // Filter states
     const [searchText, setSearchText] = useState(initialFilters.searchText || '');
@@ -94,7 +98,7 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
 
             <Autocomplete
                 multiple
-                options={subjectsOptions}
+                options={subjectNames}
                 value={subjects}
                 onChange={(_, newValue) => setSubjects(newValue)}
                 renderInput={(params) => (

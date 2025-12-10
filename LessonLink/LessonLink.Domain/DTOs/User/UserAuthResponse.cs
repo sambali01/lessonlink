@@ -1,6 +1,6 @@
 ﻿namespace LessonLink.BusinessLogic.DTOs.User;
 
-public class AuthDto
+public class UserAuthResponse
 {
     public required string Id { get; set; }
     public required string Token { get; set; }

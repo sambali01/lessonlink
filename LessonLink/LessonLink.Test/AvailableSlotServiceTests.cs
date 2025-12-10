@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using LessonLink.BusinessLogic.DTOs.AvailableSlot;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
@@ -126,7 +126,7 @@ public class AvailableSlotServiceTests
     {
         // Arrange
         var teacherId = "teacher-123";
-        var createDto = new AvailableSlotCreateDto
+        var createDto = new CreateAvailableSlotRequest
         {
             StartTime = DateTime.Now.AddDays(1),
             EndTime = DateTime.Now.AddDays(1).AddHours(1)
@@ -168,7 +168,7 @@ public class AvailableSlotServiceTests
     {
         // Arrange
         var teacherId = "teacher-123";
-        var createDto = new AvailableSlotCreateDto
+        var createDto = new CreateAvailableSlotRequest
         {
             StartTime = DateTime.Now.AddDays(1).AddHours(1),
             EndTime = DateTime.Now.AddDays(1) // End time before start time
@@ -189,7 +189,7 @@ public class AvailableSlotServiceTests
     {
         // Arrange
         var teacherId = "teacher-123";
-        var createDto = new AvailableSlotCreateDto
+        var createDto = new CreateAvailableSlotRequest
         {
             StartTime = DateTime.Now.AddHours(-1), // Past time
             EndTime = DateTime.Now.AddHours(1)
@@ -210,7 +210,7 @@ public class AvailableSlotServiceTests
     {
         // Arrange
         var teacherId = "teacher-123";
-        var createDto = new AvailableSlotCreateDto
+        var createDto = new CreateAvailableSlotRequest
         {
             StartTime = DateTime.Now.AddDays(1),
             EndTime = DateTime.Now.AddDays(1).AddHours(1)
@@ -235,7 +235,7 @@ public class AvailableSlotServiceTests
     {
         // Arrange
         var teacherId = "teacher-123";
-        var createDto = new AvailableSlotCreateDto
+        var createDto = new CreateAvailableSlotRequest
         {
             StartTime = DateTime.UtcNow.AddDays(1),
             EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
@@ -247,9 +247,9 @@ public class AvailableSlotServiceTests
 
         _mockAvailableSlotRepository
             .Setup(x => x.CreateAsync(It.IsAny<AvailableSlot>()))
-            .Returns(new AvailableSlot 
-            { 
-                Id = 1, 
+            .Returns(new AvailableSlot
+            {
+                Id = 1,
                 TeacherId = teacherId,
                 StartTime = createDto.StartTime,
                 EndTime = createDto.EndTime

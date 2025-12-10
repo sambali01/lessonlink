@@ -29,7 +29,7 @@ public class BookingServiceTests
     {
         // Arrange
         var studentId = "student-123";
-        var createDto = new BookingCreateDto
+        var createDto = new CreateBookingRequest
         {
             AvailableSlotId = 1
         };
@@ -101,7 +101,7 @@ public class BookingServiceTests
     public async Task CreateBookingAsync_WithInvalidStudentId_ShouldReturnFailure()
     {
         // Arrange
-        var createDto = new BookingCreateDto
+        var createDto = new CreateBookingRequest
         {
             AvailableSlotId = 1
         };
@@ -121,7 +121,7 @@ public class BookingServiceTests
     {
         // Arrange
         var studentId = "student-123";
-        var createDto = new BookingCreateDto
+        var createDto = new CreateBookingRequest
         {
             AvailableSlotId = 999
         };
@@ -146,7 +146,7 @@ public class BookingServiceTests
         // Arrange
         var userId = "unauthorized-user";
         var bookingId = 1;
-        var updateDto = new BookingUpdateStatusDto { Status = BookingStatus.Confirmed };
+        var updateDto = new BookingAcceptanceRequest { Status = BookingStatus.Confirmed };
 
         var booking = new Booking
         {
@@ -220,7 +220,7 @@ public class BookingServiceTests
     {
         // Arrange
         var studentId = "student-123";
-        var createDto = new BookingCreateDto { AvailableSlotId = 1 };
+        var createDto = new CreateBookingRequest { AvailableSlotId = 1 };
 
         var availableSlot = new AvailableSlot
         {
@@ -264,7 +264,7 @@ public class BookingServiceTests
         // Arrange
         var userId = "teacher-123";
         var bookingId = 1;
-        var updateDto = new BookingUpdateStatusDto { Status = BookingStatus.Confirmed };
+        var updateDto = new BookingAcceptanceRequest { Status = BookingStatus.Confirmed };
 
         var booking = new Booking
         {

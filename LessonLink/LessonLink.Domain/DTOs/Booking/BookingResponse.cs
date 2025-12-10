@@ -1,8 +1,8 @@
-using LessonLink.BusinessLogic.Models;
+﻿using LessonLink.BusinessLogic.Models;
 
 namespace LessonLink.BusinessLogic.DTOs.Booking;
 
-public class BookingGetDto
+public class BookingResponse
 {
     public int Id { get; set; }
     public required string StudentId { get; set; }
@@ -13,5 +13,5 @@ public class BookingGetDto
     public required string TeacherId { get; set; }
     public required string TeacherName { get; set; }
     public BookingStatus Status { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

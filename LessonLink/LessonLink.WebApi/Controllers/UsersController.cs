@@ -20,7 +20,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetUserById(string id)
+    public async Task<ActionResult<User>> FindUserById(string id)
     {
         var user = await userManager.FindByIdAsync(id);
         if (user == null)
@@ -34,21 +34,21 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
     /// <summary>
     /// Creates a new student user.
     /// </summary>
-    /// <param name="registerStudentDto">Student registration data.</param>
+    /// <param name="registerStudentRequest">Student registration data.</param>
     [HttpPost("register-student")]
-    public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentDto registerStudentDto)
+    public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentRequest registerStudentRequest)
     {
         // Check if user with the given email already exists
-        var existingUser = await userManager.FindByEmailAsync(registerStudentDto.Email);
+        var existingUser = await userManager.FindByEmailAsync(registerStudentRequest.Email);
         if (existingUser != null)
         {
             return Conflict("User with given email already exists.");
         }
 
-        var user = UserMappers.RegisterStudentDtoToUser(registerStudentDto);
+        var user = UserMappers.RegisterStudentRequestToUser(registerStudentRequest);
 
         // Create user entity
-        var createResult = await userManager.CreateAsync(user, registerStudentDto.Password);
+        var createResult = await userManager.CreateAsync(user, registerStudentRequest.Password);
         if (!createResult.Succeeded)
         {
             return HandleServiceResult(ServiceResult<User>.Failure([.. createResult.Errors.Select(e => e.Description)], 500));
@@ -67,21 +67,21 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
     /// <summary>
     /// Creates a new teacher user.
     /// </summary>
-    /// <param name="registerTeacherDto">Teacher registration data.</param>
+    /// <param name="registerTeacherRequest">Teacher registration data.</param>
     [HttpPost("register-teacher")]
-    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterTeacherDto registerTeacherDto)
+    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterTeacherRequest registerTeacherRequest)
     {
         // Check if user with the given email already exists
-        var existingUser = await userManager.FindByEmailAsync(registerTeacherDto.Email);
+        var existingUser = await userManager.FindByEmailAsync(registerTeacherRequest.Email);
         if (existingUser != null)
         {
             return Conflict("User with given email already exists.");
         }
 
-        var user = UserMappers.RegisterTeacherDtoToUser(registerTeacherDto);
+        var user = UserMappers.RegisterTeacherRequestToUser(registerTeacherRequest);
 
         // Create user entity
-        var createResult = await userManager.CreateAsync(user, registerTeacherDto.Password);
+        var createResult = await userManager.CreateAsync(user, registerTeacherRequest.Password);
         if (!createResult.Succeeded)
         {
             return HandleServiceResult(ServiceResult<User>.Failure([.. createResult.Errors.Select(e => e.Description)], 500));
@@ -101,7 +101,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         }
 
         // Create teacher entity
-        var result = await teacherService.CreateTeacherAsync(user, registerTeacherDto);
+        var result = await teacherService.CreateTeacherAsync(user, registerTeacherRequest);
         return HandleServiceResult(result);
     }
 
@@ -109,12 +109,12 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
     /// Updates the student user.
     /// </summary>
     /// <param name="id">The ID of the user.</param>
-    /// <param name="studentUpdateDto">Student update data.</param>
+    /// <param name="studentUpdateRequest">Student update data.</param>
     /// <returns>The updated user.</returns>
     [HttpPut("update-student/{id}")]
-    public async Task<IActionResult> UpdateStudent(string id, [FromForm] StudentUpdateDto studentUpdateDto)
+    public async Task<IActionResult> UpdateStudent(string id, [FromForm] StudentUpdateRequest studentUpdateRequest)
     {
-        var commonFieldsResult = await UpdateCommonFields(id, studentUpdateDto.ProfilePicture, studentUpdateDto.NickName);
+        var commonFieldsResult = await UpdateCommonFields(id, studentUpdateRequest.ProfilePicture, studentUpdateRequest.NickName);
         return commonFieldsResult;
     }
 
@@ -122,20 +122,20 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
     /// Updates the teacher user.
     /// </summary>
     /// <param name="id">The ID of the user.</param>
-    /// <param name="teacherUpdateDto">Teacher update data.</param>
+    /// <param name="teacherUpdateRequest">Teacher update data.</param>
     /// <returns>The updated user.</returns>
     [HttpPut("update-teacher/{id}")]
-    public async Task<IActionResult> UpdateTeacher(string id, [FromForm] TeacherUpdateDto teacherUpdateDto)
+    public async Task<IActionResult> UpdateTeacher(string id, [FromForm] TeacherUpdateRequest teacherUpdateRequest)
     {
         // Update teacher-specific fields
-        var updateTeacherResult = await teacherService.UpdateTeacherAsync(id, teacherUpdateDto);
+        var updateTeacherResult = await teacherService.UpdateTeacherAsync(id, teacherUpdateRequest);
         if (!updateTeacherResult.Succeeded)
         {
             return HandleServiceResult(ServiceResult<User>.Failure(updateTeacherResult.Errors, updateTeacherResult.StatusCode));
         }
 
         // Update student's and teacher's common fields
-        var commonFieldsResult = await UpdateCommonFields(id, teacherUpdateDto.ProfilePicture, teacherUpdateDto.NickName);
+        var commonFieldsResult = await UpdateCommonFields(id, teacherUpdateRequest.ProfilePicture, teacherUpdateRequest.NickName);
         return commonFieldsResult;
     }
 

@@ -1,6 +1,6 @@
 ﻿namespace LessonLink.BusinessLogic.DTOs.Subject;
 
-public class SubjectGetDto
+public class CreateSubjectRequest
 {
     public required string Name { get; set; }
 }

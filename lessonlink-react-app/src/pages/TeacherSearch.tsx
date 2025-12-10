@@ -9,7 +9,7 @@ import {
 import { FunctionComponent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSearchTeachers } from "../hooks/teacherQueries";
-import { TeacherSearchRequest } from "../models/TeacherSearchRequest";
+import { TeacherSearchRequest } from "../models/Teacher";
 import TeacherFilters from "../components/features/teacher/TeacherFilters";
 import TeacherCard from "../components/features/teacher/TeacherCard";
 import { TEACHER_SEARCH_PAGE_SIZE } from "../utils/constants";

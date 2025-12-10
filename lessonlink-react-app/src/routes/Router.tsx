@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
-import { Role } from "../models/Role";
+import { Role } from "../models/User";
 import Dashboard from "../pages/Dashboard";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -9,7 +9,7 @@ import Register from "../pages/Register";
 import TeacherDetails from "../pages/TeacherDetails";
 import TeacherSearch from "../pages/TeacherSearch";
 import MyBookings from "../pages/MyBookings";
-import BookingDetails from "../pages/BookingDetails";
+import BookingDetails from "../pages/MySlotDetails";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import { UnauthenticatedRoute } from "./UnauthenticatedRoute";

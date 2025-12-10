@@ -1,24 +1,23 @@
 ﻿using LessonLink.BusinessLogic.DTOs.Subject;
 using LessonLink.BusinessLogic.Models;
 
-namespace LessonLink.BusinessLogic.Mappers
-{
-    public static class SubjectMappers
-    {
-        public static SubjectGetDto SubjectToGetDto(Subject subject)
-        {
-            return new SubjectGetDto
-            {
-                Name = subject.Name
-            };
-        }
+namespace LessonLink.BusinessLogic.Mappers;
 
-        public static Subject CreateDtoToSubject(SubjectCreateDto subjectCreateDto)
+public static class SubjectMappers
+{
+    public static SubjectResponse SubjectToResponse(Subject subject)
+    {
+        return new SubjectResponse
         {
-            return new Subject
-            {
-                Name = subjectCreateDto.Name
-            };
-        }
+            Name = subject.Name
+        };
+    }
+
+    public static Subject CreateRequestToSubject(CreateSubjectRequest subjectCreateDto)
+    {
+        return new Subject
+        {
+            Name = subjectCreateDto.Name
+        };
     }
 }

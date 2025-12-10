@@ -20,11 +20,11 @@ import {
 import { FunctionComponent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useSubjects } from "../hooks/subjectQueries";
 import { useRegisterStudent, useRegisterTeacher } from "../hooks/userQueries";
-import { Role } from "../models/Role";
+import { Role } from "../models/User";
 import { TeachingMethod } from "../utils/enums";
 import { convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
+import { useSubjects } from "../hooks/subjectQueries";
 
 interface RegisterForm {
     firstName: string;
@@ -53,7 +53,8 @@ const Register: FunctionComponent = () => {
 
     const registerStudentMutation = useRegisterStudent();
     const registerTeacherMutation = useRegisterTeacher();
-    const { data: allSubjects = [] } = useSubjects();
+    const { data: allSubjects } = useSubjects();
+    const subjectNames = allSubjects ? allSubjects.map((s) => s.name) : [];
 
     const selectedRole = watch('role');
     const selectedTeachingMethod = watch('teachingMethod');
@@ -426,7 +427,7 @@ const Register: FunctionComponent = () => {
                                         <Autocomplete
                                             {...field}
                                             multiple
-                                            options={allSubjects}
+                                            options={subjectNames}
                                             value={field.value || []}
                                             onChange={(_, newValue) => field.onChange(newValue)}
                                             renderInput={(params) => (

@@ -10,93 +10,93 @@ namespace LessonLink.BusinessLogic.Services;
 
 public class TeacherService(IUnitOfWork unitOfWork)
 {
-    public async Task<ServiceResult<TeacherGetDto[]>> GetAllAsync()
+    public async Task<ServiceResult<TeacherResponse[]>> GetAllAsync()
     {
         var teachers = await unitOfWork.TeacherRepository.GetAllAsync();
 
         var teachersDto = teachers
-            .Select(TeacherMappers.TeacherToGetDto)
+            .Select(TeacherMappers.TeacherToResponse)
             .ToArray();
 
-        return ServiceResult<TeacherGetDto[]>.Success(teachersDto);
+        return ServiceResult<TeacherResponse[]>.Success(teachersDto);
     }
 
-    public async Task<ServiceResult<TeacherGetDto[]>> GetFeaturedAsync()
+    public async Task<ServiceResult<TeacherResponse[]>> GetFeaturedAsync()
     {
         var featuredTeachers = await unitOfWork.TeacherRepository.GetFeaturedAsync();
 
         var featuredTeachersDto = featuredTeachers
-            .Select(TeacherMappers.TeacherToGetDto)
+            .Select(TeacherMappers.TeacherToResponse)
             .ToArray();
 
-        return ServiceResult<TeacherGetDto[]>.Success(featuredTeachersDto);
+        return ServiceResult<TeacherResponse[]>.Success(featuredTeachersDto);
     }
 
-    public async Task<ServiceResult<TeacherGetDto>> GetByIdAsync(string id)
+    public async Task<ServiceResult<TeacherResponse>> GetByIdAsync(string id)
     {
         var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(id);
         if (teacher == null)
         {
-            return ServiceResult<TeacherGetDto>.Failure("Teacher with given id not found.", 404);
+            return ServiceResult<TeacherResponse>.Failure("Teacher with given id not found.", 404);
         }
 
-        var teacherDto = TeacherMappers.TeacherToGetDto(teacher);
+        var teacherDto = TeacherMappers.TeacherToResponse(teacher);
 
-        return ServiceResult<TeacherGetDto>.Success(teacherDto);
+        return ServiceResult<TeacherResponse>.Success(teacherDto);
     }
 
-    public async Task<ServiceResult<PaginatedResponse<TeacherGetDto>>> SearchAsync(TeacherSearchRequest request)
+    public async Task<ServiceResult<PaginatedResponse<TeacherResponse>>> SearchAsync(TeacherSearchRequest teacherSearchRequest)
     {
         var (teachers, totalCount) = await unitOfWork.TeacherRepository.SearchAsync(
-            request.SearchText,
-            request.Subjects,
-            request.MinPrice,
-            request.MaxPrice,
-            request.AcceptsOnline,
-            request.AcceptsInPerson,
-            request.Location,
-            request.Page,
-            request.PageSize
+            teacherSearchRequest.SearchText,
+            teacherSearchRequest.Subjects,
+            teacherSearchRequest.MinPrice,
+            teacherSearchRequest.MaxPrice,
+            teacherSearchRequest.AcceptsOnline,
+            teacherSearchRequest.AcceptsInPerson,
+            teacherSearchRequest.Location,
+            teacherSearchRequest.Page,
+            teacherSearchRequest.PageSize
         );
 
         var teachersDto = teachers
-            .Select(TeacherMappers.TeacherToGetDto)
+            .Select(TeacherMappers.TeacherToResponse)
             .ToList();
 
-        var response = new PaginatedResponse<TeacherGetDto>
+        var response = new PaginatedResponse<TeacherResponse>
         {
             Items = teachersDto,
             TotalCount = totalCount,
-            Page = request.Page,
-            PageSize = request.PageSize
+            Page = teacherSearchRequest.Page,
+            PageSize = teacherSearchRequest.PageSize
         };
 
-        return ServiceResult<PaginatedResponse<TeacherGetDto>>.Success(response);
+        return ServiceResult<PaginatedResponse<TeacherResponse>>.Success(response);
     }
 
     /// <summary>
     /// Creates a new teacher entity and associates it with the user.
     /// </summary>
     /// <param name="user">The related user entity.</param>
-    /// <param name="registerTeacherDto">Teacher registration data.</param>
+    /// <param name="registerTeacherRequest">Teacher registration data.</param>
     /// <returns>The created teacher user.</returns>
-    public async Task<ServiceResult<User>> CreateTeacherAsync(User user, RegisterTeacherDto registerTeacherDto)
+    public async Task<ServiceResult<User>> CreateTeacherAsync(User user, RegisterTeacherRequest registerTeacherRequest)
     {
         var teacher = new Teacher
         {
             UserId = user.Id,
             User = user,
-            AcceptsOnline = registerTeacherDto.AcceptsOnline,
-            AcceptsInPerson = registerTeacherDto.AcceptsInPerson,
-            Location = registerTeacherDto.Location,
-            HourlyRate = registerTeacherDto.HourlyRate,
-            Contact = registerTeacherDto.Contact
+            AcceptsOnline = registerTeacherRequest.AcceptsOnline,
+            AcceptsInPerson = registerTeacherRequest.AcceptsInPerson,
+            Location = registerTeacherRequest.Location,
+            HourlyRate = registerTeacherRequest.HourlyRate,
+            Contact = registerTeacherRequest.Contact
         };
 
         unitOfWork.TeacherRepository.CreateAsync(teacher);
 
         // Create teacher subject entities
-        await CreateTeacherSubjectsAsync(teacher.UserId, registerTeacherDto.SubjectNames);
+        await CreateTeacherSubjectsAsync(teacher.UserId, registerTeacherRequest.SubjectNames);
 
         if (await unitOfWork.CompleteAsync())
         {
@@ -110,8 +110,8 @@ public class TeacherService(IUnitOfWork unitOfWork)
     /// Updates the teacher.
     /// </summary>
     /// <param name="teacherId">The ID of the teacher.</param>
-    /// <param name="teacherUpdateDto">Teacher update data.</param>
-    public async Task<ServiceResult<User>> UpdateTeacherAsync(string teacherId, TeacherUpdateDto teacherUpdateDto)
+    /// <param name="teacherUpdateRequest">Teacher update data.</param>
+    public async Task<ServiceResult<User>> UpdateTeacherAsync(string teacherId, TeacherUpdateRequest teacherUpdateRequest)
     {
         // Check if teacher exists
         var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(teacherId);
@@ -121,10 +121,10 @@ public class TeacherService(IUnitOfWork unitOfWork)
         }
 
         // Validate that at least one of online or in-person acceptance is true
-        if (teacherUpdateDto.AcceptsOnline.HasValue || teacherUpdateDto.AcceptsInPerson.HasValue)
+        if (teacherUpdateRequest.AcceptsOnline.HasValue || teacherUpdateRequest.AcceptsInPerson.HasValue)
         {
-            bool acceptsOnline = teacherUpdateDto.AcceptsOnline ?? teacher.AcceptsOnline;
-            bool acceptsInPerson = teacherUpdateDto.AcceptsInPerson ?? teacher.AcceptsInPerson;
+            bool acceptsOnline = teacherUpdateRequest.AcceptsOnline ?? teacher.AcceptsOnline;
+            bool acceptsInPerson = teacherUpdateRequest.AcceptsInPerson ?? teacher.AcceptsInPerson;
             if (!acceptsOnline && !acceptsInPerson)
             {
                 return ServiceResult<User>.Failure("The teacher must accept at least one of online or in-person lessons.", 400);
@@ -132,54 +132,54 @@ public class TeacherService(IUnitOfWork unitOfWork)
         }
 
         // Validate that location is provided when in-person lessons are accepted
-        if (teacherUpdateDto.AcceptsInPerson == true && string.IsNullOrEmpty(teacherUpdateDto.Location))
+        if (teacherUpdateRequest.AcceptsInPerson == true && string.IsNullOrEmpty(teacherUpdateRequest.Location))
         {
             return ServiceResult<User>.Failure("Location must be provided when accepting in-person lessons.", 400);
         }
 
         // Set online acceptance
-        if (teacherUpdateDto.AcceptsOnline.HasValue)
+        if (teacherUpdateRequest.AcceptsOnline.HasValue)
         {
-            teacher.AcceptsOnline = teacherUpdateDto.AcceptsOnline.Value;
+            teacher.AcceptsOnline = teacherUpdateRequest.AcceptsOnline.Value;
         }
 
         // Set in-person acceptance
-        if (teacherUpdateDto.AcceptsInPerson.HasValue)
+        if (teacherUpdateRequest.AcceptsInPerson.HasValue)
         {
-            teacher.AcceptsInPerson = teacherUpdateDto.AcceptsInPerson.Value;
+            teacher.AcceptsInPerson = teacherUpdateRequest.AcceptsInPerson.Value;
         }
 
         // Set location
-        if (teacherUpdateDto.Location != null)
+        if (teacherUpdateRequest.Location != null)
         {
-            teacher.Location = teacherUpdateDto.Location;
+            teacher.Location = teacherUpdateRequest.Location;
         }
 
         // Set hourly rate
-        if (teacherUpdateDto.HourlyRate.HasValue)
+        if (teacherUpdateRequest.HourlyRate.HasValue)
         {
-            teacher.HourlyRate = teacherUpdateDto.HourlyRate.Value;
+            teacher.HourlyRate = teacherUpdateRequest.HourlyRate.Value;
         }
         // Set description
-        if (teacherUpdateDto.Description != null)
+        if (teacherUpdateRequest.Description != null)
         {
-            teacher.Description = teacherUpdateDto.Description;
+            teacher.Description = teacherUpdateRequest.Description;
         }
 
         // Set contact
-        if (!string.IsNullOrEmpty(teacherUpdateDto.Contact))
+        if (!string.IsNullOrEmpty(teacherUpdateRequest.Contact))
         {
-            teacher.Contact = teacherUpdateDto.Contact;
+            teacher.Contact = teacherUpdateRequest.Contact;
         }
 
         // Update teacher
         unitOfWork.TeacherRepository.UpdateAsync(teacher);
 
         // Update teacher subjects
-        if (teacherUpdateDto.SubjectNames != null)
+        if (teacherUpdateRequest.SubjectNames != null)
         {
             unitOfWork.TeacherSubjectRepository.DeleteByTeacherIdAsync(teacherId);
-            await CreateTeacherSubjectsAsync(teacherId, teacherUpdateDto.SubjectNames);
+            await CreateTeacherSubjectsAsync(teacherId, teacherUpdateRequest.SubjectNames);
         }
 
         if (await unitOfWork.CompleteAsync())

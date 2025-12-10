@@ -2,7 +2,7 @@
 
 namespace LessonLink.BusinessLogic.DTOs.User;
 
-public class RegisterTeacherDto
+public class RegisterTeacherRequest
 {
     public required string FirstName { get; set; }
     public required string SurName { get; set; }

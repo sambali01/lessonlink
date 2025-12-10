@@ -1,13 +1,28 @@
 import { Subject } from "./Subject";
-import { User } from "./User";
 
 export type Teacher = {
-    user: User;
-    acceptOnline?: boolean;
-    acceptInPerson?: boolean;
+    userId: string;
+    firstName: string;
+    surName: string;
+    nickName: string;
+    imageUrl?: string;
+    acceptsOnline?: boolean;
+    acceptsInPerson?: boolean;
     location?: string;
     hourlyRate?: number;
     description?: string;
-    rating?: string;
+    contact?: string;
     subjects: Subject[];
+}
+
+export interface TeacherSearchRequest {
+    searchText?: string;
+    subjects?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    acceptsOnline?: boolean;
+    acceptsInPerson?: boolean;
+    location?: string;
+    page?: number;
+    pageSize?: number;
 }

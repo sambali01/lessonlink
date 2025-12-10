@@ -3,13 +3,11 @@ import { Subject } from "../models/Subject";
 
 const SUBJECT_API = '/Subjects';
 
-export const getSubjectNames = async (): Promise<string[]> => {
+export const getSubjects = async (): Promise<Subject[]> => {
     try {
         const response = await axiosInstance.get(SUBJECT_API);
-        const subjects = response.data;
-        return subjects.map((s: Subject) => s.name);
+        return response.data;
     } catch (error) {
-        console.log("Error subject!");
         throw new Error('Error fetching subjects: ' + error);
     }
 };

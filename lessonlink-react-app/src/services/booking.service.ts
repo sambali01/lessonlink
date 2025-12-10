@@ -1,18 +1,13 @@
 import { axiosInstance } from '../configs/axiosConfig';
-import { Booking, BookingStatus } from '../models/Booking';
+import { Booking, BookingAcceptanceRequest, CreateBookingRequest } from '../models/Booking';
 
-export interface BookingCreateDto {
-    availableSlotId: number;
-    notes?: string;
-}
 
-export interface BookingUpdateStatusDto {
-    status: BookingStatus;
-}
+
+
 
 const BOOKING_API = '/Bookings';
 
-export const createBooking = async (data: BookingCreateDto): Promise<Booking> => {
+export const createBooking = async (data: CreateBookingRequest): Promise<Booking> => {
     try {
         const response = await axiosInstance.post(`${BOOKING_API}`, data);
         return response.data;
@@ -39,7 +34,7 @@ export const getMyBookingsAsTeacher = async (): Promise<Booking[]> => {
     }
 };
 
-export const updateBookingStatus = async (bookingId: number, data: BookingUpdateStatusDto): Promise<Booking> => {
+export const decideBookingAcceptance = async (bookingId: number, data: BookingAcceptanceRequest): Promise<Booking> => {
     try {
         const response = await axiosInstance.put(`${BOOKING_API}/${bookingId}/status`, data);
         return response.data;
