@@ -9,6 +9,6 @@ export type TeacherDto = {
     location?: string;
     hourlyRate?: number;
     description?: string;
-    rating?: string;
+    contact?: string;
     subjects: string[];
 }

@@ -1,6 +1,5 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { FunctionComponent } from "react";
-import "./Footer.less";
 
 const Footer: FunctionComponent = () => {
     const theme = useTheme();
@@ -14,7 +13,14 @@ const Footer: FunctionComponent = () => {
                 borderTop: `1px solid ${theme.palette.divider}`
             }}
         >
-            <div className="footer-content">
+            <Box sx={{
+                maxWidth: '1200px',
+                margin: '0 auto',
+                px: { xs: 2, sm: 4 },
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1
+            }}>
                 <Typography
                     variant="body2"
                     color="textSecondary"
@@ -26,33 +32,7 @@ const Footer: FunctionComponent = () => {
                 >
                     © {new Date().getFullYear()} LessonLink
                 </Typography>
-                <div className="footer-links">
-                    <Typography
-                        variant="body2"
-                        component="a"
-                        href="/terms"
-                        sx={{
-                            color: theme.palette.text.secondary,
-                            textDecoration: 'none',
-                            '&:hover': { color: theme.palette.primary.main }
-                        }}
-                    >
-                        Felhasználási feltételek
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        component="a"
-                        href="/privacy"
-                        sx={{
-                            color: theme.palette.text.secondary,
-                            textDecoration: 'none',
-                            '&:hover': { color: theme.palette.primary.main }
-                        }}
-                    >
-                        Adatvédelem
-                    </Typography>
-                </div>
-            </div>
+            </Box>
         </Box>
     );
 };

@@ -12,7 +12,6 @@ public static class BookingMappers
             StudentId = studentId,
             AvailableSlotId = createDto.AvailableSlotId,
             Status = BookingStatus.Pending,
-            Notes = createDto.Notes,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -32,7 +31,6 @@ public static class BookingMappers
                 ? $"{booking.AvailableSlot.Teacher.User.SurName} {booking.AvailableSlot.Teacher.User.FirstName}"
                 : string.Empty,
             Status = booking.Status,
-            Notes = booking.Notes,
             CreatedAt = booking.CreatedAt
         };
     }

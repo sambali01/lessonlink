@@ -16,8 +16,7 @@ export const login = async (email: string, password: string) => {
 };
 
 export const refresh = async () => {
-    return await axiosInstance
-        .post(AUTH_API + "/refresh")
+    return await axiosInstance.post(AUTH_API + "/refresh")
         .then((response) => { return response.data; })
         .catch((error) => { throw new Error(error.response); });
 }

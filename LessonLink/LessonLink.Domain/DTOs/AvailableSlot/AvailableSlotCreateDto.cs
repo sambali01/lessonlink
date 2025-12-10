@@ -2,6 +2,6 @@
 
 public class AvailableSlotCreateDto
 {
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
+    public required DateTime StartTime { get; set; }
+    public required DateTime EndTime { get; set; }
 }

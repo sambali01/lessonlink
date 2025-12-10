@@ -9,20 +9,19 @@ namespace LessonLink.UnitTest;
 
 public class BookingServiceTests
 {
+    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IBookingRepository> _mockBookingRepository;
     private readonly Mock<IAvailableSlotRepository> _mockAvailableSlotRepository;
-    private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly BookingService _bookingService;
 
     public BookingServiceTests()
     {
+        _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockBookingRepository = new Mock<IBookingRepository>();
         _mockAvailableSlotRepository = new Mock<IAvailableSlotRepository>();
-        _mockUserRepository = new Mock<IUserRepository>();
-        _bookingService = new BookingService(
-            _mockBookingRepository.Object,
-            _mockAvailableSlotRepository.Object,
-            _mockUserRepository.Object);
+        _mockUnitOfWork.Setup(x => x.BookingRepository).Returns(_mockBookingRepository.Object);
+        _mockUnitOfWork.Setup(x => x.AvailableSlotRepository).Returns(_mockAvailableSlotRepository.Object);
+        _bookingService = new BookingService(_mockUnitOfWork.Object);
     }
 
     [Fact]
@@ -32,8 +31,7 @@ public class BookingServiceTests
         var studentId = "student-123";
         var createDto = new BookingCreateDto
         {
-            AvailableSlotId = 1,
-            Notes = "Test booking"
+            AvailableSlotId = 1
         };
 
         var availableSlot = new AvailableSlot
@@ -58,7 +56,6 @@ public class BookingServiceTests
             StudentId = studentId,
             AvailableSlotId = 1,
             Status = BookingStatus.Pending,
-            Notes = "Test booking",
             CreatedAt = DateTime.UtcNow
         };
 
@@ -68,7 +65,6 @@ public class BookingServiceTests
             StudentId = studentId,
             AvailableSlotId = 1,
             Status = BookingStatus.Pending,
-            Notes = "Test booking",
             CreatedAt = DateTime.UtcNow,
             Student = student,
             AvailableSlot = availableSlot
@@ -78,13 +74,13 @@ public class BookingServiceTests
             .Setup(x => x.GetByIdAsync(createDto.AvailableSlotId))
             .ReturnsAsync(availableSlot);
 
-        _mockUserRepository
-            .Setup(x => x.GetByIdAsync(studentId))
-            .ReturnsAsync(student);
-
         _mockBookingRepository
             .Setup(x => x.CreateAsync(It.IsAny<Booking>()))
-            .ReturnsAsync(createdBooking);
+            .Returns(createdBooking);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(true);
 
         _mockBookingRepository
             .Setup(x => x.GetByIdAsync(createdBooking.Id))
@@ -99,7 +95,6 @@ public class BookingServiceTests
         result.StatusCode.Should().Be(201);
         result.Data.Should().NotBeNull();
         result.Data.StudentId.Should().Be(studentId);
-        result.Data.Notes.Should().Be("Test booking");
     }
 
     [Fact]
@@ -108,8 +103,7 @@ public class BookingServiceTests
         // Arrange
         var createDto = new BookingCreateDto
         {
-            AvailableSlotId = 1,
-            Notes = "Test booking"
+            AvailableSlotId = 1
         };
 
         // Act
@@ -119,7 +113,7 @@ public class BookingServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(401);
-        result.Errors.Should().Contain("Student not found.");
+        result.Errors.Should().Contain("You are not authenticated.");
     }
 
     [Fact]
@@ -129,8 +123,7 @@ public class BookingServiceTests
         var studentId = "student-123";
         var createDto = new BookingCreateDto
         {
-            AvailableSlotId = 999,
-            Notes = "Test booking"
+            AvailableSlotId = 999
         };
 
         _mockAvailableSlotRepository
@@ -158,10 +151,14 @@ public class BookingServiceTests
         var booking = new Booking
         {
             Id = bookingId,
+            AvailableSlotId = 1,
+            Status = BookingStatus.Pending,
             StudentId = "student-123",
             AvailableSlot = new AvailableSlot
             {
-                TeacherId = "teacher-123" // Different from userId
+                TeacherId = "teacher-123", // Different from userId
+                StartTime = DateTime.UtcNow.AddDays(1),
+                EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
             }
         };
 
@@ -189,10 +186,14 @@ public class BookingServiceTests
         var booking = new Booking
         {
             Id = bookingId,
+            AvailableSlotId = 1,
+            Status = BookingStatus.Pending,
             StudentId = studentId,
             AvailableSlot = new AvailableSlot
             {
-                TeacherId = "teacher-123"
+                TeacherId = "teacher-123",
+                StartTime = DateTime.UtcNow.AddDays(1),
+                EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
             }
         };
 
@@ -200,9 +201,9 @@ public class BookingServiceTests
             .Setup(x => x.GetByIdAsync(bookingId))
             .ReturnsAsync(booking);
 
-        _mockBookingRepository
-            .Setup(x => x.DeleteAsync(booking))
-            .Returns(Task.CompletedTask);
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(true);
 
         // Act
         var result = await _bookingService.CancelBookingAsync(studentId, bookingId);
@@ -212,5 +213,127 @@ public class BookingServiceTests
         result.Succeeded.Should().BeTrue();
         result.StatusCode.Should().Be(204);
         _mockBookingRepository.Verify(x => x.DeleteAsync(booking), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var studentId = "student-123";
+        var createDto = new BookingCreateDto { AvailableSlotId = 1 };
+
+        var availableSlot = new AvailableSlot
+        {
+            Id = 1,
+            TeacherId = "teacher-123",
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdAsync(createDto.AvailableSlotId))
+            .ReturnsAsync(availableSlot);
+
+        _mockBookingRepository
+            .Setup(x => x.CreateAsync(It.IsAny<Booking>()))
+            .Returns(new Booking
+            {
+                Id = 1,
+                StudentId = studentId,
+                AvailableSlotId = 1,
+                Status = BookingStatus.Pending
+            });
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _bookingService.CreateBookingAsync(studentId, createDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        result.Errors.Should().Contain("An error occurred while creating the booking.");
+    }
+
+    [Fact]
+    public async Task UpdateBookingStatusAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var userId = "teacher-123";
+        var bookingId = 1;
+        var updateDto = new BookingUpdateStatusDto { Status = BookingStatus.Confirmed };
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            AvailableSlotId = 1,
+            Status = BookingStatus.Pending,
+            StudentId = "student-123",
+            AvailableSlot = new AvailableSlot
+            {
+                TeacherId = userId,
+                StartTime = DateTime.UtcNow.AddDays(1),
+                EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+            }
+        };
+
+        _mockBookingRepository
+            .Setup(x => x.GetByIdAsync(bookingId))
+            .ReturnsAsync(booking);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _bookingService.UpdateBookingStatusAsync(userId, bookingId, updateDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        result.Errors.Should().Contain("An error occurred while updating the booking.");
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var studentId = "student-123";
+        var bookingId = 1;
+
+        var booking = new Booking
+        {
+            Id = bookingId,
+            AvailableSlotId = 1,
+            Status = BookingStatus.Pending,
+            StudentId = studentId,
+            AvailableSlot = new AvailableSlot
+            {
+                TeacherId = "teacher-123",
+                StartTime = DateTime.UtcNow.AddDays(1),
+                EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+            }
+        };
+
+        _mockBookingRepository
+            .Setup(x => x.GetByIdAsync(bookingId))
+            .ReturnsAsync(booking);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _bookingService.CancelBookingAsync(studentId, bookingId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        result.Errors.Should().Contain("An error occurred while cancelling the booking.");
     }
 }

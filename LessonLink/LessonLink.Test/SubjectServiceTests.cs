@@ -9,13 +9,16 @@ namespace LessonLink.UnitTest;
 
 public class SubjectServiceTests
 {
+    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ISubjectRepository> _mockSubjectRepository;
     private readonly SubjectService _subjectService;
 
     public SubjectServiceTests()
     {
+        _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockSubjectRepository = new Mock<ISubjectRepository>();
-        _subjectService = new SubjectService(_mockSubjectRepository.Object);
+        _mockUnitOfWork.Setup(x => x.SubjectRepository).Returns(_mockSubjectRepository.Object);
+        _subjectService = new SubjectService(_mockUnitOfWork.Object);
     }
 
     [Fact]
@@ -39,7 +42,11 @@ public class SubjectServiceTests
 
         _mockSubjectRepository
             .Setup(x => x.CreateAsync(It.IsAny<Subject>()))
-            .ReturnsAsync(subject);
+            .Returns(subject);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(true);
 
         // Act
         var result = await _subjectService.CreateAsync(subjectCreateDto);

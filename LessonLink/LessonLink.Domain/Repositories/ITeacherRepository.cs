@@ -9,7 +9,7 @@ public interface ITeacherRepository
     Task<Teacher?> GetByIdAsync(string id);
     Task<(List<Teacher>, int)> SearchAsync(
         string? searchText,
-        string[]? subjects,
+        List<string> subjects,
         int? minPrice,
         int? maxPrice,
         bool? acceptsOnline,
@@ -17,7 +17,7 @@ public interface ITeacherRepository
         string? location,
         int page,
         int pageSize);
-    Task<Teacher> CreateAsync(Teacher teacher);
-    Task UpdateAsync(Teacher updatedTeacher);
-    Task DeleteAsync(Teacher teacher);
+    Teacher CreateAsync(Teacher teacher);
+    void UpdateAsync(Teacher updatedTeacher);
+    void DeleteAsync(Teacher teacher);
 }

@@ -1,6 +1,6 @@
 ﻿namespace LessonLink.BusinessLogic.Models;
 
-enum Role
+public enum Role
 {
     Student = 0,
     Teacher = 1,

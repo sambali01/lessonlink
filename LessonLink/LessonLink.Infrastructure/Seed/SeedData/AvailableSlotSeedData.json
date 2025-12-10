@@ -1,0 +1,324 @@
+[
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  -7,
+        "StartTime":  "14:00",
+        "EndTime":  "15:30",
+        "Id":  1
+    },
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  -5,
+        "StartTime":  "10:00",
+        "EndTime":  "11:30",
+        "Id":  2
+    },
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  -2,
+        "StartTime":  "16:00",
+        "EndTime":  "17:30",
+        "Id":  3
+    },
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  1,
+        "StartTime":  "09:00",
+        "EndTime":  "10:30",
+        "Id":  4
+    },
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  3,
+        "StartTime":  "14:00",
+        "EndTime":  "15:30",
+        "Id":  5
+    },
+    {
+        "TeacherId":  "user-teacher-1",
+        "DayOffset":  5,
+        "StartTime":  "11:00",
+        "EndTime":  "12:30",
+        "Id":  6
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  -6,
+        "StartTime":  "09:00",
+        "EndTime":  "10:00",
+        "Id":  7
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  -3,
+        "StartTime":  "15:00",
+        "EndTime":  "16:00",
+        "Id":  8
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  0,
+        "StartTime":  "13:00",
+        "EndTime":  "14:00",
+        "Id":  9
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  2,
+        "StartTime":  "11:00",
+        "EndTime":  "12:00",
+        "Id":  10
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  4,
+        "StartTime":  "16:00",
+        "EndTime":  "17:00",
+        "Id":  11
+    },
+    {
+        "TeacherId":  "user-teacher-2",
+        "DayOffset":  7,
+        "StartTime":  "10:00",
+        "EndTime":  "11:00",
+        "Id":  12
+    },
+    {
+        "TeacherId":  "user-teacher-3",
+        "DayOffset":  -8,
+        "StartTime":  "13:00",
+        "EndTime":  "15:00",
+        "Id":  13
+    },
+    {
+        "TeacherId":  "user-teacher-3",
+        "DayOffset":  -4,
+        "StartTime":  "10:00",
+        "EndTime":  "12:00",
+        "Id":  14
+    },
+    {
+        "TeacherId":  "user-teacher-3",
+        "DayOffset":  -1,
+        "StartTime":  "14:00",
+        "EndTime":  "16:00",
+        "Id":  15
+    },
+    {
+        "TeacherId":  "user-teacher-3",
+        "DayOffset":  2,
+        "StartTime":  "09:00",
+        "EndTime":  "11:00",
+        "Id":  16
+    },
+    {
+        "TeacherId":  "user-teacher-3",
+        "DayOffset":  6,
+        "StartTime":  "15:00",
+        "EndTime":  "17:00",
+        "Id":  17
+    },
+    {
+        "TeacherId":  "user-teacher-4",
+        "DayOffset":  -7,
+        "StartTime":  "08:00",
+        "EndTime":  "09:30",
+        "Id":  18
+    },
+    {
+        "TeacherId":  "user-teacher-4",
+        "DayOffset":  -3,
+        "StartTime":  "14:00",
+        "EndTime":  "15:30",
+        "Id":  19
+    },
+    {
+        "TeacherId":  "user-teacher-4",
+        "DayOffset":  1,
+        "StartTime":  "10:00",
+        "EndTime":  "11:30",
+        "Id":  20
+    },
+    {
+        "TeacherId":  "user-teacher-4",
+        "DayOffset":  4,
+        "StartTime":  "13:00",
+        "EndTime":  "14:30",
+        "Id":  21
+    },
+    {
+        "TeacherId":  "user-teacher-4",
+        "DayOffset":  8,
+        "StartTime":  "16:00",
+        "EndTime":  "17:30",
+        "Id":  22
+    },
+    {
+        "TeacherId":  "user-teacher-5",
+        "DayOffset":  -5,
+        "StartTime":  "16:00",
+        "EndTime":  "17:00",
+        "Id":  23
+    },
+    {
+        "TeacherId":  "user-teacher-5",
+        "DayOffset":  -1,
+        "StartTime":  "09:00",
+        "EndTime":  "10:00",
+        "Id":  24
+    },
+    {
+        "TeacherId":  "user-teacher-5",
+        "DayOffset":  2,
+        "StartTime":  "11:00",
+        "EndTime":  "12:00",
+        "Id":  25
+    },
+    {
+        "TeacherId":  "user-teacher-5",
+        "DayOffset":  5,
+        "StartTime":  "14:00",
+        "EndTime":  "15:00",
+        "Id":  26
+    },
+    {
+        "TeacherId":  "user-teacher-6",
+        "DayOffset":  -6,
+        "StartTime":  "18:00",
+        "EndTime":  "19:00",
+        "Id":  27
+    },
+    {
+        "TeacherId":  "user-teacher-6",
+        "DayOffset":  -2,
+        "StartTime":  "17:00",
+        "EndTime":  "18:00",
+        "Id":  28
+    },
+    {
+        "TeacherId":  "user-teacher-6",
+        "DayOffset":  1,
+        "StartTime":  "19:00",
+        "EndTime":  "20:00",
+        "Id":  29
+    },
+    {
+        "TeacherId":  "user-teacher-6",
+        "DayOffset":  6,
+        "StartTime":  "18:30",
+        "EndTime":  "19:30",
+        "Id":  30
+    },
+    {
+        "TeacherId":  "user-teacher-7",
+        "DayOffset":  -8,
+        "StartTime":  "15:00",
+        "EndTime":  "16:30",
+        "Id":  31
+    },
+    {
+        "TeacherId":  "user-teacher-7",
+        "DayOffset":  -4,
+        "StartTime":  "13:00",
+        "EndTime":  "14:30",
+        "Id":  32
+    },
+    {
+        "TeacherId":  "user-teacher-7",
+        "DayOffset":  0,
+        "StartTime":  "10:00",
+        "EndTime":  "11:30",
+        "Id":  33
+    },
+    {
+        "TeacherId":  "user-teacher-7",
+        "DayOffset":  3,
+        "StartTime":  "16:00",
+        "EndTime":  "17:30",
+        "Id":  34
+    },
+    {
+        "TeacherId":  "user-teacher-8",
+        "DayOffset":  -7,
+        "StartTime":  "11:00",
+        "EndTime":  "12:30",
+        "Id":  35
+    },
+    {
+        "TeacherId":  "user-teacher-8",
+        "DayOffset":  -3,
+        "StartTime":  "10:00",
+        "EndTime":  "11:30",
+        "Id":  36
+    },
+    {
+        "TeacherId":  "user-teacher-8",
+        "DayOffset":  1,
+        "StartTime":  "14:00",
+        "EndTime":  "15:30",
+        "Id":  37
+    },
+    {
+        "TeacherId":  "user-teacher-8",
+        "DayOffset":  5,
+        "StartTime":  "09:00",
+        "EndTime":  "10:30",
+        "Id":  38
+    },
+    {
+        "TeacherId":  "user-teacher-9",
+        "DayOffset":  -5,
+        "StartTime":  "08:00",
+        "EndTime":  "09:00",
+        "Id":  39
+    },
+    {
+        "TeacherId":  "user-teacher-9",
+        "DayOffset":  -2,
+        "StartTime":  "15:00",
+        "EndTime":  "16:00",
+        "Id":  40
+    },
+    {
+        "TeacherId":  "user-teacher-9",
+        "DayOffset":  2,
+        "StartTime":  "12:00",
+        "EndTime":  "13:00",
+        "Id":  41
+    },
+    {
+        "TeacherId":  "user-teacher-9",
+        "DayOffset":  7,
+        "StartTime":  "16:00",
+        "EndTime":  "17:00",
+        "Id":  42
+    },
+    {
+        "TeacherId":  "user-teacher-10",
+        "DayOffset":  -6,
+        "StartTime":  "17:00",
+        "EndTime":  "18:30",
+        "Id":  43
+    },
+    {
+        "TeacherId":  "user-teacher-10",
+        "DayOffset":  -1,
+        "StartTime":  "16:00",
+        "EndTime":  "17:30",
+        "Id":  44
+    },
+    {
+        "TeacherId":  "user-teacher-10",
+        "DayOffset":  3,
+        "StartTime":  "13:00",
+        "EndTime":  "14:30",
+        "Id":  45
+    },
+    {
+        "TeacherId":  "user-teacher-10",
+        "DayOffset":  6,
+        "StartTime":  "15:00",
+        "EndTime":  "16:30",
+        "Id":  46
+    }
+]

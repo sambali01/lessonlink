@@ -2,9 +2,11 @@
 
 public class RefreshToken
 {
-    public string Value { get; set; }
+    public required string Value { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime ExpiresAt { get; set; }
-    public string UserId { get; set; }
-    public User User { get; set; }
+    public required DateTime ExpiresAt { get; set; }
+
+    public required string UserId { get; set; }
+    public User User { get; set; } = null!;
 }

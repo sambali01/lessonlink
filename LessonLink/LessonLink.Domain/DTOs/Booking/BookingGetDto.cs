@@ -13,6 +13,5 @@ public class BookingGetDto
     public required string TeacherId { get; set; }
     public required string TeacherName { get; set; }
     public BookingStatus Status { get; set; }
-    public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 }

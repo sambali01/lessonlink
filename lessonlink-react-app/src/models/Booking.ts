@@ -8,7 +8,6 @@ export type Booking = {
     teacherId: string;
     teacherName: string;
     status: BookingStatus;
-    notes?: string;
     createdAt: string;
 }
 

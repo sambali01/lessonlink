@@ -7,10 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LessonLink.WebApi.Controllers;
 
-[Route("api/[controller]")]
-[ApiController]
-[Authorize]
-public class AvailableSlotsController : ControllerBase
+public class AvailableSlotsController : BaseApiController
 {
     private readonly AvailableSlotService _availableSlotService;
 
@@ -19,7 +16,6 @@ public class AvailableSlotsController : ControllerBase
         _availableSlotService = availableSlotService;
     }
 
-    // GET: api/AvailableSlots/my-slots
     [HttpGet("my-slots")]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> GetMySlots([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -28,7 +24,6 @@ public class AvailableSlotsController : ControllerBase
         return HandleServiceResult(result);
     }
 
-    // GET: api/AvailableSlots/{id}/details
     [HttpGet("{id}/details")]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> GetSlotDetails(int id)
@@ -37,16 +32,13 @@ public class AvailableSlotsController : ControllerBase
         return HandleServiceResult(result);
     }
 
-    // GET: api/AvailableSlots/teacher/{teacherId}
     [HttpGet("teacher/{teacherId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetSlotsByTeacherId(string teacherId)
     {
         var result = await _availableSlotService.GetNotBookedSlotsByTeacherIdAsync(teacherId);
         return HandleServiceResult(result);
     }
 
-    // POST: api/AvailableSlots
     [HttpPost]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> CreateSlot([FromBody] AvailableSlotCreateDto createDto)
@@ -61,29 +53,5 @@ public class AvailableSlotsController : ControllerBase
     {
         var result = await _availableSlotService.DeleteSlotAsync(User.GetUserId(), id);
         return HandleServiceResult(result);
-    }
-
-    private IActionResult HandleServiceResult<T>(ServiceResult<T> result)
-    {
-        if (result.Succeeded)
-        {
-            return result.StatusCode switch
-            {
-                200 => Ok(result.Data),
-                201 => Created("", result.Data),
-                204 => NoContent(),
-                _ => StatusCode(result.StatusCode, result.Data)
-            };
-        }
-        else
-        {
-            return result.StatusCode switch
-            {
-                400 => BadRequest(result.Errors),
-                401 => Unauthorized(result.Errors),
-                404 => NotFound(result.Errors),
-                _ => StatusCode(result.StatusCode, result.Errors)
-            };
-        }
     }
 }

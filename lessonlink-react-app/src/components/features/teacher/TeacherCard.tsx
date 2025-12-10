@@ -98,8 +98,21 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick
                         ))}
                     </Box>
 
-                    <Typography variant="body2" color="text.secondary" minHeight={110} maxHeight={120}>
-                        {teacher.description || 'Nincs leírás'}
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                            mb: 2,
+                            height: 60,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            lineHeight: 1.43
+                        }}
+                    >
+                        {teacher.description || ''}
                     </Typography>
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -107,7 +120,7 @@ const TeacherCard: FunctionComponent<TeacherCardProps> = ({ teacher, onCardClick
                             {teacher.hourlyRate ? `${teacher.hourlyRate} Ft/óra` : 'Ár egyeztetés'}
                         </Typography>
                         <Typography variant="body2">
-                            {teacher.location || 'Online'}
+                            {teacher.location || ''}
                         </Typography>
                     </Box>
                 </CardContent>

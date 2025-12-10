@@ -1,5 +1,6 @@
 ﻿using LessonLink.BusinessLogic.DTOs.Common;
 using LessonLink.BusinessLogic.DTOs.Teacher;
+using LessonLink.BusinessLogic.DTOs.User;
 using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Mappers;
 using LessonLink.BusinessLogic.Models;
@@ -7,171 +8,230 @@ using LessonLink.BusinessLogic.Repositories;
 
 namespace LessonLink.BusinessLogic.Services;
 
-public class TeacherService
+public class TeacherService(IUnitOfWork unitOfWork)
 {
-    private readonly ITeacherRepository _teacherRepository;
-    private readonly IUserRepository _userRepository;
-
-    public TeacherService(ITeacherRepository teacherRepository, IUserRepository userRepository)
-    {
-        _teacherRepository = teacherRepository;
-        _userRepository = userRepository;
-    }
-
     public async Task<ServiceResult<TeacherGetDto[]>> GetAllAsync()
     {
-        try
-        {
-            var teachers = await _teacherRepository.GetAllAsync();
+        var teachers = await unitOfWork.TeacherRepository.GetAllAsync();
 
-            var teachersDto = teachers
-                .Select(TeacherMappers.TeacherToGetDto)
-                .ToArray();
+        var teachersDto = teachers
+            .Select(TeacherMappers.TeacherToGetDto)
+            .ToArray();
 
-            return ServiceResult<TeacherGetDto[]>.Success(teachersDto);
-        }
-        catch (Exception ex)
-        {
-            return ServiceResult<TeacherGetDto[]>.Failure(ex.Message, 500);
-        }
+        return ServiceResult<TeacherGetDto[]>.Success(teachersDto);
     }
 
     public async Task<ServiceResult<TeacherGetDto[]>> GetFeaturedAsync()
     {
-        try
-        {
-            var featuredTeachers = await _teacherRepository.GetFeaturedAsync();
+        var featuredTeachers = await unitOfWork.TeacherRepository.GetFeaturedAsync();
 
-            var featuredTeachersDto = featuredTeachers
-                .Select(TeacherMappers.TeacherToGetDto)
-                .ToArray();
+        var featuredTeachersDto = featuredTeachers
+            .Select(TeacherMappers.TeacherToGetDto)
+            .ToArray();
 
-            return ServiceResult<TeacherGetDto[]>.Success(featuredTeachersDto);
-        }
-        catch (Exception ex)
-        {
-            return ServiceResult<TeacherGetDto[]>.Failure(ex.Message, 500);
-        }
+        return ServiceResult<TeacherGetDto[]>.Success(featuredTeachersDto);
     }
-
 
     public async Task<ServiceResult<TeacherGetDto>> GetByIdAsync(string id)
     {
-        try
+        var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(id);
+        if (teacher == null)
         {
-            var teacher = await _teacherRepository.GetByIdAsync(id);
-            if (teacher == null)
-            {
-                return ServiceResult<TeacherGetDto>.Failure("Teacher with given id not found.", 404);
-            }
-
-            var teacherDto = TeacherMappers.TeacherToGetDto(teacher);
-
-            return ServiceResult<TeacherGetDto>.Success(teacherDto);
+            return ServiceResult<TeacherGetDto>.Failure("Teacher with given id not found.", 404);
         }
-        catch (Exception ex)
-        {
-            return ServiceResult<TeacherGetDto>.Failure(ex.Message, 500);
-        }
+
+        var teacherDto = TeacherMappers.TeacherToGetDto(teacher);
+
+        return ServiceResult<TeacherGetDto>.Success(teacherDto);
     }
 
     public async Task<ServiceResult<PaginatedResponse<TeacherGetDto>>> SearchAsync(TeacherSearchRequest request)
     {
-        try
+        var (teachers, totalCount) = await unitOfWork.TeacherRepository.SearchAsync(
+            request.SearchText,
+            request.Subjects,
+            request.MinPrice,
+            request.MaxPrice,
+            request.AcceptsOnline,
+            request.AcceptsInPerson,
+            request.Location,
+            request.Page,
+            request.PageSize
+        );
+
+        var teachersDto = teachers
+            .Select(TeacherMappers.TeacherToGetDto)
+            .ToList();
+
+        var response = new PaginatedResponse<TeacherGetDto>
         {
-            var (teachers, totalCount) = await _teacherRepository.SearchAsync(
-                request.SearchText,
-                request.Subjects,
-                request.MinPrice,
-                request.MaxPrice,
-                request.AcceptsOnline,
-                request.AcceptsInPerson,
-                request.Location,
-                request.Page,
-                request.PageSize
-            );
+            Items = teachersDto,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
 
-            var teachersDto = teachers
-                .Select(TeacherMappers.TeacherToGetDto)
-                .ToList();
+        return ServiceResult<PaginatedResponse<TeacherGetDto>>.Success(response);
+    }
 
-            var response = new PaginatedResponse<TeacherGetDto>
+    /// <summary>
+    /// Creates a new teacher entity and associates it with the user.
+    /// </summary>
+    /// <param name="user">The related user entity.</param>
+    /// <param name="registerTeacherDto">Teacher registration data.</param>
+    /// <returns>The created teacher user.</returns>
+    public async Task<ServiceResult<User>> CreateTeacherAsync(User user, RegisterTeacherDto registerTeacherDto)
+    {
+        var teacher = new Teacher
+        {
+            UserId = user.Id,
+            User = user,
+            AcceptsOnline = registerTeacherDto.AcceptsOnline,
+            AcceptsInPerson = registerTeacherDto.AcceptsInPerson,
+            Location = registerTeacherDto.Location,
+            HourlyRate = registerTeacherDto.HourlyRate,
+            Contact = registerTeacherDto.Contact
+        };
+
+        unitOfWork.TeacherRepository.CreateAsync(teacher);
+
+        // Create teacher subject entities
+        await CreateTeacherSubjectsAsync(teacher.UserId, registerTeacherDto.SubjectNames);
+
+        if (await unitOfWork.CompleteAsync())
+        {
+            return ServiceResult<User>.Success(user, 201);
+        }
+
+        return ServiceResult<User>.Failure("An error occurred while creating the teacher.", 500);
+    }
+
+    /// <summary>
+    /// Updates the teacher.
+    /// </summary>
+    /// <param name="teacherId">The ID of the teacher.</param>
+    /// <param name="teacherUpdateDto">Teacher update data.</param>
+    public async Task<ServiceResult<User>> UpdateTeacherAsync(string teacherId, TeacherUpdateDto teacherUpdateDto)
+    {
+        // Check if teacher exists
+        var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(teacherId);
+        if (teacher == null)
+        {
+            return ServiceResult<User>.Failure("Teacher not found", 404);
+        }
+
+        // Validate that at least one of online or in-person acceptance is true
+        if (teacherUpdateDto.AcceptsOnline.HasValue || teacherUpdateDto.AcceptsInPerson.HasValue)
+        {
+            bool acceptsOnline = teacherUpdateDto.AcceptsOnline ?? teacher.AcceptsOnline;
+            bool acceptsInPerson = teacherUpdateDto.AcceptsInPerson ?? teacher.AcceptsInPerson;
+            if (!acceptsOnline && !acceptsInPerson)
             {
-                Items = teachersDto,
-                TotalCount = totalCount,
-                Page = request.Page,
-                PageSize = request.PageSize
-            };
+                return ServiceResult<User>.Failure("The teacher must accept at least one of online or in-person lessons.", 400);
+            }
+        }
 
-            return ServiceResult<PaginatedResponse<TeacherGetDto>>.Success(response);
-        }
-        catch (Exception ex)
+        // Validate that location is provided when in-person lessons are accepted
+        if (teacherUpdateDto.AcceptsInPerson == true && string.IsNullOrEmpty(teacherUpdateDto.Location))
         {
-            return ServiceResult<PaginatedResponse<TeacherGetDto>>.Failure(ex.Message, 500);
+            return ServiceResult<User>.Failure("Location must be provided when accepting in-person lessons.", 400);
         }
+
+        // Set online acceptance
+        if (teacherUpdateDto.AcceptsOnline.HasValue)
+        {
+            teacher.AcceptsOnline = teacherUpdateDto.AcceptsOnline.Value;
+        }
+
+        // Set in-person acceptance
+        if (teacherUpdateDto.AcceptsInPerson.HasValue)
+        {
+            teacher.AcceptsInPerson = teacherUpdateDto.AcceptsInPerson.Value;
+        }
+
+        // Set location
+        if (teacherUpdateDto.Location != null)
+        {
+            teacher.Location = teacherUpdateDto.Location;
+        }
+
+        // Set hourly rate
+        if (teacherUpdateDto.HourlyRate.HasValue)
+        {
+            teacher.HourlyRate = teacherUpdateDto.HourlyRate.Value;
+        }
+        // Set description
+        if (teacherUpdateDto.Description != null)
+        {
+            teacher.Description = teacherUpdateDto.Description;
+        }
+
+        // Set contact
+        if (!string.IsNullOrEmpty(teacherUpdateDto.Contact))
+        {
+            teacher.Contact = teacherUpdateDto.Contact;
+        }
+
+        // Update teacher
+        unitOfWork.TeacherRepository.UpdateAsync(teacher);
+
+        // Update teacher subjects
+        if (teacherUpdateDto.SubjectNames != null)
+        {
+            unitOfWork.TeacherSubjectRepository.DeleteByTeacherIdAsync(teacherId);
+            await CreateTeacherSubjectsAsync(teacherId, teacherUpdateDto.SubjectNames);
+        }
+
+        if (await unitOfWork.CompleteAsync())
+        {
+            return ServiceResult<User>.Success(null);
+        }
+
+        return ServiceResult<User>.Failure("An error occurred while updating the teacher.", 500);
     }
 
-    public async Task<ServiceResult<Teacher>> CreateAsync(TeacherCreateDto teacherCreateDto)
+    /// <summary>
+    /// Creates the teacher subject entities associated with the teacher.
+    /// </summary>
+    /// <param name="teacherId">Id of the teacher.</param>
+    /// <param name="subjectNames">List of subject names.</param>
+    private async Task CreateTeacherSubjectsAsync(string teacherId, List<string> subjectNames)
     {
-        try
+        foreach (var subjectName in subjectNames)
         {
-            var existingTeacher = await _teacherRepository.GetByIdAsync(teacherCreateDto.UserId);
-            if (existingTeacher != null)
-                return ServiceResult<Teacher>.Failure("Teacher already exists.", 409);
-
-            var user = await _userRepository.GetByIdAsync(teacherCreateDto.UserId);
-            if (user == null)
-                return ServiceResult<Teacher>.Failure("Corresponding user not found", 404);
-
-            var addToRoleResult = await _userRepository.AddToRoleAsync(user, Role.Teacher.ToString());
-            if (!addToRoleResult.Succeeded)
-                return ServiceResult<Teacher>.Failure(addToRoleResult.Errors.Select(e => e.Description).ToList(), 500);
-
-            Teacher teacher = TeacherMappers.CreateDtoToTeacher(teacherCreateDto);
-            teacher.User = user;
-
-            await _teacherRepository.CreateAsync(teacher);
-
-            return ServiceResult<Teacher>.Success(teacher, 201);
-        }
-        catch (Exception ex)
-        {
-            return ServiceResult<Teacher>.Failure(ex.Message, 500);
-        }
-    }
-
-    public Task UpdateAsync(string id, Teacher updatedTeacher)
-    {
-        return _teacherRepository.UpdateAsync(updatedTeacher);
-    }
-
-    public async Task<ServiceResult<Teacher>> DeleteAsync(string id)
-    {
-        try
-        {
-            var teacher = await _teacherRepository.GetByIdAsync(id);
-            if (teacher == null)
+            var subject = await unitOfWork.SubjectRepository.GetByNameAsync(subjectName);
+            if (subject != null)
             {
-                return ServiceResult<Teacher>.Failure("Teacher not found", 404);
+                var teacherSubject = new TeacherSubject
+                {
+                    TeacherId = teacherId,
+                    SubjectId = subject.Id
+                };
+
+                unitOfWork.TeacherSubjectRepository.CreateAsync(teacherSubject);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deletes a teacher by their ID.
+    /// </summary>
+    /// <param name="teacherId">The ID of the teacher to delete.</param>
+    public async Task<ServiceResult<User>> DeleteAsync(string teacherId)
+    {
+        var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(teacherId);
+        if (teacher != null)
+        {
+            unitOfWork.TeacherRepository.DeleteAsync(teacher);
+
+            if (await unitOfWork.CompleteAsync())
+            {
+                return ServiceResult<User>.Success(null, 204);
             }
 
-            var user = await _userRepository.GetByIdAsync(id);
-            if (user == null)
-                return ServiceResult<Teacher>.Failure("Corresponding user not found", 404);
-
-            var removeFromRoleResult = await _userRepository.RemoveFromRolesAsync(user, [Role.Teacher.ToString()]);
-            if (!removeFromRoleResult.Succeeded)
-            {
-                return ServiceResult<Teacher>.Failure(removeFromRoleResult.Errors.Select(e => e.Description).ToList(), 500);
-            }
-
-            await _teacherRepository.DeleteAsync(teacher);
-
-            return ServiceResult<Teacher>.Success(teacher, 204);
+            return ServiceResult<User>.Failure("An error occurred while deleting the teacher.", 500);
         }
-        catch (Exception ex)
-        {
-            return ServiceResult<Teacher>.Failure(ex.Message, 500);
-        }
+
+        return ServiceResult<User>.Success(null, 204);
     }
 }

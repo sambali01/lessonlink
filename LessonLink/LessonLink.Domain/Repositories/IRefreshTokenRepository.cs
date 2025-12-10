@@ -5,7 +5,7 @@ namespace LessonLink.BusinessLogic.Repositories;
 public interface IRefreshTokenRepository
 {
     Task<RefreshToken?> GetByHashedValueAsync(string token);
-    Task CreateAsync(RefreshToken token);
-    Task DeleteAsync(RefreshToken token);
+    void CreateAsync(RefreshToken token);
+    void DeleteAsync(RefreshToken token);
     Task DeleteAllForUserAsync(string userId);
 }

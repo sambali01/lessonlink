@@ -12,7 +12,7 @@ public class Booking
     public required int AvailableSlotId { get; set; }
     public AvailableSlot AvailableSlot { get; set; } = null!;
 
-    public BookingStatus Status { get; set; }
-    public string? Notes { get; set; }
+    public required BookingStatus Status { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

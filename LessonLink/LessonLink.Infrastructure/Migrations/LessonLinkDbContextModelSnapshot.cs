@@ -61,9 +61,6 @@ namespace LessonLink.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -127,16 +124,21 @@ namespace LessonLink.Infrastructure.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool?>("AcceptsInPerson")
+                    b.Property<bool>("AcceptsInPerson")
                         .HasColumnType("bit");
 
-                    b.Property<bool?>("AcceptsOnline")
+                    b.Property<bool>("AcceptsOnline")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Contact")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("HourlyRate")
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HourlyRate")
                         .HasColumnType("int");
 
                     b.Property<string>("Location")
@@ -271,19 +273,19 @@ namespace LessonLink.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "1a1a1111-1111-1111-1111-111111111111",
+                            Id = "student-role-id",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         },
                         new
                         {
-                            Id = "2b2b2222-2222-2222-2222-222222222222",
+                            Id = "teacher-role-id",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "3c3c3333-3333-3333-3333-333333333333",
+                            Id = "admin-role-id",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

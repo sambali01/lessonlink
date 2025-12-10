@@ -6,25 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
-public class TeacherRepository : ITeacherRepository
+public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherRepository
 {
-    private readonly LessonLinkDbContext _dbContext;
-
-    public TeacherRepository(LessonLinkDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<IReadOnlyCollection<Teacher>> GetAllAsync()
     {
-        return await _dbContext.Teachers
+        return await dbContext.Teachers
             .Include(t => t.User)
             .ToListAsync();
     }
 
     public async Task<IReadOnlyCollection<Teacher>> GetFeaturedAsync()
     {
-        return await _dbContext.Teachers
+        return await dbContext.Teachers
             .Include(t => t.User)
             .Include(t => t.TeacherSubjects)
                 .ThenInclude(ts => ts.Subject)
@@ -45,7 +38,7 @@ public class TeacherRepository : ITeacherRepository
 
     public async Task<Teacher?> GetByIdAsync(string id)
     {
-        return await _dbContext.Teachers
+        return await dbContext.Teachers
             .Include(t => t.User)
             .Include(t => t.TeacherSubjects)
                 .ThenInclude(ts => ts.Subject)
@@ -54,7 +47,7 @@ public class TeacherRepository : ITeacherRepository
 
     public async Task<(List<Teacher>, int)> SearchAsync(
         string? searchText,
-        string[]? subjects,
+        List<string> subjects,
         int? minPrice,
         int? maxPrice,
         bool? acceptsOnline,
@@ -63,7 +56,7 @@ public class TeacherRepository : ITeacherRepository
         int page,
         int pageSize)
     {
-        var query = _dbContext.Teachers
+        var query = dbContext.Teachers
             .Include(t => t.User)
             .Include(t => t.TeacherSubjects)
                 .ThenInclude(ts => ts.Subject)
@@ -78,7 +71,7 @@ public class TeacherRepository : ITeacherRepository
                 (t.Description != null && t.Description.Contains(searchText)));
         }
 
-        if (subjects != null && subjects.Length != 0)
+        if (subjects != null && subjects.Count != 0)
         {
             query = query.Where(t => t.TeacherSubjects
                 .Any(ts => subjects.Contains(ts.Subject.Name)));
@@ -119,22 +112,19 @@ public class TeacherRepository : ITeacherRepository
         return (teachers, totalCount);
     }
 
-    public async Task<Teacher> CreateAsync(Teacher teacher)
+    public Teacher CreateAsync(Teacher teacher)
     {
-        _dbContext.Teachers.Add(teacher);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Teachers.Add(teacher);
         return teacher;
     }
 
-    public async Task UpdateAsync(Teacher updatedTeacher)
+    public void UpdateAsync(Teacher updatedTeacher)
     {
-        _dbContext.Teachers.Update(updatedTeacher);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Teachers.Update(updatedTeacher);
     }
 
-    public async Task DeleteAsync(Teacher teacher)
+    public void DeleteAsync(Teacher teacher)
     {
-        _dbContext.Teachers.Remove(teacher);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Teachers.Remove(teacher);
     }
 }

@@ -1,23 +1,31 @@
-﻿using LessonLink.BusinessLogic.Models;
+﻿using LessonLink.BusinessLogic.DTOs.Common;
+using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
-using LessonLink.BusinessLogic.DTOs.Common;
 using LessonLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
-public class AvailableSlotRepository : IAvailableSlotRepository
+public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailableSlotRepository
 {
-    private readonly LessonLinkDbContext _dbContext;
-
-    public AvailableSlotRepository(LessonLinkDbContext dbContext)
+    public async Task<AvailableSlot?> GetByIdAsync(int id)
     {
-        _dbContext = dbContext;
+        return await dbContext.AvailableSlots
+            .FirstOrDefaultAsync(slot => slot.Id == id);
+    }
+
+    public async Task<AvailableSlot?> GetByIdWithBookingAsync(int id)
+    {
+        return await dbContext.AvailableSlots
+            .Include(slot => slot.Teacher)
+            .Include(slot => slot.Bookings)
+                .ThenInclude(booking => booking.Student)
+            .FirstOrDefaultAsync(slot => slot.Id == id);
     }
 
     public async Task<IReadOnlyCollection<AvailableSlot>> GetByTeacherIdAsync(string teacherId)
     {
-        return await _dbContext.AvailableSlots
+        return await dbContext.AvailableSlots
             .Where(slot => slot.TeacherId == teacherId)
             .OrderBy(slot => slot.StartTime)
             .ToListAsync();
@@ -25,7 +33,7 @@ public class AvailableSlotRepository : IAvailableSlotRepository
 
     public async Task<PaginatedResponse<AvailableSlot>> GetByTeacherIdPaginatedAsync(string teacherId, int page, int pageSize)
     {
-        var query = _dbContext.AvailableSlots
+        var query = dbContext.AvailableSlots
             .Where(slot => slot.TeacherId == teacherId)
             .OrderBy(slot => slot.StartTime);
 
@@ -34,14 +42,14 @@ public class AvailableSlotRepository : IAvailableSlotRepository
         var uniqueDates = await query
             .Select(slot => slot.StartTime.Date)
             .Distinct()
-            .OrderBy(date => date)
+            .OrderByDescending(date => date)
             .ToListAsync();
 
-        if (!uniqueDates.Any())
+        if (uniqueDates.Count == 0)
         {
             return new PaginatedResponse<AvailableSlot>
             {
-                Items = new List<AvailableSlot>(),
+                Items = [],
                 TotalCount = 0,
                 Page = page,
                 PageSize = 0,
@@ -58,11 +66,11 @@ public class AvailableSlotRepository : IAvailableSlotRepository
             .Take(daysPerPage)
             .ToList();
 
-        if (!selectedDates.Any())
+        if (selectedDates.Count == 0)
         {
             return new PaginatedResponse<AvailableSlot>
             {
-                Items = new List<AvailableSlot>(),
+                Items = [],
                 TotalCount = totalCount,
                 Page = page,
                 PageSize = 0,
@@ -87,34 +95,9 @@ public class AvailableSlotRepository : IAvailableSlotRepository
         };
     }
 
-    private async Task<int> CalculateOptimalDaysPerPage(string teacherId, List<DateTime> uniqueDates, int targetPageSize)
-    {
-        if (!uniqueDates.Any()) return 1;
-
-        var sampleSize = Math.Min(10, uniqueDates.Count);
-        var sampleDates = uniqueDates.Take(sampleSize).ToList();
-
-        var totalSlotsInSample = 0;
-        foreach (var date in sampleDates)
-        {
-            var slotsOnDate = await _dbContext.AvailableSlots
-                .Where(slot => slot.TeacherId == teacherId && slot.StartTime.Date == date)
-                .CountAsync();
-            totalSlotsInSample += slotsOnDate;
-        }
-
-        var avgSlotsPerDay = (double)totalSlotsInSample / sampleDates.Count;
-
-        if (avgSlotsPerDay == 0) return 1;
-
-        var estimatedDays = (int)Math.Ceiling(targetPageSize / avgSlotsPerDay);
-
-        return Math.Max(1, Math.Min(estimatedDays, uniqueDates.Count));
-    }
-
     public async Task<IReadOnlyCollection<AvailableSlot>> GetByTeacherIdWithBookingsAsync(string teacherId)
     {
-        return await _dbContext.AvailableSlots
+        return await dbContext.AvailableSlots
             .Include(slot => slot.Bookings)
             .ThenInclude(booking => booking.Student)
             .Where(slot => slot.TeacherId == teacherId)
@@ -124,7 +107,7 @@ public class AvailableSlotRepository : IAvailableSlotRepository
 
     public async Task<PaginatedResponse<AvailableSlot>> GetByTeacherIdWithBookingsPaginatedAsync(string teacherId, int page, int pageSize)
     {
-        var query = _dbContext.AvailableSlots
+        var query = dbContext.AvailableSlots
             .Include(slot => slot.Bookings)
             .ThenInclude(booking => booking.Student)
             .Where(slot => slot.TeacherId == teacherId)
@@ -132,7 +115,7 @@ public class AvailableSlotRepository : IAvailableSlotRepository
 
         var totalCount = await query.CountAsync();
 
-        var uniqueDates = await _dbContext.AvailableSlots
+        var uniqueDates = await dbContext.AvailableSlots
             .Where(slot => slot.TeacherId == teacherId)
             .Select(slot => slot.StartTime.Date)
             .Distinct()
@@ -191,51 +174,17 @@ public class AvailableSlotRepository : IAvailableSlotRepository
 
     public async Task<IReadOnlyCollection<AvailableSlot>> GetNotBookedByTeacherIdAsync(string teacherId)
     {
-        return await _dbContext.AvailableSlots
+        return await dbContext.AvailableSlots
             .Where(slot => slot.TeacherId == teacherId &&
-                !_dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
+                !dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
             )
             .OrderBy(slot => slot.StartTime)
             .ToListAsync();
     }
 
-    public async Task<AvailableSlot?> GetByIdAsync(int id)
-    {
-        return await _dbContext.AvailableSlots
-            .FirstOrDefaultAsync(slot => slot.Id == id);
-    }
-
-    public async Task<AvailableSlot?> GetByIdWithBookingAsync(int id)
-    {
-        return await _dbContext.AvailableSlots
-            .Include(slot => slot.Teacher)
-            .Include(slot => slot.Bookings)
-                .ThenInclude(booking => booking.Student)
-            .FirstOrDefaultAsync(slot => slot.Id == id);
-    }
-
-    public async Task<AvailableSlot> CreateAsync(AvailableSlot slot)
-    {
-        _dbContext.AvailableSlots.Add(slot);
-        await _dbContext.SaveChangesAsync();
-        return slot;
-    }
-
-    public async Task UpdateAsync(AvailableSlot slot)
-    {
-        _dbContext.AvailableSlots.Update(slot);
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task DeleteAsync(AvailableSlot slot)
-    {
-        _dbContext.AvailableSlots.Remove(slot);
-        await _dbContext.SaveChangesAsync();
-    }
-
     public async Task<bool> HasOverlappingSlotAsync(string teacherId, DateTime startTime, DateTime endTime)
     {
-        return await _dbContext.AvailableSlots
+        return await dbContext.AvailableSlots
             .AnyAsync(slot => slot.TeacherId == teacherId &&
                 ((startTime >= slot.StartTime && startTime < slot.EndTime) ||
                  (endTime > slot.StartTime && endTime <= slot.EndTime) ||
@@ -243,7 +192,48 @@ public class AvailableSlotRepository : IAvailableSlotRepository
     }
     public async Task<bool> HasBookingAsync(int slotId)
     {
-        return await _dbContext.Bookings
+        return await dbContext.Bookings
             .AnyAsync(booking => booking.AvailableSlotId == slotId && booking.Status != BookingStatus.Cancelled);
+    }
+
+    public AvailableSlot CreateAsync(AvailableSlot slot)
+    {
+        dbContext.AvailableSlots.Add(slot);
+        return slot;
+    }
+
+    public void UpdateAsync(AvailableSlot slot)
+    {
+        dbContext.AvailableSlots.Update(slot);
+    }
+
+    public void DeleteAsync(AvailableSlot slot)
+    {
+        dbContext.AvailableSlots.Remove(slot);
+    }
+
+    private async Task<int> CalculateOptimalDaysPerPage(string teacherId, List<DateTime> uniqueDates, int targetPageSize)
+    {
+        if (uniqueDates.Count == 0) return 1;
+
+        var sampleSize = Math.Min(10, uniqueDates.Count);
+        var sampleDates = uniqueDates.Take(sampleSize).ToList();
+
+        var totalSlotsInSample = 0;
+        foreach (var date in sampleDates)
+        {
+            var slotsOnDate = await dbContext.AvailableSlots
+                .Where(slot => slot.TeacherId == teacherId && slot.StartTime.Date == date)
+                .CountAsync();
+            totalSlotsInSample += slotsOnDate;
+        }
+
+        var avgSlotsPerDay = (double)totalSlotsInSample / sampleDates.Count;
+
+        if (avgSlotsPerDay == 0) return 1;
+
+        var estimatedDays = (int)Math.Ceiling(targetPageSize / avgSlotsPerDay);
+
+        return Math.Max(1, Math.Min(estimatedDays, uniqueDates.Count));
     }
 }

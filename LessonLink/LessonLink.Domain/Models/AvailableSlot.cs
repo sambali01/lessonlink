@@ -11,5 +11,5 @@ public class AvailableSlot
     public required DateTime EndTime { get; set; }
 
     // Navigation property
-    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public List<Booking> Bookings { get; set; } = [];
 }

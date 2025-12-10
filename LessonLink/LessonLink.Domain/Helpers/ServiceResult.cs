@@ -4,10 +4,10 @@ public class ServiceResult<T>
 {
     public bool Succeeded { get; set; }
     public T? Data { get; set; }
-    public List<string> Errors { get; set; } = new List<string>();
+    public List<string> Errors { get; set; } = [];
     public int StatusCode { get; set; }
 
-    public static ServiceResult<T> Success(T data, int statusCode = 200)
+    public static ServiceResult<T> Success(T? data, int statusCode = 200)
     {
         return new ServiceResult<T>
         {
@@ -32,7 +32,7 @@ public class ServiceResult<T>
         return new ServiceResult<T>
         {
             Succeeded = false,
-            Errors = new List<string> { error },
+            Errors = [error],
             StatusCode = statusCode
         };
     }

@@ -3,7 +3,7 @@
 public class TeacherSearchRequest
 {
     public string? SearchText { get; set; }
-    public string[]? Subjects { get; set; }
+    public List<string> Subjects { get; set; } = [];
     public int? MinPrice { get; set; }
     public int? MaxPrice { get; set; }
     public bool? AcceptsOnline { get; set; }

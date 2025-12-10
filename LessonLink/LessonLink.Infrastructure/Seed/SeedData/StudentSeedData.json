@@ -1,0 +1,82 @@
+﻿[
+  {
+    "Id": "user-student-1",
+    "Email": "kovacs.janos@test.com",
+    "FirstName": "János",
+    "SurName": "Kovács",
+    "NickName": "Jani",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/1.jpg"
+  },
+  {
+    "Id": "user-student-2",
+    "Email": "nagy.anna@test.com",
+    "FirstName": "Anna",
+    "SurName": "Nagy",
+    "NickName": "Annácska",
+    "ImageUrl": "https://randomuser.me/api/portraits/women/2.jpg"
+  },
+  {
+    "Id": "user-student-3",
+    "Email": "kiss.bela@test.com",
+    "FirstName": "Béla",
+    "SurName": "Kiss",
+    "NickName": "BelaGamer",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/3.jpg"
+  },
+  {
+    "Id": "user-student-4",
+    "Email": "szabo.eszter@test.com",
+    "FirstName": "Eszter",
+    "SurName": "Szabó",
+    "NickName": "Eszti",
+    "ImageUrl": "https://randomuser.me/api/portraits/women/4.jpg"
+  },
+  {
+    "Id": "user-student-5",
+    "Email": "toth.balazs@test.com",
+    "FirstName": "Balázs",
+    "SurName": "Tóth",
+    "NickName": "Bálint",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/5.jpg"
+  },
+  {
+    "Id": "user-student-6",
+    "Email": "varga.kata@test.com",
+    "FirstName": "Kata",
+    "SurName": "Varga",
+    "NickName": "Kati",
+    "ImageUrl": "https://randomuser.me/api/portraits/women/6.jpg"
+  },
+  {
+    "Id": "user-student-7",
+    "Email": "molnar.zoltan@test.com",
+    "FirstName": "Zoltán",
+    "SurName": "Molnár",
+    "NickName": "Zoli",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/7.jpg"
+  },
+  {
+    "Id": "user-student-8",
+    "Email": "fekete.reka@test.com",
+    "FirstName": "Réka",
+    "SurName": "Fekete",
+    "NickName": "RékiChan",
+    "ImageUrl": "https://randomuser.me/api/portraits/women/8.jpg"
+  },
+  {
+    "Id": "user-student-9",
+    "Email": "horvath.david@test.com",
+    "FirstName": "Dávid",
+    "SurName": "Horváth",
+    "NickName": "DaviCode",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/9.jpg"
+  },
+  {
+    "Id": "user-student-10",
+    "Email": "lakatos.judit@test.com",
+    "FirstName": "Judit",
+    "SurName": "Lakatos",
+    "NickName": "Jucus",
+    "ImageUrl": "https://randomuser.me/api/portraits/women/10.jpg"
+  }
+]

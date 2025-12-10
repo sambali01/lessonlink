@@ -148,21 +148,6 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
                         </Typography>
                     </Box>
 
-                    {booking.notes && (
-                        <Box sx={{
-                            p: 2,
-                            bgcolor: theme.palette.mode === 'dark'
-                                ? theme.palette.grey[800]
-                                : theme.palette.grey[50],
-                            borderRadius: 1,
-                            border: `1px solid ${theme.palette.divider}`
-                        }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                "{booking.notes}"
-                            </Typography>
-                        </Box>
-                    )}
-
                     <Box sx={{ pt: 1 }}>
                         <Typography variant="caption" color="text.secondary">
                             Foglalás ideje: {new Date(booking.createdAt).toLocaleDateString('hu-HU')}

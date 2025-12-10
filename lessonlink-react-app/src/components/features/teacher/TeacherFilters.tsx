@@ -15,7 +15,7 @@ import { useSubjects } from "../../../hooks/subjectQueries";
 import { TeacherSearchRequest } from "../../../models/TeacherSearchRequest";
 import { TEACHER_SEARCH_PAGE_SIZE } from "../../../utils/constants";
 import { TeachingMethod } from "../../../utils/enums";
-import { convertBoolsToTeachingMethod, convertTeachingMethodToBools } from "../../../utils/teachingMethodConverters";
+import { convertBoolsToTeachingMethod, convertTeachingMethodToFilterBools } from "../../../utils/teachingMethodConverters";
 import PriceSlider from "../../common/PriceSlider";
 
 interface TeacherFiltersProps {
@@ -44,7 +44,7 @@ const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
 
     // Handle search button click
     const handleSearchClick = () => {
-        const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToBools(teachingMethod);
+        const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToFilterBools(teachingMethod);
 
         const searchFilters: TeacherSearchRequest = {
             searchText,

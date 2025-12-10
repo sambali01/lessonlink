@@ -10,12 +10,15 @@ namespace LessonLink.UnitTest;
 public class AvailableSlotServiceTests
 {
     private readonly Mock<IAvailableSlotRepository> _mockAvailableSlotRepository;
+    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly AvailableSlotService _availableSlotService;
 
     public AvailableSlotServiceTests()
     {
         _mockAvailableSlotRepository = new Mock<IAvailableSlotRepository>();
-        _availableSlotService = new AvailableSlotService(_mockAvailableSlotRepository.Object);
+        _mockUnitOfWork = new Mock<IUnitOfWork>();
+        _mockUnitOfWork.Setup(x => x.AvailableSlotRepository).Returns(_mockAvailableSlotRepository.Object);
+        _availableSlotService = new AvailableSlotService(_mockUnitOfWork.Object);
     }
 
     [Fact]
@@ -35,6 +38,7 @@ public class AvailableSlotServiceTests
                     new Booking
                     {
                         Id = 1,
+                        AvailableSlotId = 1,
                         Status = BookingStatus.Pending,
                         Student = new User { FirstName = "John", SurName = "Doe", NickName = "JohnD" },
                         StudentId = "student-1"
@@ -42,6 +46,7 @@ public class AvailableSlotServiceTests
                     new Booking
                     {
                         Id = 2,
+                        AvailableSlotId = 1,
                         Status = BookingStatus.Cancelled, // This should be filtered out
                         Student = new User { FirstName = "Jane", SurName = "Smith", NickName = "JaneS" },
                         StudentId = "student-2"
@@ -141,7 +146,11 @@ public class AvailableSlotServiceTests
 
         _mockAvailableSlotRepository
             .Setup(x => x.CreateAsync(It.IsAny<AvailableSlot>()))
-            .ReturnsAsync(createdSlot);
+            .Returns(createdSlot);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(true);
 
         // Act
         var result = await _availableSlotService.CreateSlotAsync(teacherId, createDto);
@@ -172,7 +181,7 @@ public class AvailableSlotServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("A kezdési időnek korábban kell lennie, mint a befejezési időnek");
+        result.Errors.Should().Contain("The start time must be earlier than the end time.");
     }
 
     [Fact]
@@ -193,7 +202,7 @@ public class AvailableSlotServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("Nem adhatsz múltbeli időpontot");
+        result.Errors.Should().Contain("You cannot provide a time in the past.");
     }
 
     [Fact]
@@ -218,6 +227,82 @@ public class AvailableSlotServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("Az időpont átfedésben van egy már meglévő időponttal");
+        result.Errors.Should().Contain("The slot overlaps with an existing slot.");
+    }
+
+    [Fact]
+    public async Task CreateSlotAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var createDto = new AvailableSlotCreateDto
+        {
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime))
+            .ReturnsAsync(false);
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.CreateAsync(It.IsAny<AvailableSlot>()))
+            .Returns(new AvailableSlot 
+            { 
+                Id = 1, 
+                TeacherId = teacherId,
+                StartTime = createDto.StartTime,
+                EndTime = createDto.EndTime
+            });
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _availableSlotService.CreateSlotAsync(teacherId, createDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        result.Errors.Should().Contain("An error occurred while creating the slot.");
+    }
+
+    [Fact]
+    public async Task DeleteSlotAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var slotId = 1;
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdAsync(slotId))
+            .ReturnsAsync(slot);
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.HasBookingAsync(slotId))
+            .ReturnsAsync(false);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _availableSlotService.DeleteSlotAsync(teacherId, slotId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        result.Errors.Should().Contain("An error occurred while deleting the slot.");
     }
 }

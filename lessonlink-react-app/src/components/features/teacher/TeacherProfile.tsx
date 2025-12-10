@@ -174,15 +174,16 @@ const TeacherProfile: FunctionComponent<TeacherProfileProps> = ({ teacher, isLoa
                     </Box>
 
                     {/* Location */}
-                    <Box>
+                    {teacher.location && <Box>
                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LocationIcon color="primary" />
                             Helyszín
                         </Typography>
                         <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
-                            {teacher.location || 'Nem megadott'}
+                            {teacher.location}
                         </Typography>
                     </Box>
+                    }
                 </Box>
             </Stack>
         </Paper>

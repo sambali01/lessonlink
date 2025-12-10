@@ -3,23 +3,24 @@ import {
     Box,
     Button,
     CircularProgress,
-    Container, Link, Paper,
+    Container,
+    Link,
+    Paper,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
-import { useState } from 'react';
+import { FunctionComponent, useState } from 'react';
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import "./Login.less";
 
 interface LoginForm {
     email: string;
     password: string;
 }
 
-export default function Login() {
+const Login: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { handleLogin } = useAuth();
@@ -124,6 +125,7 @@ export default function Login() {
                         fullWidth
                         variant="contained"
                         disabled={loading}
+                        sx={{ py: 1.5 }}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Belépés'}
                     </Button>
@@ -152,4 +154,6 @@ export default function Login() {
             </Paper>
         </Container>
     );
-}
+};
+
+export default Login;

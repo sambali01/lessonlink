@@ -5,18 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
-public class BookingRepository : IBookingRepository
+public class BookingRepository(LessonLinkDbContext dbContext) : IBookingRepository
 {
-    private readonly LessonLinkDbContext _dbContext;
-
-    public BookingRepository(LessonLinkDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<IReadOnlyCollection<Booking>> GetByStudentIdAsync(string studentId)
     {
-        return await _dbContext.Bookings
+        return await dbContext.Bookings
             .Include(b => b.Student)
             .Include(b => b.AvailableSlot)
                 .ThenInclude(a => a.Teacher)
@@ -28,7 +21,7 @@ public class BookingRepository : IBookingRepository
 
     public async Task<IReadOnlyCollection<Booking>> GetByTeacherIdAsync(string teacherId)
     {
-        return await _dbContext.Bookings
+        return await dbContext.Bookings
             .Include(b => b.Student)
             .Include(b => b.AvailableSlot)
                 .ThenInclude(a => a.Teacher)
@@ -40,7 +33,7 @@ public class BookingRepository : IBookingRepository
 
     public async Task<Booking?> GetByIdAsync(int id)
     {
-        return await _dbContext.Bookings
+        return await dbContext.Bookings
             .Include(b => b.Student)
             .Include(b => b.AvailableSlot)
                 .ThenInclude(a => a.Teacher)
@@ -48,22 +41,19 @@ public class BookingRepository : IBookingRepository
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<Booking> CreateAsync(Booking booking)
+    public Booking CreateAsync(Booking booking)
     {
-        _dbContext.Bookings.Add(booking);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Bookings.Add(booking);
         return booking;
     }
 
-    public async Task UpdateAsync(Booking booking)
+    public void UpdateAsync(Booking booking)
     {
-        _dbContext.Bookings.Update(booking);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Bookings.Update(booking);
     }
 
-    public async Task DeleteAsync(Booking booking)
+    public void DeleteAsync(Booking booking)
     {
-        _dbContext.Bookings.Remove(booking);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Bookings.Remove(booking);
     }
 }

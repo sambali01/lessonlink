@@ -146,7 +146,7 @@ const MySlots: FunctionComponent = () => {
                         }}
                     >
                         {slotsResponse?.totalCount === 0
-                            ? 'Még nincsenek óraidőpontok.'
+                            ? 'Még nincsenek óraidőpontjaid.'
                             : 'Nincsenek óraidőpontok ezen az oldalon.'}
                     </Typography>
                     {slotsResponse?.totalCount === 0 && (

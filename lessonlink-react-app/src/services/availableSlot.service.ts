@@ -38,12 +38,9 @@ export const getAvailableSlotsByTeacherId = async (teacherId: string): Promise<A
 };
 
 export const createAvailableSlot = async (data: AvailableSlotCreateDto): Promise<AvailableSlot> => {
-    try {
-        const response = await axiosInstance.post(`${AVAILABLESLOT_API}`, data);
-        return response.data;
-    } catch (error) {
-        throw new Error('Error creating available slot: ' + error);
-    }
+    return await axiosInstance.post(`${AVAILABLESLOT_API}`, data)
+        .then((response) => { return response.data; })
+        .catch((error) => { throw new Error(error.response); });
 };
 
 export const deleteAvailableSlot = async (slotId: number): Promise<void> => {

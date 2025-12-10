@@ -2,7 +2,7 @@
 
 public class AuthDto
 {
-    public string Id { get; set; }
-    public string Token { get; set; }
-    public IEnumerable<string> Roles { get; set; }
+    public required string Id { get; set; }
+    public required string Token { get; set; }
+    public required IList<string> Roles { get; set; }
 }
