@@ -1,23 +1,27 @@
-import { FunctionComponent } from 'react';
-import {
-    Card,
-    CardContent,
-    Typography,
-    Box,
-    Chip,
-    Button,
-    useTheme,
-    Stack,
-    Divider
-} from '@mui/material';
 import {
     CalendarToday as CalendarIcon,
-    AccessTime as TimeIcon,
-    Person as PersonIcon,
     Cancel as CancelIcon,
     CheckCircle as ConfirmIcon,
-    Schedule as PendingIcon
+    ContactMail as ContactIcon,
+    Schedule as PendingIcon,
+    Person as PersonIcon,
+    AccessTime as TimeIcon
 } from '@mui/icons-material';
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    CircularProgress,
+    Divider,
+    Link,
+    Stack,
+    Typography,
+    useTheme
+} from '@mui/material';
+import { FunctionComponent } from 'react';
+import { useTeacherContact } from '../../../hooks/teacherQueries';
 import { Booking, BookingStatus } from '../../../models/Booking';
 
 interface BookingCardProps {
@@ -35,6 +39,13 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
 }) => {
     const theme = useTheme();
 
+    // Only fetch contact if booking is confirmed
+    const shouldFetchContact = booking.status === BookingStatus.Confirmed;
+    const { data: teacherContact, isLoading: isLoadingContact } = useTeacherContact(
+        booking.teacherId,
+        { enabled: shouldFetchContact }
+    );
+
     const formatDateTime = (dateTimeString: string) => {
         const date = new Date(dateTimeString);
         return {
@@ -51,35 +62,35 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
         };
     };
 
-    const getStatusConfig = (status: number) => {
+    const getStatusConfig = (status: BookingStatus) => {
         switch (status) {
-            case 0: // BookingStatus.Pending
+            case BookingStatus.Pending:
                 return {
                     color: 'warning' as const,
                     icon: <PendingIcon />,
                     label: 'Függőben',
                     bgColor: theme.palette.warning.light
                 };
-            case 1: // BookingStatus.Confirmed
+            case BookingStatus.Confirmed:
                 return {
                     color: 'success' as const,
                     icon: <ConfirmIcon />,
-                    label: 'Megerősítve',
+                    label: 'Jóváhagyva',
                     bgColor: theme.palette.success.light
                 };
-            case 2: // BookingStatus.Cancelled
+            case BookingStatus.Cancelled:
                 return {
                     color: 'error' as const,
                     icon: <CancelIcon />,
-                    label: 'Törölve',
+                    label: 'Lemondva',
                     bgColor: theme.palette.error.light
                 };
             default:
                 return {
-                    color: 'default' as const,
+                    color: 'warning' as const,
                     icon: <PendingIcon />,
-                    label: 'Ismeretlen',
-                    bgColor: theme.palette.grey[300]
+                    label: 'Függőben',
+                    bgColor: theme.palette.warning.light
                 };
         }
     };
@@ -88,7 +99,18 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
     const endTime = formatDateTime(booking.slotEndTime);
     const statusConfig = getStatusConfig(booking.status);
 
-    const canCancel = booking.status === BookingStatus.Pending || booking.status === BookingStatus.Confirmed;
+    // Check if booking can be cancelled
+    const canCancel = () => {
+        if (booking.status !== BookingStatus.Pending && booking.status !== BookingStatus.Confirmed) {
+            return false;
+        }
+
+        const startDate = new Date(booking.slotStartTime);
+        const now = new Date();
+        const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+        return hoursUntilStart >= 24;
+    };
 
     return (
         <Card sx={{
@@ -116,7 +138,7 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
                             size="small"
                         />
                     </Box>
-                    {showCancelButton && canCancel && onCancel && (
+                    {showCancelButton && canCancel() && onCancel && (
                         <Button
                             variant="outlined"
                             color="error"
@@ -147,6 +169,36 @@ const BookingCard: FunctionComponent<BookingCardProps> = ({
                             {startTime.time} - {endTime.time}
                         </Typography>
                     </Box>
+
+                    {shouldFetchContact && (
+                        <>
+                            <Divider sx={{ my: 1 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <ContactIcon color="primary" />
+                                {isLoadingContact ? (
+                                    <CircularProgress size={20} />
+                                ) : teacherContact ? (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary" display="block">
+                                            Kapcsolat:
+                                        </Typography>
+                                        <Link
+                                            href={`mailto:${teacherContact}`}
+                                            sx={{
+                                                textDecoration: 'none',
+                                                color: theme.palette.primary.main,
+                                                '&:hover': {
+                                                    textDecoration: 'underline'
+                                                }
+                                            }}
+                                        >
+                                            {teacherContact}
+                                        </Link>
+                                    </Box>
+                                ) : null}
+                            </Box>
+                        </>
+                    )}
 
                     <Box sx={{ pt: 1 }}>
                         <Typography variant="caption" color="text.secondary">

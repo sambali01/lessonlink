@@ -14,6 +14,8 @@ import { FunctionComponent, useState } from 'react';
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useNotification } from "../hooks/useNotification";
+import { ApiError } from "../utils/ApiError";
 
 interface LoginForm {
     email: string;
@@ -24,6 +26,7 @@ const Login: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { handleLogin } = useAuth();
+    const { showError } = useNotification();
     const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>();
     const [loading, setLoading] = useState(false);
 
@@ -33,7 +36,11 @@ const Login: FunctionComponent = () => {
             handleLogin(data.email, data.password);
             navigate('/dashboard');
         } catch (error) {
-            console.error("Login failed:", error);
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Bejelentkezés sikertelen');
+            }
         } finally {
             setLoading(false);
         }

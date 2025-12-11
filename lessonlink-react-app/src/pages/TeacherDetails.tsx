@@ -1,145 +1,118 @@
 import {
     Box,
-    Button,
-    Container,
-    Paper,
-    Tab,
-    Tabs,
+    Pagination,
     Typography,
-    useTheme,
-    Alert
+    useTheme
 } from "@mui/material";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import TabPanel from "../components/common/TabPanel";
-import TeacherProfile from "../components/features/teacher/TeacherProfile";
-import TeacherScheduleView from "../components/features/teacher/TeacherScheduleView";
-import { useTeacherDetails } from "../hooks/teacherQueries";
+import TeacherProfile from "../components/features/teacher-details/TeacherProfile";
+import TeacherScheduleView from "../components/features/teacher-details/TeacherScheduleView";
 import { useAvailableSlotsByTeacherId } from "../hooks/avaliableSlotQueries";
 import { useCreateBooking } from "../hooks/bookingQueries";
+import { useTeacherDetails } from "../hooks/teacherQueries";
 import { AvailableSlot } from "../models/AvailableSlot";
+import { TEACHER_SLOTS_PAGE_SIZE } from "../utils/constants";
+import { useNotification } from "../hooks/useNotification";
+import { ApiError } from "../utils/ApiError";
 
 const TeacherDetails: FunctionComponent = () => {
     const theme = useTheme();
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
-    const [tabValue, setTabValue] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    // Queries
-    const {
-        data: teacher,
-        isLoading: teacherLoading,
-        isError: teacherError
-    } = useTeacherDetails(userId || '');
-
-    const {
-        data: availableSlots,
-        isLoading: slotsLoading,
-        error: slotsError
-    } = useAvailableSlotsByTeacherId(userId || '');
+    const { data: teacher, isLoading: teacherLoading } = useTeacherDetails(userId || '');
+    const { data: slotsResponse, isLoading: slotsLoading } = useAvailableSlotsByTeacherId(userId || '', currentPage, TEACHER_SLOTS_PAGE_SIZE);
 
     const createBookingMutation = useCreateBooking();
+    const { showSuccess, showError } = useNotification();
 
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-        setTabValue(newValue);
-    };
+    // Navigate to not-found if teacher doesn't exist
+    useEffect(() => {
+        if (!teacher && !teacherLoading) {
+            navigate('/not-found');
+        }
+    }, [teacher, teacherLoading, navigate]);
 
     const handleBookSlot = async (slot: AvailableSlot) => {
         try {
             await createBookingMutation.mutateAsync({ availableSlotId: slot.id });
-            // Show success message or navigate to bookings page
-            navigate('/dashboard');
+            showSuccess('Foglalás sikeres!');
+            navigate('/my-bookings');
         } catch (error) {
-            console.error('Booking failed:', error);
-            // Handle error (show toast, etc.)
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Hiba történt a foglalás során');
+            }
         }
     };
 
-    // Error handling
-    if (teacherError) {
-        return (
-            <Container sx={{ textAlign: 'center', py: 8 }}>
-                <Alert severity="error" sx={{ mb: 3 }}>
-                    Hiba történt a tanár adatainak betöltése közben
-                </Alert>
-                <Button variant="contained" onClick={() => navigate('/')}>
-                    Vissza a főoldalra
-                </Button>
-            </Container>
-        );
-    }
+    const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setCurrentPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const slots = slotsResponse?.items || [];
+    const totalPages = slotsResponse?.totalPages || 0;
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-
+        <Box sx={{
+            minHeight: '100vh',
+            bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f5f5f5',
+            py: 4
+        }}>
+            <Box sx={{
+                maxWidth: '1400px',
+                mx: 'auto',
+                px: { xs: 2, sm: 3, md: 4 }
+            }}>
                 {/* Teacher Profile Section */}
                 <TeacherProfile
-                    teacher={teacher!}
+                    teacher={teacher}
                     isLoading={teacherLoading}
                 />
 
-                {/* Tabs Section */}
-                <Paper sx={{
-                    borderRadius: theme.shape.borderRadius,
-                    overflow: 'hidden',
-                    boxShadow: theme.shadows[2]
-                }}>
-                    <Tabs
-                        value={tabValue}
-                        onChange={handleTabChange}
-                        variant="fullWidth"
+                {/* Available Slots Section */}
+                <Box sx={{ mt: 4 }}>
+                    <Typography
+                        variant="h4"
                         sx={{
-                            borderBottom: 1,
-                            borderColor: 'divider',
-                            bgcolor: theme.palette.mode === 'dark'
-                                ? theme.palette.background.default
-                                : '#fff'
+                            mb: 3,
+                            color: theme.palette.text.primary,
+                            fontWeight: 500
                         }}
                     >
-                        <Tab label="Elérhető időpontok" />
-                        <Tab label="Kapcsolat" />
-                    </Tabs>
+                        Elérhető időpontok
+                    </Typography>
 
-                    {/* Available Slots Tab */}
-                    <TabPanel value={tabValue} index={0}>
-                        <Box sx={{ p: 3 }}>
-                            <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                                Elérhető időpontok
-                            </Typography>
-                            <TeacherScheduleView
-                                slots={availableSlots || []}
-                                isLoading={slotsLoading}
-                                error={slotsError}
-                                onBookSlot={handleBookSlot}
+                    <TeacherScheduleView
+                        slots={slots}
+                        isLoading={slotsLoading}
+                        onBookSlot={handleBookSlot}
+                    />
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <Box display="flex" justifyContent="center" mt={4}>
+                            <Pagination
+                                count={totalPages}
+                                page={currentPage}
+                                onChange={handlePageChange}
+                                color="primary"
+                                size="large"
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        fontSize: '1rem',
+                                    },
+                                }}
                             />
                         </Box>
-                    </TabPanel>
-
-                    {/* Contact Tab */}
-                    <TabPanel value={tabValue} index={1}>
-                        <Box sx={{
-                            p: 4,
-                            textAlign: 'center',
-                            minHeight: 200,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center'
-                        }}>
-                            <Typography variant="h6" color="text.secondary" gutterBottom>
-                                Kapcsolat
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                A kapcsolatfelvétel funkcionalitás hamarosan elérhető lesz.
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                                Addig is foglalj órát az elérhető időpontok közül!
-                            </Typography>
-                        </Box>
-                    </TabPanel>
-                </Paper>
+                    )}
+                </Box>
             </Box>
-        </Container>
+        </Box>
     );
 };
 

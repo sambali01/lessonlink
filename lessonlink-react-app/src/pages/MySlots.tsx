@@ -1,89 +1,81 @@
 import { Add as AddIcon } from '@mui/icons-material';
 import {
-    Alert,
     Box,
     Button,
     CircularProgress,
     Pagination,
-    Snackbar,
+    Tab,
+    Tabs,
     Typography,
     useTheme
 } from '@mui/material';
 import { FunctionComponent, useEffect, useState } from 'react';
-import CreateSlotModal from '../components/features/calendar/CreateSlotModal';
-import MonthSection from '../components/features/calendar/MonthSection';
-import { useCreateAvailableSlot, useDeleteAvailableSlot, useMyAvailableSlots } from '../hooks/avaliableSlotQueries';
+import MonthSection from '../components/common/MonthSection';
+import SlotFormModal from '../components/features/my-slots/SlotFormModal';
+import { useCreateAvailableSlot, useDeleteAvailableSlot, useMyCurrentSlots, useMyPastSlots } from '../hooks/avaliableSlotQueries';
+import { useNotification } from '../hooks/useNotification';
 import { AvailableSlot, CreateAvailableSlotRequest } from '../models/AvailableSlot';
+import { ApiError } from '../utils/ApiError';
 import { MY_SLOTS_PAGE_SIZE } from '../utils/constants';
 
 const MySlots: FunctionComponent = () => {
     const theme = useTheme();
+    const { showSuccess, showError } = useNotification();
+    const [tabValue, setTabValue] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const { data: slotsResponse, isLoading, error } = useMyAvailableSlots(currentPage, MY_SLOTS_PAGE_SIZE);
+    const [pastPage, setPastPage] = useState(1);
+
+    const { data: currentSlotsResponse, isLoading: currentLoading } = useMyCurrentSlots(currentPage, MY_SLOTS_PAGE_SIZE);
+    const { data: pastSlotsResponse, isLoading: pastLoading } = useMyPastSlots(pastPage, MY_SLOTS_PAGE_SIZE);
     const createSlotMutation = useCreateAvailableSlot();
     const deleteSlotMutation = useDeleteAvailableSlot();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-        open: false,
-        message: '',
-        severity: 'success'
-    });
 
     useEffect(() => {
         if (deleteSlotMutation.error) {
-            setSnackbar({
-                open: true,
-                message: deleteSlotMutation.error.message,
-                severity: 'error'
-            });
+            if (deleteSlotMutation.error instanceof ApiError) {
+                showError(deleteSlotMutation.error.errors);
+            } else {
+                showError(deleteSlotMutation.error.message);
+            }
         }
-    }, [deleteSlotMutation.error]);
+    }, [deleteSlotMutation.error, showError]);
 
     const handleCreateSlot = async (data: CreateAvailableSlotRequest) => {
         try {
             await createSlotMutation.mutateAsync(data);
             setIsModalOpen(false);
-            setSnackbar({
-                open: true,
-                message: 'Óraidőpont sikeresen létrehozva!',
-                severity: 'success'
-            });
+            showSuccess('Óraidőpont sikeresen létrehozva!');
         } catch (error) {
-            setSnackbar({
-                open: true,
-                message: error instanceof Error ? error.message : 'Hiba történt a létrehozás során',
-                severity: 'error'
-            });
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Hiba történt a létrehozás során');
+            }
         }
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({ ...prev, open: false }));
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue);
     };
 
-    if (isLoading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                <CircularProgress />
-            </Box>
-        );
-    }
+    const handleCurrentPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setCurrentPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-    if (error) {
-        return (
-            <Alert severity="error" sx={{ m: 2 }}>
-                {error.message}
-            </Alert>
-        );
-    }
+    const handlePastPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setPastPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
+    const isLoading = tabValue === 0 ? currentLoading : pastLoading;
+    const slotsResponse = tabValue === 0 ? currentSlotsResponse : pastSlotsResponse;
     const slots = slotsResponse?.items || [];
     const totalPages = slotsResponse?.totalPages || 0;
-
-    const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-        setCurrentPage(value);
-    };
+    const activePage = tabValue === 0 ? currentPage : pastPage;
+    const handlePageChange = tabValue === 0 ? handleCurrentPageChange : handlePastPageChange;
 
     // Group slots by month and then by day
     const groupedSlots = slots.reduce((acc, slot) => {
@@ -135,86 +127,101 @@ const MySlots: FunctionComponent = () => {
                 </Button>
             </Box>
 
-            {Object.keys(groupedSlots).length === 0 ? (
-                <Box textAlign="center" mt={4}>
-                    <Typography
-                        variant="h6"
-                        sx={{
-                            color: theme.palette.text.secondary,
-                            mb: 2
-                        }}
-                    >
-                        {slotsResponse?.totalCount === 0
-                            ? 'Még nincsenek óraidőpontjaid.'
-                            : 'Nincsenek óraidőpontok ezen az oldalon.'}
-                    </Typography>
-                    {slotsResponse?.totalCount === 0 && (
-                        <Button
-                            variant="outlined"
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            Hozd létre az elsőt!
-                        </Button>
-                    )}
+            {/* Tabs */}
+            <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                sx={{
+                    mb: 3,
+                    borderBottom: 1,
+                    borderColor: 'divider'
+                }}
+            >
+                <Tab label="Aktuális" />
+                <Tab label="Korábbi" />
+            </Tabs>
+
+            {/* Loading State */}
+            {isLoading && (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+                    <CircularProgress size={60} />
                 </Box>
-            ) : (
+            )}
+
+            {/* Content */}
+            {!isLoading && (
                 <>
-                    {Object.entries(groupedSlots).map(([month, days]) => (
-                        <MonthSection key={month} month={month} days={days} />
-                    ))}
+                    {Object.keys(groupedSlots).length === 0 ? (
+                        <Box textAlign="center" mt={4}>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    color: theme.palette.text.secondary,
+                                    mb: 2
+                                }}
+                            >
+                                {tabValue === 0
+                                    ? (slotsResponse?.totalCount === 0
+                                        ? 'Még nincsenek aktuális óraidőpontjaid.'
+                                        : 'Nincsenek óraidőpontok ezen az oldalon.')
+                                    : 'Nincsenek korábbi óraidőpontok.'
+                                }
+                            </Typography>
+                            {tabValue === 0 && slotsResponse?.totalCount === 0 && (
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => setIsModalOpen(true)}
+                                >
+                                    Hozd létre az elsőt!
+                                </Button>
+                            )}
+                        </Box>
+                    ) : (
+                        <>
+                            {Object.entries(groupedSlots).map(([month, days]) => (
+                                <MonthSection key={month} month={month} days={days} />
+                            ))}
+                        </>
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: theme.palette.text.secondary,
+                                    mb: 2
+                                }}
+                            >
+                                {slotsResponse?.totalCount} óraidőpont összesen
+                            </Typography>
+                            <Pagination
+                                count={totalPages}
+                                page={activePage}
+                                onChange={handlePageChange}
+                                color="primary"
+                                size="large"
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        fontSize: '1rem',
+                                    },
+                                }}
+                            />
+                        </Box>
+                    )}
                 </>
             )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: theme.palette.text.secondary,
-                            mb: 2
-                        }}
-                    >
-                        {slotsResponse?.totalCount} óraidőpont összesen
-                    </Typography>
-                    <Pagination
-                        count={totalPages}
-                        page={currentPage}
-                        onChange={handlePageChange}
-                        color="primary"
-                        size="large"
-                        sx={{
-                            '& .MuiPaginationItem-root': {
-                                fontSize: '1rem',
-                            },
-                        }}
-                    />
-                </Box>
-            )}
-
             {/* Modal */}
-            <CreateSlotModal
+            <SlotFormModal
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onCreate={handleCreateSlot}
+                onSubmit={handleCreateSlot}
                 isLoading={createSlotMutation.isPending}
-                error={createSlotMutation.error?.message}
+                mode="create"
             />
 
-            {/* Snackbar */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    variant="filled"
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 };

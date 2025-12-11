@@ -1,5 +1,4 @@
 import {
-    Alert,
     Autocomplete,
     Avatar,
     Box,
@@ -11,7 +10,6 @@ import {
     Radio,
     RadioGroup,
     Slider,
-    Snackbar,
     TextField,
     Typography,
     useTheme
@@ -26,6 +24,8 @@ import { Subject } from "../models/Subject";
 import { Role, StudentUpdateRequest, TeacherUpdateRequest } from "../models/User";
 import { TeachingMethod } from "../utils/enums";
 import { convertBoolsToTeachingMethod, convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
+import { useNotification } from "../hooks/useNotification";
+import { ApiError } from "../utils/ApiError";
 
 interface ProfileForm {
     nickName: string;
@@ -72,9 +72,9 @@ const Profile: FunctionComponent = () => {
         selectedTeachingMethod === TeachingMethod.Both
     );
 
+    const { showSuccess, showError } = useNotification();
     const [isEditing, setIsEditing] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
 
     const isUpdating = updateStudentMutation.isPending || updateTeacherMutation.isPending;
 
@@ -109,10 +109,15 @@ const Profile: FunctionComponent = () => {
         const onSuccess = () => {
             setIsEditing(false);
             setImagePreview(null);
+            showSuccess('Profil sikeresen frissítve!');
         };
 
         const onError = (error: Error) => {
-            setError(error instanceof Error ? error.message : 'Ismeretlen hiba történt');
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Ismeretlen hiba történt');
+            }
         };
 
         if (isTeacher) {
@@ -173,10 +178,6 @@ const Profile: FunctionComponent = () => {
                 alignItems: 'center'
             }}
         >
-            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert severity="error">{error}</Alert>
-            </Snackbar>
-
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',

@@ -23,10 +23,7 @@ interface TeacherFiltersProps {
     onSearch: (searchFilters: TeacherSearchRequest) => void;
 }
 
-const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({
-    initialFilters,
-    onSearch
-}) => {
+const TeacherFilters: FunctionComponent<TeacherFiltersProps> = ({ initialFilters, onSearch }) => {
     const theme = useTheme();
 
     // State to trigger filters reset

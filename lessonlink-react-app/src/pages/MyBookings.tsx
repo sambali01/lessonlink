@@ -1,47 +1,54 @@
+import { BookmarkBorder as BookingsIcon, } from '@mui/icons-material';
 import {
-    BookmarkBorder as BookingsIcon,
-    Refresh as RefreshIcon
-} from '@mui/icons-material';
-import {
-    Alert,
     Box,
-    Button,
     CircularProgress,
-    Container,
+    Pagination,
     Paper,
-    Snackbar,
     Stack,
     Tab,
     Tabs,
     Typography,
     useTheme
 } from '@mui/material';
-import { FunctionComponent, SyntheticEvent, useState } from 'react';
-import TabPanel from '../components/common/TabPanel';
-import BookingCard from '../components/features/booking/BookingCard';
+import { FunctionComponent, SyntheticEvent, useMemo, useState } from 'react';
 import NegativeActionConfirmationModal from '../components/common/NegativeActionConfirmationModal';
+import TabPanel from '../components/common/TabPanel';
+import BookingCard from '../components/features/my-bookings/BookingCard';
 import { useCancelBooking, useMyBookingsAsStudent } from '../hooks/bookingQueries';
 import { BookingStatus } from '../models/Booking';
+import { BOOKINGS_PAGE_SIZE } from '../utils/constants';
+import { useNotification } from '../hooks/useNotification';
+import { ApiError } from '../utils/ApiError';
 
 const MyBookings: FunctionComponent = () => {
     const theme = useTheme();
+    const { showSuccess, showError } = useNotification();
     const [tabValue, setTabValue] = useState(0);
-    const [snackbar, setSnackbar] = useState<{
-        open: boolean;
-        message: string;
-        severity: 'success' | 'error'
-    }>({
-        open: false,
-        message: '',
-        severity: 'success'
-    });
+    const [activePage, setActivePage] = useState(1);
+    const [pastPage, setPastPage] = useState(1);
     const [bookingToCancel, setBookingToCancel] = useState<{ id: number; teacherName: string; time: string } | null>(null);
 
-    const { data: bookings, isLoading, error, refetch } = useMyBookingsAsStudent();
+    const { data: bookings, isLoading, refetch } = useMyBookingsAsStudent();
     const cancelBookingMutation = useCancelBooking();
 
     const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
+        // Reset to first page when switching tabs
+        if (newValue === 0) {
+            setActivePage(1);
+        } else {
+            setPastPage(1);
+        }
+    };
+
+    const handleActivePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setActivePage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePastPageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setPastPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleCancelBooking = (bookingId: number) => {
@@ -63,19 +70,16 @@ const MyBookings: FunctionComponent = () => {
         if (bookingToCancel) {
             try {
                 await cancelBookingMutation.mutateAsync(bookingToCancel.id);
-                setSnackbar({
-                    open: true,
-                    message: 'Foglalás sikeresen lemondva',
-                    severity: 'success'
-                });
+                showSuccess('Foglalás sikeresen lemondva');
             } catch (error) {
-                setSnackbar({
-                    open: true,
-                    message: error instanceof Error ? error.message : 'Hiba történt a lemondás során',
-                    severity: 'error'
-                });
+                if (error instanceof ApiError) {
+                    showError(error.errors);
+                } else {
+                    showError('Hiba történt a lemondás során');
+                }
             } finally {
                 setBookingToCancel(null);
+                refetch();
             }
         }
     };
@@ -84,35 +88,46 @@ const MyBookings: FunctionComponent = () => {
         setBookingToCancel(null);
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({ ...prev, open: false }));
-    };
+    // Filter and sort bookings by status
+    const { activeBookings, pastBookings, paginatedActiveBookings, paginatedPastBookings, activeTotalPages, pastTotalPages } = useMemo(() => {
+        const now = new Date();
 
-    const handleRefresh = () => {
-        refetch();
-    };
+        const active = (bookings || [])
+            .filter(booking =>
+                (booking.status === BookingStatus.Pending || booking.status === BookingStatus.Confirmed) &&
+                new Date(booking.slotEndTime) >= now
+            )
+            .sort((a, b) => new Date(a.slotStartTime).getTime() - new Date(b.slotStartTime).getTime());
 
-    // Filter bookings by status
-    const activeBookings = bookings?.filter(booking =>
-        booking.status === BookingStatus.Pending || booking.status === BookingStatus.Confirmed
-    ) || [];
+        const past = (bookings || [])
+            .filter(booking =>
+                booking.status === BookingStatus.Cancelled ||
+                new Date(booking.slotEndTime) < now
+            )
+            .sort((a, b) => new Date(b.slotStartTime).getTime() - new Date(a.slotStartTime).getTime());
 
-    const pastBookings = bookings?.filter(booking =>
-        booking.status === BookingStatus.Cancelled || new Date(booking.slotEndTime) < new Date()
-    ) || [];
+        const activeTotalPages = Math.ceil(active.length / BOOKINGS_PAGE_SIZE);
+        const pastTotalPages = Math.ceil(past.length / BOOKINGS_PAGE_SIZE);
 
-    if (error) {
-        return (
-            <Container sx={{ textAlign: 'center', py: 8 }}>
-                <Alert severity="error" sx={{ mb: 3 }}>
-                    Hiba történt a foglalások betöltése közben: {error.message}
-                </Alert>
-                <Button variant="contained" onClick={handleRefresh}>
-                    Újrapróbálkozás
-                </Button>
-            </Container>
+        const paginatedActive = active.slice(
+            (activePage - 1) * BOOKINGS_PAGE_SIZE,
+            activePage * BOOKINGS_PAGE_SIZE
         );
-    }
+
+        const paginatedPast = past.slice(
+            (pastPage - 1) * BOOKINGS_PAGE_SIZE,
+            pastPage * BOOKINGS_PAGE_SIZE
+        );
+
+        return {
+            activeBookings: active,
+            pastBookings: past,
+            paginatedActiveBookings: paginatedActive,
+            paginatedPastBookings: paginatedPast,
+            activeTotalPages,
+            pastTotalPages
+        };
+    }, [bookings, activePage, pastPage]);
 
     return (
         <Box sx={{ p: { xs: 1, sm: 2 } }}>
@@ -131,15 +146,6 @@ const MyBookings: FunctionComponent = () => {
                         Saját foglalások
                     </Typography>
                 </Box>
-
-                <Button
-                    variant="outlined"
-                    startIcon={<RefreshIcon />}
-                    onClick={handleRefresh}
-                    disabled={isLoading}
-                >
-                    Frissítés
-                </Button>
             </Box>
 
             {isLoading ? (
@@ -190,17 +196,45 @@ const MyBookings: FunctionComponent = () => {
                                     </Typography>
                                 </Box>
                             ) : (
-                                <Stack spacing={3}>
-                                    {activeBookings.map((booking) => (
-                                        <BookingCard
-                                            key={booking.id}
-                                            booking={booking}
-                                            onCancel={handleCancelBooking}
-                                            showCancellationButton={true}
-                                            isLoading={cancelBookingMutation.isPending}
-                                        />
-                                    ))}
-                                </Stack>
+                                <>
+                                    <Stack spacing={3}>
+                                        {paginatedActiveBookings.map((booking) => (
+                                            <BookingCard
+                                                key={booking.id}
+                                                booking={booking}
+                                                onCancel={handleCancelBooking}
+                                                showCancellationButton={true}
+                                                isLoading={cancelBookingMutation.isPending}
+                                            />
+                                        ))}
+                                    </Stack>
+
+                                    {activeTotalPages > 1 && (
+                                        <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    color: theme.palette.text.secondary,
+                                                    mb: 2
+                                                }}
+                                            >
+                                                {activeBookings.length} aktív foglalás összesen
+                                            </Typography>
+                                            <Pagination
+                                                count={activeTotalPages}
+                                                page={activePage}
+                                                onChange={handleActivePageChange}
+                                                color="primary"
+                                                size="large"
+                                                sx={{
+                                                    '& .MuiPaginationItem-root': {
+                                                        fontSize: '1rem',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                    )}
+                                </>
                             )}
                         </Box>
                     </TabPanel>
@@ -223,34 +257,48 @@ const MyBookings: FunctionComponent = () => {
                                     </Typography>
                                 </Box>
                             ) : (
-                                <Stack spacing={3}>
-                                    {pastBookings.map((booking) => (
-                                        <BookingCard
-                                            key={booking.id}
-                                            booking={booking}
-                                            showCancellationButton={false}
-                                        />
-                                    ))}
-                                </Stack>
+                                <>
+                                    <Stack spacing={3}>
+                                        {paginatedPastBookings.map((booking) => (
+                                            <BookingCard
+                                                key={booking.id}
+                                                booking={booking}
+                                                showCancellationButton={false}
+                                            />
+                                        ))}
+                                    </Stack>
+
+                                    {pastTotalPages > 1 && (
+                                        <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    color: theme.palette.text.secondary,
+                                                    mb: 2
+                                                }}
+                                            >
+                                                {pastBookings.length} korábbi foglalás összesen
+                                            </Typography>
+                                            <Pagination
+                                                count={pastTotalPages}
+                                                page={pastPage}
+                                                onChange={handlePastPageChange}
+                                                color="primary"
+                                                size="large"
+                                                sx={{
+                                                    '& .MuiPaginationItem-root': {
+                                                        fontSize: '1rem',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                    )}
+                                </>
                             )}
                         </Box>
                     </TabPanel>
                 </Paper>
             )}
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    variant="filled"
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
 
             <NegativeActionConfirmationModal
                 open={!!bookingToCancel}

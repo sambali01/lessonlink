@@ -8,10 +8,10 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TeacherCard from "../components/features/teacher-search/TeacherCard";
+import TeacherFilters from "../components/features/teacher-search/TeacherFilters";
 import { useSearchTeachers } from "../hooks/teacherQueries";
 import { TeacherSearchRequest } from "../models/Teacher";
-import TeacherFilters from "../components/features/teacher/TeacherFilters";
-import TeacherCard from "../components/features/teacher/TeacherCard";
 import { TEACHER_SEARCH_PAGE_SIZE } from "../utils/constants";
 
 const TeacherSearch: FunctionComponent = () => {
@@ -19,7 +19,7 @@ const TeacherSearch: FunctionComponent = () => {
     const navigate = useNavigate();
     const [searchFilters, setSearchFilters] = useState<TeacherSearchRequest>({ page: 1, pageSize: TEACHER_SEARCH_PAGE_SIZE });
 
-    const { data: paginatedData, isLoading, isError } = useSearchTeachers(searchFilters);
+    const { data: paginatedData, isLoading } = useSearchTeachers(searchFilters);
     const teachers = paginatedData?.items ?? [];
     const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / TEACHER_SEARCH_PAGE_SIZE) : 0;
 
@@ -64,11 +64,7 @@ const TeacherSearch: FunctionComponent = () => {
                     justifyContent: 'flex-start',
                     gap: 4
                 }}>
-                    {isError ? (
-                        <Typography color="error" sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 4 }}>
-                            Hiba történt az adatok betöltése közben
-                        </Typography>
-                    ) : isLoading ? (
+                    {isLoading ? (
                         Array.from(new Array(6)).map((_, index) => (
                             <Skeleton
                                 key={`skeleton-${index}`}

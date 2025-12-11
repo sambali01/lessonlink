@@ -1,36 +1,55 @@
 import { AxiosResponse } from "axios";
 import { axiosInstance } from "../configs/axiosConfig";
 import { RegisterStudentRequest, RegisterTeacherRequest, StudentUpdateRequest, TeacherUpdateRequest, User } from "../models/User";
+import { ApiError } from "../utils/ApiError";
 
 const USER_API = "/Users";
 
 export const registerStudent = async (data: RegisterStudentRequest) => {
-    return await axiosInstance.post(USER_API + "/register-student", data);
+    try {
+        return await axiosInstance.post(USER_API + "/register-student", data);
+    } catch (error) {
+        throw ApiError.fromAxiosError(error);
+    }
 };
 
 export const registerTeacher = async (data: RegisterTeacherRequest) => {
-    return await axiosInstance.post(USER_API + "/register-teacher", data);
+    try {
+        return await axiosInstance.post(USER_API + "/register-teacher", data);
+    } catch (error) {
+        throw ApiError.fromAxiosError(error);
+    }
 };
 
 export const findUserById = async (userId: string): Promise<AxiosResponse<User>> => {
-    return await axiosInstance.get<User>(USER_API + "/" + userId);
+    try {
+        return await axiosInstance.get<User>(USER_API + "/" + userId);
+    } catch (error) {
+        throw ApiError.fromAxiosError(error);
+    }
 };
 
 export const updateStudent = async (userId: string, data: StudentUpdateRequest) => {
+
     const formData = new FormData();
 
     if (data.nickName) formData.append('nickName', data.nickName);
     if (data.profilePicture) formData.append('profilePicture', data.profilePicture);
 
-    const response = await axiosInstance.put<User>(`${USER_API}/update-student/${userId}`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    });
-    return response.data;
+    try {
+        const response = await axiosInstance.put<User>(`${USER_API}/update-student/${userId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw ApiError.fromAxiosError(error);
+    }
 };
 
 export const updateTeacher = async (userId: string, data: TeacherUpdateRequest): Promise<User> => {
+
     const formData = new FormData();
 
     if (data.nickName) formData.append('nickName', data.nickName);
@@ -47,10 +66,14 @@ export const updateTeacher = async (userId: string, data: TeacherUpdateRequest):
         });
     }
 
-    const response = await axiosInstance.put<User>(`${USER_API}/update-teacher/${userId}`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    });
-    return response.data;
+    try {
+        const response = await axiosInstance.put<User>(`${USER_API}/update-teacher/${userId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw ApiError.fromAxiosError(error);
+    }
 };

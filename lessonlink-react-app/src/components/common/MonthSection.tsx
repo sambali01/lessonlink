@@ -1,15 +1,18 @@
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import DayCard from './DayCard';
-import { AvailableSlot } from '../../../models/AvailableSlot';
-import { FunctionComponent } from 'react';
+import MyDayCard from '../features/my-slots/MyDayCard';
+import { AvailableSlot } from '../../models/AvailableSlot';
+import { FunctionComponent, ReactElement } from 'react';
+import { CalendarToday as CalendarIcon } from '@mui/icons-material';
 
 interface MonthSectionProps {
     month: string;
     days: Record<string, AvailableSlot[]>;
+    renderDayCard?: (date: string, slots: AvailableSlot[]) => ReactElement;
+    showIcon?: boolean;
 }
 
-const MonthSection: FunctionComponent<MonthSectionProps> = ({ month, days }) => {
+const MonthSection: FunctionComponent<MonthSectionProps> = ({ month, days, renderDayCard, showIcon = false }) => {
     const theme = useTheme();
 
     return (
@@ -18,12 +21,17 @@ const MonthSection: FunctionComponent<MonthSectionProps> = ({ month, days }) => 
                 variant="h5"
                 sx={{
                     color: theme.palette.text.primary,
-                    mb: 2,
+                    mb: showIcon ? 3 : 2,
                     pl: 1,
-                    borderLeft: `4px solid ${theme.palette.primary.main}`
+                    borderLeft: `4px solid ${theme.palette.primary.main}`,
+                    display: showIcon ? 'flex' : 'block',
+                    alignItems: 'center',
+                    gap: 1,
+                    fontWeight: showIcon ? 500 : 400
                 }}
             >
-                {month}
+                {showIcon && <CalendarIcon />}
+                {month.charAt(0).toUpperCase() + month.slice(1)}
             </Typography>
 
             <Box
@@ -41,7 +49,9 @@ const MonthSection: FunctionComponent<MonthSectionProps> = ({ month, days }) => 
                 {Object.entries(days)
                     .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
                     .map(([date, slots]) => (
-                        <DayCard key={date} date={date} slots={slots} />
+                        renderDayCard
+                            ? renderDayCard(date, slots)
+                            : <MyDayCard key={date} date={date} slots={slots} />
                     ))
                 }
             </Box>

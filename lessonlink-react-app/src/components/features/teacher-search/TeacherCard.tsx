@@ -14,9 +14,9 @@ import {
     useTheme
 } from "@mui/material";
 import { FunctionComponent } from "react";
+import { Subject } from '../../../models/Subject';
 import { Teacher } from "../../../models/Teacher";
 import { BLANK_PROFILE_PICTURE_PATH } from "../../../utils/constants";
-import { Subject } from '../../../models/Subject';
 
 interface TeacherCardProps {
     teacher: Teacher;

@@ -23,13 +23,13 @@ public class AuthController(
         var user = await userManager.FindByEmailAsync(loginRequest.Email);
         if (user == null)
         {
-            return Unauthorized("There is no user with the email provided.");
+            return Unauthorized("Nincs felhasználó a megadott email címmel.");
         }
 
         var passwordCheck = await signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
         if (!passwordCheck.Succeeded)
         {
-            return Unauthorized("Incorrect email or password.");
+            return Unauthorized("Helytelen email cím vagy jelszó.");
         }
 
         // Generate access and refresh token
@@ -93,7 +93,7 @@ public class AuthController(
         var user = await userManager.FindByIdAsync(refreshTokenFromDb.UserId);
         if (user == null)
         {
-            return NotFound("The user who owns the refresh token was not found.");
+            return NotFound("A refresh tokenhez tartozó felhasználó nem található.");
         }
 
         // Generate access and refresh token

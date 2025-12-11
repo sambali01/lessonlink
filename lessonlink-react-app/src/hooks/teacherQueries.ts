@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { PaginatedResponse } from '../models/PaginatedResponse';
 import { Teacher, TeacherSearchRequest } from '../models/Teacher';
-import { getFeaturedTeachers, getTeacherById, searchTeachers } from '../services/teacher.service';
+import { getFeaturedTeachers, getTeacherById, getTeacherContact, searchTeachers } from '../services/teacher.service';
 
 export const useFeaturedTeachers = () => {
     return useQuery({
@@ -16,6 +16,15 @@ export const useTeacherDetails = (userId: string, options?: { enabled?: boolean 
         queryKey: ['teacher', userId],
         queryFn: () => getTeacherById(userId),
         enabled: !!userId && (options?.enabled ?? true)
+    });
+};
+
+export const useTeacherContact = (teacherId: string, options?: { enabled?: boolean }) => {
+    return useQuery<string, Error>({
+        queryKey: ['teacherContact', teacherId],
+        queryFn: () => getTeacherContact(teacherId),
+        enabled: !!teacherId && (options?.enabled ?? true),
+        staleTime: 1000 * 60 * 10    // 10 minutes cache
     });
 };
 

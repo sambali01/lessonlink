@@ -3,6 +3,8 @@ using LessonLink.BusinessLogic.Repositories;
 using LessonLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
+namespace LessonLink.Infrastructure.Repositories;
+
 public class TeacherSubjectRepository(LessonLinkDbContext context) : ITeacherSubjectRepository
 {
     public async Task<IReadOnlyCollection<TeacherSubject>> GetByTeacherIdAsync(string teacherId)

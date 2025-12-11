@@ -10,14 +10,14 @@ export type UserAuth = {
     roles: string[];
 };
 
-export type RegisterStudentRequest = {
+export interface RegisterStudentRequest {
     firstName: string;
     surName: string;
     email: string;
     password: string;
 };
 
-export type RegisterTeacherRequest = {
+export interface RegisterTeacherRequest {
     firstName: string;
     surName: string;
     email: string;
@@ -30,12 +30,12 @@ export type RegisterTeacherRequest = {
     subjectNames: string[];
 };
 
-export type StudentUpdateRequest = {
+export interface StudentUpdateRequest {
     nickName?: string;
     profilePicture?: File;
 };
 
-export type TeacherUpdateRequest = {
+export interface TeacherUpdateRequest {
     nickName?: string;
     profilePicture?: File;
     acceptsOnline?: boolean;

@@ -2,12 +2,12 @@ import { Box, Button, Container, Skeleton, Typography, useTheme } from "@mui/mat
 import { FunctionComponent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFeaturedTeachers } from "../../../hooks/teacherQueries";
-import TeacherCard from "../teacher/TeacherCard";
+import TeacherCard from "../teacher-search/TeacherCard";
 
 const FeaturedTeachers: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { data: teachers = [], isLoading, isError } = useFeaturedTeachers();
+    const { data: teachers = [], isLoading } = useFeaturedTeachers();
 
     return (
         <Box sx={{
@@ -41,44 +41,38 @@ const FeaturedTeachers: FunctionComponent = () => {
                     </Button>
                 </Box>
 
-                {isError ? (
-                    <Typography color="error" textAlign="center">
-                        Hiba történt az adatok betöltése közben.
-                    </Typography>
-                ) : (
-                    <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                            xs: '1fr',
-                            sm: 'repeat(2, 1fr)',
-                            md: 'repeat(3, 1fr)',
-                            lg: 'repeat(4, 1fr)'
-                        },
-                        gap: 4,
-                        justifyItems: 'center'
-                    }}>
-                        {(isLoading ? Array.from(new Array(4)) : teachers).map((teacher, index) => (
-                            isLoading ? (
-                                <Skeleton
-                                    key={`skeleton-${index}`}
-                                    variant="rectangular"
-                                    height={400}
-                                    sx={{
-                                        borderRadius: 2,
-                                        width: '100%',
-                                        maxWidth: 345
-                                    }}
-                                />
-                            ) : (
-                                <TeacherCard
-                                    key={teacher.userId}
-                                    teacher={teacher}
-                                    onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
-                                />
-                            )
-                        ))}
-                    </Box>
-                )}
+                <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(3, 1fr)',
+                        lg: 'repeat(4, 1fr)'
+                    },
+                    gap: 4,
+                    justifyItems: 'center'
+                }}>
+                    {(isLoading ? Array.from(new Array(4)) : teachers).map((teacher, index) => (
+                        isLoading ? (
+                            <Skeleton
+                                key={`skeleton-${index}`}
+                                variant="rectangular"
+                                height={400}
+                                sx={{
+                                    borderRadius: 2,
+                                    width: '100%',
+                                    maxWidth: 345
+                                }}
+                            />
+                        ) : (
+                            <TeacherCard
+                                key={teacher.userId}
+                                teacher={teacher}
+                                onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
+                            />
+                        )
+                    ))}
+                </Box>
             </Container>
         </Box>
     );

@@ -33,4 +33,11 @@ public class TeachersController(TeacherService teacherService) : BaseApiControll
         var result = await teacherService.SearchAsync(searchRequest);
         return HandleServiceResult(result);
     }
+
+    [HttpGet("{teacherId}/contact")]
+    public async Task<IActionResult> GetTeacherContact(string teacherId)
+    {
+        var result = await teacherService.GetTeacherContactAsync(teacherId);
+        return HandleServiceResult(result);
+    }
 }

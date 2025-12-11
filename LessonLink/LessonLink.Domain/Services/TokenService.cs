@@ -21,9 +21,9 @@ public class TokenService(
     {
         var refreshToken = await unitOfWork.RefreshTokenRepository.GetByHashedValueAsync(hashedValue);
         if (refreshToken == null)
-            return ServiceResult<RefreshToken>.Failure("Invalid refresh token.", 401);
+            return ServiceResult<RefreshToken>.Failure("Érvénytelen frissítési token.", 401);
         if (refreshToken.ExpiresAt < DateTime.UtcNow)
-            return ServiceResult<RefreshToken>.Failure("The provided refresh token is expired.", 401);
+            return ServiceResult<RefreshToken>.Failure("A megadott frissítési token lejárt.", 401);
 
         return ServiceResult<RefreshToken>.Success(refreshToken);
     }
@@ -35,7 +35,7 @@ public class TokenService(
         {
             return ServiceResult<object>.Success(null);
         }
-        return ServiceResult<object>.Failure("An error occurred while deleting the refresh token.", 500);
+        return ServiceResult<object>.Failure("Hiba történt a frissítési token törlése során.", 500);
     }
 
     public ServiceResult<string> GenerateAccessToken(User user, IList<string> roles)
@@ -100,7 +100,7 @@ public class TokenService(
             return ServiceResult<RefreshToken>.Success(refreshToken);
         }
 
-        return ServiceResult<RefreshToken>.Failure("An error occurred while creating the refresh token.", 500);
+        return ServiceResult<RefreshToken>.Failure("Hiba történt a frissítési token létrehozása során.", 500);
     }
 
     public ServiceResult<object> SetRefreshTokenResponseCookie(RefreshToken refreshToken)
@@ -126,7 +126,7 @@ public class TokenService(
         var refreshTokenValue = httpContextAccessor.HttpContext.Request.Cookies[REFRESH_TOKEN_COOKIE];
         if (refreshTokenValue == null)
         {
-            return ServiceResult<string>.Failure("No refresh token provided.", 401);
+            return ServiceResult<string>.Failure("Nincs frissítési token megadva.", 401);
         }
         return ServiceResult<string>.Success(refreshTokenValue);
     }

@@ -20,11 +20,13 @@ import {
 import { FunctionComponent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useSubjects } from "../hooks/subjectQueries";
 import { useRegisterStudent, useRegisterTeacher } from "../hooks/userQueries";
+import { useNotification } from "../hooks/useNotification";
 import { Role } from "../models/User";
 import { TeachingMethod } from "../utils/enums";
 import { convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
-import { useSubjects } from "../hooks/subjectQueries";
+import { ApiError } from "../utils/ApiError";
 
 interface RegisterForm {
     firstName: string;
@@ -53,6 +55,7 @@ const Register: FunctionComponent = () => {
 
     const registerStudentMutation = useRegisterStudent();
     const registerTeacherMutation = useRegisterTeacher();
+    const { showSuccess, showError } = useNotification();
     const { data: allSubjects } = useSubjects();
     const subjectNames = allSubjects ? allSubjects.map((s) => s.name) : [];
 
@@ -89,9 +92,14 @@ const Register: FunctionComponent = () => {
                     subjectNames: data.subjectNames || []
                 });
             }
+            showSuccess('Sikeres regisztráció! Jelentkezz be a folytatáshoz.');
             navigate('/login');
         } catch (error) {
-            console.error("Registration failed:", error);
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Regisztráció sikertelen');
+            }
         }
     };
 

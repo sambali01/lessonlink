@@ -6,35 +6,36 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LessonLink.WebApi.Controllers;
 
-public class AvailableSlotsController : BaseApiController
+public class AvailableSlotsController(AvailableSlotService availableSlotService) : BaseApiController
 {
-    private readonly AvailableSlotService _availableSlotService;
-
-    public AvailableSlotsController(AvailableSlotService availableSlotService)
-    {
-        _availableSlotService = availableSlotService;
-    }
-
-    [HttpGet("my-slots")]
-    [Authorize(Roles = "Teacher")]
-    public async Task<IActionResult> GetMySlots([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-    {
-        var result = await _availableSlotService.GetMySlotsPaginatedAsync(User.GetUserId(), page, pageSize);
-        return HandleServiceResult(result);
-    }
-
     [HttpGet("{id}/details")]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> GetSlotDetails(int id)
     {
-        var result = await _availableSlotService.GetSlotDetailsAsync(User.GetUserId(), id);
+        var result = await availableSlotService.GetSlotDetailsAsync(User.GetUserId(), id);
+        return HandleServiceResult(result);
+    }
+
+    [HttpGet("my-slots/current")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> GetMyCurrentSlots([FromQuery] int page, [FromQuery] int pageSize)
+    {
+        var result = await availableSlotService.GetCurrentSlotsPaginatedAsync(User.GetUserId(), page, pageSize);
+        return HandleServiceResult(result);
+    }
+
+    [HttpGet("my-slots/past")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> GetMyPastSlots([FromQuery] int page, [FromQuery] int pageSize)
+    {
+        var result = await availableSlotService.GetPastSlotsPaginatedAsync(User.GetUserId(), page, pageSize);
         return HandleServiceResult(result);
     }
 
     [HttpGet("teacher/{teacherId}")]
-    public async Task<IActionResult> GetSlotsByTeacherId(string teacherId)
+    public async Task<IActionResult> GetCurrentSlotsByTeacherId(string teacherId, [FromQuery] int page, [FromQuery] int pageSize)
     {
-        var result = await _availableSlotService.GetNotBookedSlotsByTeacherIdAsync(teacherId);
+        var result = await availableSlotService.GetCurrentNotBookedSlotsPaginatedAsync(teacherId, page, pageSize);
         return HandleServiceResult(result);
     }
 
@@ -42,7 +43,15 @@ public class AvailableSlotsController : BaseApiController
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> CreateSlot([FromBody] CreateAvailableSlotRequest createRequest)
     {
-        var result = await _availableSlotService.CreateSlotAsync(User.GetUserId(), createRequest);
+        var result = await availableSlotService.CreateSlotAsync(User.GetUserId(), createRequest);
+        return HandleServiceResult(result);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Teacher")]
+    public async Task<IActionResult> UpdateSlot(int id, [FromBody] UpdateAvailableSlotRequest updateRequest)
+    {
+        var result = await availableSlotService.UpdateSlotAsync(User.GetUserId(), id, updateRequest);
         return HandleServiceResult(result);
     }
 
@@ -50,7 +59,7 @@ public class AvailableSlotsController : BaseApiController
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> DeleteSlot(int id)
     {
-        var result = await _availableSlotService.DeleteSlotAsync(User.GetUserId(), id);
+        var result = await availableSlotService.DeleteSlotAsync(User.GetUserId(), id);
         return HandleServiceResult(result);
     }
 }

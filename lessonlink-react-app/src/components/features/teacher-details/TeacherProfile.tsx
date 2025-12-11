@@ -20,14 +20,14 @@ import { FunctionComponent } from 'react';
 import { Teacher } from '../../../models/Teacher';
 
 interface TeacherProfileProps {
-    teacher: Teacher;
+    teacher: Teacher | undefined;
     isLoading: boolean;
 }
 
 const TeacherProfile: FunctionComponent<TeacherProfileProps> = ({ teacher, isLoading }) => {
     const theme = useTheme();
 
-    if (isLoading) {
+    if (isLoading || !teacher) {
         return (
             <Paper sx={{ p: 4, borderRadius: 2 }}>
                 <Stack spacing={3}>

@@ -7,6 +7,7 @@ import {
     decideBookingAcceptance,
     cancelBooking
 } from '../services/booking.service';
+import { useAuth } from './useAuth';
 
 export const useCreateBooking = () => {
     const queryClient = useQueryClient();
@@ -14,24 +15,31 @@ export const useCreateBooking = () => {
     return useMutation<Booking, Error, CreateBookingRequest>({
         mutationFn: createBooking,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['myBookings', 'student'] });
-            queryClient.invalidateQueries({ queryKey: ['myBookings', 'teacher'] });
+            queryClient.invalidateQueries({ queryKey: ['myBookings'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
+            queryClient.invalidateQueries({ queryKey: ['myCurrentSlots'] });
+            queryClient.invalidateQueries({ queryKey: ['myPastSlots'] });
         },
     });
 };
 
 export const useMyBookingsAsStudent = () => {
+    const { currentUserAuth } = useAuth();
+
     return useQuery<Booking[], Error>({
-        queryKey: ['myBookings', 'student'],
+        queryKey: ['myBookings', currentUserAuth?.userId, 'student'],
         queryFn: getMyBookingsAsStudent,
+        enabled: !!currentUserAuth?.userId,
     });
 };
 
 export const useMyBookingsAsTeacher = () => {
+    const { currentUserAuth } = useAuth();
+
     return useQuery<Booking[], Error>({
-        queryKey: ['myBookings', 'teacher'],
+        queryKey: ['myBookings', currentUserAuth?.userId, 'teacher'],
         queryFn: getMyBookingsAsTeacher,
+        enabled: !!currentUserAuth?.userId,
     });
 };
 
@@ -43,6 +51,8 @@ export const useDecideBookingAcceptance = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['myBookings'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlotDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['myCurrentSlots'] });
+            queryClient.invalidateQueries({ queryKey: ['myPastSlots'] });
         },
     });
 };
@@ -56,6 +66,8 @@ export const useCancelBooking = () => {
             queryClient.invalidateQueries({ queryKey: ['myBookings', 'student'] });
             queryClient.invalidateQueries({ queryKey: ['myBookings', 'teacher'] });
             queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
+            queryClient.invalidateQueries({ queryKey: ['myCurrentSlots'] });
+            queryClient.invalidateQueries({ queryKey: ['myPastSlots'] });
         },
     });
 };

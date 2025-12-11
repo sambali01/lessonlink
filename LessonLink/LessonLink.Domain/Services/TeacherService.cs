@@ -37,12 +37,23 @@ public class TeacherService(IUnitOfWork unitOfWork)
         var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(id);
         if (teacher == null)
         {
-            return ServiceResult<TeacherResponse>.Failure("Teacher with given id not found.", 404);
+            return ServiceResult<TeacherResponse>.Failure("A megadott azonosítóval nem található tanár.", 404);
         }
 
         var teacherDto = TeacherMappers.TeacherToResponse(teacher);
 
         return ServiceResult<TeacherResponse>.Success(teacherDto);
+    }
+
+    public async Task<ServiceResult<string>> GetTeacherContactAsync(string teacherId)
+    {
+        var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(teacherId);
+        if (teacher == null)
+        {
+            return ServiceResult<string>.Failure("A megadott azonosítóval nem található tanár.", 404);
+        }
+
+        return ServiceResult<string>.Success(teacher.Contact);
     }
 
     public async Task<ServiceResult<PaginatedResponse<TeacherResponse>>> SearchAsync(TeacherSearchRequest teacherSearchRequest)
@@ -103,7 +114,7 @@ public class TeacherService(IUnitOfWork unitOfWork)
             return ServiceResult<User>.Success(user, 201);
         }
 
-        return ServiceResult<User>.Failure("An error occurred while creating the teacher.", 500);
+        return ServiceResult<User>.Failure("Hiba történt a tanár létrehozása során.", 500);
     }
 
     /// <summary>
@@ -117,7 +128,7 @@ public class TeacherService(IUnitOfWork unitOfWork)
         var teacher = await unitOfWork.TeacherRepository.GetByIdAsync(teacherId);
         if (teacher == null)
         {
-            return ServiceResult<User>.Failure("Teacher not found", 404);
+            return ServiceResult<User>.Failure("A tanár nem található", 404);
         }
 
         // Validate that at least one of online or in-person acceptance is true
@@ -127,14 +138,14 @@ public class TeacherService(IUnitOfWork unitOfWork)
             bool acceptsInPerson = teacherUpdateRequest.AcceptsInPerson ?? teacher.AcceptsInPerson;
             if (!acceptsOnline && !acceptsInPerson)
             {
-                return ServiceResult<User>.Failure("The teacher must accept at least one of online or in-person lessons.", 400);
+                return ServiceResult<User>.Failure("Legalább az egyik oktatási formát (online vagy személyes) el kell fogadnod.", 400);
             }
         }
 
         // Validate that location is provided when in-person lessons are accepted
         if (teacherUpdateRequest.AcceptsInPerson == true && string.IsNullOrEmpty(teacherUpdateRequest.Location))
         {
-            return ServiceResult<User>.Failure("Location must be provided when accepting in-person lessons.", 400);
+            return ServiceResult<User>.Failure("Személyes oktatás elfogadása esetén meg kell adnod a helyszínt.", 400);
         }
 
         // Set online acceptance
@@ -147,12 +158,17 @@ public class TeacherService(IUnitOfWork unitOfWork)
         if (teacherUpdateRequest.AcceptsInPerson.HasValue)
         {
             teacher.AcceptsInPerson = teacherUpdateRequest.AcceptsInPerson.Value;
-        }
 
-        // Set location
-        if (teacherUpdateRequest.Location != null)
-        {
-            teacher.Location = teacherUpdateRequest.Location;
+            // Clear location if in-person is disabled
+            if (teacherUpdateRequest.AcceptsInPerson == false)
+            {
+                teacher.Location = null;
+            }
+            // Set location if in-person is enabled and location is provided
+            else if (teacherUpdateRequest.AcceptsInPerson == true && teacherUpdateRequest.Location != null)
+            {
+                teacher.Location = teacherUpdateRequest.Location;
+            }
         }
 
         // Set hourly rate
@@ -187,7 +203,7 @@ public class TeacherService(IUnitOfWork unitOfWork)
             return ServiceResult<User>.Success(null);
         }
 
-        return ServiceResult<User>.Failure("An error occurred while updating the teacher.", 500);
+        return ServiceResult<User>.Failure("Hiba történt a tanári profilod módosítása során.", 500);
     }
 
     /// <summary>
@@ -229,7 +245,7 @@ public class TeacherService(IUnitOfWork unitOfWork)
                 return ServiceResult<User>.Success(null, 204);
             }
 
-            return ServiceResult<User>.Failure("An error occurred while deleting the teacher.", 500);
+            return ServiceResult<User>.Failure("Hiba történt a tanár törlése során.", 500);
         }
 
         return ServiceResult<User>.Success(null, 204);

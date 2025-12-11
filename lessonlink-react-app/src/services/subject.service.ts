@@ -1,5 +1,6 @@
 import { axiosInstance } from "../configs/axiosConfig";
 import { Subject } from "../models/Subject";
+import { ApiError } from "../utils/ApiError";
 
 const SUBJECT_API = '/Subjects';
 
@@ -8,6 +9,6 @@ export const getSubjects = async (): Promise<Subject[]> => {
         const response = await axiosInstance.get(SUBJECT_API);
         return response.data;
     } catch (error) {
-        throw new Error('Error fetching subjects: ' + error);
+        throw ApiError.fromAxiosError(error);
     }
 };

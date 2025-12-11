@@ -10,115 +10,18 @@ namespace LessonLink.UnitTest;
 public class AvailableSlotServiceTests
 {
     private readonly Mock<IAvailableSlotRepository> _mockAvailableSlotRepository;
+    private readonly Mock<IBookingRepository> _mockBookingRepository;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly AvailableSlotService _availableSlotService;
 
     public AvailableSlotServiceTests()
     {
         _mockAvailableSlotRepository = new Mock<IAvailableSlotRepository>();
+        _mockBookingRepository = new Mock<IBookingRepository>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockUnitOfWork.Setup(x => x.AvailableSlotRepository).Returns(_mockAvailableSlotRepository.Object);
+        _mockUnitOfWork.Setup(x => x.BookingRepository).Returns(_mockBookingRepository.Object);
         _availableSlotService = new AvailableSlotService(_mockUnitOfWork.Object);
-    }
-
-    [Fact]
-    public async Task GetMySlotsAsync_WithValidTeacherId_ShouldReturnSlotsWithBookings()
-    {
-        // Arrange
-        var teacherId = "teacher-123";
-        var availableSlots = new List<AvailableSlot>
-        {
-            new() {
-                Id = 1,
-                TeacherId = teacherId,
-                StartTime = DateTime.UtcNow.AddDays(1),
-                EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
-                Bookings = new List<Booking>
-                {
-                    new Booking
-                    {
-                        Id = 1,
-                        AvailableSlotId = 1,
-                        Status = BookingStatus.Pending,
-                        Student = new User { FirstName = "John", SurName = "Doe", NickName = "JohnD" },
-                        StudentId = "student-1"
-                    },
-                    new Booking
-                    {
-                        Id = 2,
-                        AvailableSlotId = 1,
-                        Status = BookingStatus.Cancelled, // This should be filtered out
-                        Student = new User { FirstName = "Jane", SurName = "Smith", NickName = "JaneS" },
-                        StudentId = "student-2"
-                    }
-                }
-            }
-        };
-
-        _mockAvailableSlotRepository
-            .Setup(x => x.GetByTeacherIdWithBookingsAsync(teacherId))
-            .ReturnsAsync(availableSlots);
-
-        // Act
-        var result = await _availableSlotService.GetMySlotsAsync(teacherId);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
-        result.Data.Should().HaveCount(1);
-
-        var slot = result.Data.First();
-        slot.TeacherId.Should().Be(teacherId);
-        slot.Bookings.Should().HaveCount(1); // Only non-cancelled bookings
-        slot.Bookings.First().Status.Should().Be(BookingStatus.Pending);
-    }
-
-    [Fact]
-    public async Task GetMySlotsAsync_WithEmptyTeacherId_ShouldReturnFailure()
-    {
-        // Arrange & Act
-        var result = await _availableSlotService.GetMySlotsAsync("");
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.StatusCode.Should().Be(401);
-        result.Errors.Should().Contain("Teacher not found.");
-    }
-
-    [Fact]
-    public async Task GetMySlotsAsync_WithNullTeacherId_ShouldReturnFailure()
-    {
-        // Arrange & Act
-        var result = await _availableSlotService.GetMySlotsAsync(null!);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.StatusCode.Should().Be(401);
-        result.Errors.Should().Contain("Teacher not found.");
-    }
-
-    [Fact]
-    public async Task GetMySlotsAsync_WithValidTeacherIdButNoSlots_ShouldReturnEmptyList()
-    {
-        // Arrange
-        var teacherId = "teacher-123";
-        var availableSlots = new List<AvailableSlot>();
-
-        _mockAvailableSlotRepository
-            .Setup(x => x.GetByTeacherIdWithBookingsAsync(teacherId))
-            .ReturnsAsync(availableSlots);
-
-        // Act
-        var result = await _availableSlotService.GetMySlotsAsync(teacherId);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
-        result.Data.Should().BeEmpty();
     }
 
     [Fact]
@@ -128,8 +31,8 @@ public class AvailableSlotServiceTests
         var teacherId = "teacher-123";
         var createDto = new CreateAvailableSlotRequest
         {
-            StartTime = DateTime.Now.AddDays(1),
-            EndTime = DateTime.Now.AddDays(1).AddHours(1)
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
         };
 
         var createdSlot = new AvailableSlot
@@ -141,7 +44,11 @@ public class AvailableSlotServiceTests
         };
 
         _mockAvailableSlotRepository
-            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime))
+            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime, null))
+            .ReturnsAsync(false);
+
+        _mockBookingRepository
+            .Setup(x => x.HasOverlappingActiveBookingForTeacherAsync(teacherId, createDto.StartTime, createDto.EndTime))
             .ReturnsAsync(false);
 
         _mockAvailableSlotRepository
@@ -170,8 +77,8 @@ public class AvailableSlotServiceTests
         var teacherId = "teacher-123";
         var createDto = new CreateAvailableSlotRequest
         {
-            StartTime = DateTime.Now.AddDays(1).AddHours(1),
-            EndTime = DateTime.Now.AddDays(1) // End time before start time
+            StartTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            EndTime = DateTime.UtcNow.AddDays(1)
         };
 
         // Act
@@ -181,7 +88,7 @@ public class AvailableSlotServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("The start time must be earlier than the end time.");
+        result.Errors.Should().Contain("A kezdési időpontnak korábbinak kell lennie, mint a befejezési időpont.");
     }
 
     [Fact]
@@ -191,8 +98,8 @@ public class AvailableSlotServiceTests
         var teacherId = "teacher-123";
         var createDto = new CreateAvailableSlotRequest
         {
-            StartTime = DateTime.Now.AddHours(-1), // Past time
-            EndTime = DateTime.Now.AddHours(1)
+            StartTime = DateTime.UtcNow.AddHours(-1),
+            EndTime = DateTime.UtcNow.AddHours(1)
         };
 
         // Act
@@ -202,36 +109,11 @@ public class AvailableSlotServiceTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("You cannot provide a time in the past.");
+        result.Errors.Should().Contain("Múltbeli időpontot nem adhatsz meg.");
     }
 
     [Fact]
     public async Task CreateSlotAsync_WithOverlappingSlot_ShouldReturnFailure()
-    {
-        // Arrange
-        var teacherId = "teacher-123";
-        var createDto = new CreateAvailableSlotRequest
-        {
-            StartTime = DateTime.Now.AddDays(1),
-            EndTime = DateTime.Now.AddDays(1).AddHours(1)
-        };
-
-        _mockAvailableSlotRepository
-            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime))
-            .ReturnsAsync(true);
-
-        // Act
-        var result = await _availableSlotService.CreateSlotAsync(teacherId, createDto);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.StatusCode.Should().Be(400);
-        result.Errors.Should().Contain("The slot overlaps with an existing slot.");
-    }
-
-    [Fact]
-    public async Task CreateSlotAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
     {
         // Arrange
         var teacherId = "teacher-123";
@@ -242,22 +124,8 @@ public class AvailableSlotServiceTests
         };
 
         _mockAvailableSlotRepository
-            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime))
-            .ReturnsAsync(false);
-
-        _mockAvailableSlotRepository
-            .Setup(x => x.CreateAsync(It.IsAny<AvailableSlot>()))
-            .Returns(new AvailableSlot
-            {
-                Id = 1,
-                TeacherId = teacherId,
-                StartTime = createDto.StartTime,
-                EndTime = createDto.EndTime
-            });
-
-        _mockUnitOfWork
-            .Setup(x => x.CompleteAsync())
-            .ReturnsAsync(false);
+            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime, null))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _availableSlotService.CreateSlotAsync(teacherId, createDto);
@@ -265,12 +133,41 @@ public class AvailableSlotServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.StatusCode.Should().Be(500);
-        result.Errors.Should().Contain("An error occurred while creating the slot.");
+        result.StatusCode.Should().Be(400);
+        result.Errors.Should().Contain("Az időpont átfedésben van egy meglévő időponttal.");
     }
 
     [Fact]
-    public async Task DeleteSlotAsync_WhenUnitOfWorkFails_ShouldReturnFailure()
+    public async Task CreateSlotAsync_WithOverlappingBooking_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var createDto = new CreateAvailableSlotRequest
+        {
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.HasOverlappingSlotAsync(teacherId, createDto.StartTime, createDto.EndTime, null))
+            .ReturnsAsync(false);
+
+        _mockBookingRepository
+            .Setup(x => x.HasOverlappingActiveBookingForTeacherAsync(teacherId, createDto.StartTime, createDto.EndTime))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _availableSlotService.CreateSlotAsync(teacherId, createDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(400);
+        result.Errors.Should().Contain("Aktív foglalásod van ebben az időszakban.");
+    }
+
+    [Fact]
+    public async Task DeleteSlotAsync_WithValidData_ShouldReturnSuccess()
     {
         // Arrange
         var teacherId = "teacher-123";
@@ -281,20 +178,46 @@ public class AvailableSlotServiceTests
             Id = slotId,
             TeacherId = teacherId,
             StartTime = DateTime.UtcNow.AddDays(1),
-            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1)
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Bookings = new List<Booking>()
         };
 
         _mockAvailableSlotRepository
-            .Setup(x => x.GetByIdAsync(slotId))
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
             .ReturnsAsync(slot);
-
-        _mockAvailableSlotRepository
-            .Setup(x => x.HasBookingAsync(slotId))
-            .ReturnsAsync(false);
 
         _mockUnitOfWork
             .Setup(x => x.CompleteAsync())
-            .ReturnsAsync(false);
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _availableSlotService.DeleteSlotAsync(teacherId, slotId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        result.StatusCode.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task DeleteSlotAsync_WithPastSlot_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var slotId = 1;
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddHours(-2),
+            EndTime = DateTime.UtcNow.AddHours(-1),
+            Bookings = new List<Booking>()
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
+            .ReturnsAsync(slot);
 
         // Act
         var result = await _availableSlotService.DeleteSlotAsync(teacherId, slotId);
@@ -302,7 +225,160 @@ public class AvailableSlotServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.StatusCode.Should().Be(500);
-        result.Errors.Should().Contain("An error occurred while deleting the slot.");
+        result.StatusCode.Should().Be(400);
+        result.Errors.Should().Contain("Múltbeli időpontot nem törölhetsz.");
+    }
+
+    [Fact]
+    public async Task DeleteSlotAsync_WithActiveBookings_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var slotId = 1;
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Bookings = new List<Booking>
+            {
+                new Booking
+                {
+                    Id = 1,
+                    Status = BookingStatus.Confirmed,
+                    StudentId = "student-123",
+                    AvailableSlotId = slotId
+                }
+            }
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
+            .ReturnsAsync(slot);
+
+        // Act
+        var result = await _availableSlotService.DeleteSlotAsync(teacherId, slotId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Errors.Should().Contain("Ez az időpont nem törölhető, mert aktív foglalások vannak rajta.");
+    }
+
+    [Fact]
+    public async Task GetSlotDetailsAsync_WithValidData_ShouldReturnSlot()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var slotId = 1;
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Bookings = new List<Booking>(),
+            Teacher = new Teacher
+            {
+                UserId = teacherId,
+                Contact = "teacher@test.com",
+                User = new User { Id = teacherId, FirstName = "John", SurName = "Doe", NickName = "JD" }
+            }
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
+            .ReturnsAsync(slot);
+
+        // Act
+        var result = await _availableSlotService.GetSlotDetailsAsync(teacherId, slotId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data.Id.Should().Be(slotId);
+        result.Data.TeacherId.Should().Be(teacherId);
+    }
+
+    [Fact]
+    public async Task GetSlotDetailsAsync_WithUnauthorizedTeacher_ShouldReturnFailure()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var unauthorizedTeacherId = "teacher-456";
+        var slotId = 1;
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Bookings = new List<Booking>()
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
+            .ReturnsAsync(slot);
+
+        // Act
+        var result = await _availableSlotService.GetSlotDetailsAsync(unauthorizedTeacherId, slotId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.StatusCode.Should().Be(403);
+        result.Errors.Should().Contain("Nincs jogosultságod megtekinteni ezt az időpontot.");
+    }
+
+    [Fact]
+    public async Task UpdateSlotAsync_WithValidData_ShouldReturnSuccess()
+    {
+        // Arrange
+        var teacherId = "teacher-123";
+        var slotId = 1;
+        var updateDto = new UpdateAvailableSlotRequest
+        {
+            StartTime = DateTime.UtcNow.AddDays(2),
+            EndTime = DateTime.UtcNow.AddDays(2).AddHours(1)
+        };
+
+        var slot = new AvailableSlot
+        {
+            Id = slotId,
+            TeacherId = teacherId,
+            StartTime = DateTime.UtcNow.AddDays(1),
+            EndTime = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Bookings = new List<Booking>()
+        };
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.GetByIdWithBookingAsync(slotId))
+            .ReturnsAsync(slot);
+
+        _mockAvailableSlotRepository
+            .Setup(x => x.HasOverlappingSlotAsync(teacherId, updateDto.StartTime, updateDto.EndTime, slotId))
+            .ReturnsAsync(false);
+
+        _mockBookingRepository
+            .Setup(x => x.HasOverlappingActiveBookingForTeacherAsync(teacherId, updateDto.StartTime, updateDto.EndTime))
+            .ReturnsAsync(false);
+
+        _mockUnitOfWork
+            .Setup(x => x.CompleteAsync())
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _availableSlotService.UpdateSlotAsync(teacherId, slotId, updateDto);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        result.Data.Should().NotBeNull();
     }
 }

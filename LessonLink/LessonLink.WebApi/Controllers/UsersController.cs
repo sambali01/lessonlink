@@ -42,7 +42,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         var existingUser = await userManager.FindByEmailAsync(registerStudentRequest.Email);
         if (existingUser != null)
         {
-            return Conflict("User with given email already exists.");
+            return Conflict("A megadott email címmel már létezik felhasználó.");
         }
 
         var user = UserMappers.RegisterStudentRequestToUser(registerStudentRequest);
@@ -75,7 +75,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         var existingUser = await userManager.FindByEmailAsync(registerTeacherRequest.Email);
         if (existingUser != null)
         {
-            return Conflict("User with given email already exists.");
+            return Conflict("A megadott email címmel már létezik felhasználó.");
         }
 
         var user = UserMappers.RegisterTeacherRequestToUser(registerTeacherRequest);
@@ -150,7 +150,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         var user = await userManager.FindByIdAsync(id);
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound("A felhasználó nem található.");
         }
 
         // Remove user from all roles
@@ -187,7 +187,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return NotFound("User not found");
+            return NotFound("A felhasználó nem található.");
         }
 
         // Set profile picture
@@ -196,7 +196,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
             var cloudinaryResult = await photoService.UploadPhotoAsync(profilePicture);
             if (cloudinaryResult.Error != null)
             {
-                return HandleServiceResult(ServiceResult<User>.Failure("Photo upload failed: " + cloudinaryResult.Error.Message, 500));
+                return HandleServiceResult(ServiceResult<User>.Failure("A kép feltöltése sikertelen, ez a Cloudinary válasza: " + cloudinaryResult.Error.Message, 400));
             }
 
             user.ImageUrl = cloudinaryResult.SecureUrl.ToString();

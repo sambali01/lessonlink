@@ -1,4 +1,4 @@
-using LessonLink.BusinessLogic.Models;
+﻿using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 using LessonLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -55,5 +55,32 @@ public class BookingRepository(LessonLinkDbContext dbContext) : IBookingReposito
     public void DeleteAsync(Booking booking)
     {
         dbContext.Bookings.Remove(booking);
+    }
+
+    public void DeleteRangeAsync(IEnumerable<Booking> bookings)
+    {
+        dbContext.Bookings.RemoveRange(bookings);
+    }
+
+    public async Task<bool> HasOverlappingActiveBookingForStudentAsync(string studentId, DateTime startTime, DateTime endTime)
+    {
+        return await dbContext.Bookings
+            .Include(b => b.AvailableSlot)
+            .AnyAsync(b =>
+                b.StudentId == studentId &&
+                b.Status != BookingStatus.Cancelled &&
+                b.AvailableSlot.StartTime < endTime &&
+                b.AvailableSlot.EndTime > startTime);
+    }
+
+    public async Task<bool> HasOverlappingActiveBookingForTeacherAsync(string teacherId, DateTime startTime, DateTime endTime)
+    {
+        return await dbContext.Bookings
+            .Include(b => b.AvailableSlot)
+            .AnyAsync(b =>
+                b.AvailableSlot.TeacherId == teacherId &&
+                b.Status != BookingStatus.Cancelled &&
+                b.AvailableSlot.StartTime < endTime &&
+                b.AvailableSlot.EndTime > startTime);
     }
 }

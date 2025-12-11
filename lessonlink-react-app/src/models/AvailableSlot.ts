@@ -8,7 +8,12 @@ export type AvailableSlot = {
     bookings: Booking[];
 }
 
-export type CreateAvailableSlotRequest = {
+export interface CreateAvailableSlotRequest {
+    startTime: string;
+    endTime: string;
+}
+
+export interface UpdateAvailableSlotRequest {
     startTime: string;
     endTime: string;
 }

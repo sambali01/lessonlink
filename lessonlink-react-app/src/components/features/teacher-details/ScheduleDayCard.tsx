@@ -11,8 +11,8 @@ import {
     useTheme
 } from '@mui/material';
 import { FunctionComponent } from 'react';
-import { AvailableSlot } from '../../../models/AvailableSlot';
 import { useAuth } from '../../../hooks/useAuth';
+import { AvailableSlot } from '../../../models/AvailableSlot';
 
 interface ScheduleDayCardProps {
     date: string;
@@ -21,11 +21,7 @@ interface ScheduleDayCardProps {
     showBookingButtons?: boolean;
 }
 
-const ScheduleDayCard: FunctionComponent<ScheduleDayCardProps> = ({
-    date,
-    slots,
-    onBookSlot
-}) => {
+const ScheduleDayCard: FunctionComponent<ScheduleDayCardProps> = ({ date, slots, onBookSlot }) => {
     const theme = useTheme();
 
     const { currentUserAuth } = useAuth();

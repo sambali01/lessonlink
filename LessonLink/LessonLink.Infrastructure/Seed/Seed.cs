@@ -121,7 +121,7 @@ public class Seed
         var result = await userManager.CreateAsync(admin, "Pa$$w0rd");
         if (result.Succeeded)
         {
-            await userManager.AddToRoleAsync(admin, "Admin");
+            await userManager.AddToRoleAsync(admin, Role.Admin.ToString());
             Console.WriteLine("Admin user created successfully");
         }
         else
@@ -167,7 +167,7 @@ public class Seed
             var result = await userManager.CreateAsync(student, "Pa$$w0rd");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(student, "Student");
+                await userManager.AddToRoleAsync(student, Role.Student.ToString());
                 Console.WriteLine($"Student created: {student.Email}");
             }
             else
@@ -217,7 +217,8 @@ public class Seed
             var result = await userManager.CreateAsync(user, "Pa$$w0rd");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(user, "Teacher");
+                await userManager.AddToRoleAsync(user, Role.Student.ToString());
+                await userManager.AddToRoleAsync(user, Role.Teacher.ToString());
 
                 // Create Teacher profile with navigation property and initialized collections
                 var teacherProfile = new Teacher

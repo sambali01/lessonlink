@@ -1,18 +1,18 @@
 ﻿[
-{
-  "UserId": "user-teacher-1",
-  "Email": "horvath.peter@test.com",
-  "FirstName": "Péter",
-  "SurName": "Horváth",
-  "NickName": "Peti tanár",
-  "ImageUrl": "https://randomuser.me/api/portraits/men/11.jpg",
-  "AcceptsOnline": true,
-  "AcceptsInPerson": true,
-  "Location": "Budapest, XIII. kerület",
-  "HourlyRate": 5000,
-  "Description": "Több mint 10 éves tanítási tapasztalattal rendelkezem. Középiskolai és egyetemi hallgatóknak egyaránt tanítok. Sikeres érettségi és felvételi felkészítés. A matematikát játékosan és érthetően tanítom!",
-  "Contact": "horvath.peter@test.com"
-},
+  {
+    "UserId": "user-teacher-1",
+    "Email": "horvath.peter@test.com",
+    "FirstName": "Péter",
+    "SurName": "Horváth",
+    "NickName": "Peti tanár",
+    "ImageUrl": "https://randomuser.me/api/portraits/men/11.jpg",
+    "AcceptsOnline": true,
+    "AcceptsInPerson": true,
+    "Location": "Budapest, XIII. kerület",
+    "HourlyRate": 5000,
+    "Description": "Több mint 10 éves tanítási tapasztalattal rendelkezem. Középiskolai és egyetemi hallgatóknak egyaránt tanítok. Sikeres érettségi és felvételi felkészítés. A matematikát játékosan és érthetően tanítom!",
+    "Contact": "horvath.peter@test.com"
+  },
   {
     "UserId": "user-teacher-2",
     "Email": "toth.maria@test.com",

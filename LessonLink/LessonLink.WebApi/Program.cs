@@ -93,16 +93,15 @@ builder.Services.AddScoped<AvailableSlotService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<PhotoService>();
 
-builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.CloudinarySettingsKey));
+var cloudinarySettingsKey = builder.Configuration.GetSection(CloudinarySettings.CloudinarySettingsKey);
+if (cloudinarySettingsKey.Exists())
+{
+    builder.Services.Configure<CloudinarySettings>(cloudinarySettingsKey);
+}
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Serialize enums as strings instead of numbers
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
+builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

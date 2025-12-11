@@ -1,5 +1,4 @@
 import {
-    Alert,
     Box,
     Button,
     Dialog,
@@ -11,27 +10,50 @@ import {
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { hu } from 'date-fns/locale';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CreateAvailableSlotRequest } from '../../../models/AvailableSlot';
 
-interface CreateSlotModalProps {
+interface SlotFormModalProps {
     open: boolean;
     onClose: () => void;
-    onCreate: (data: CreateAvailableSlotRequest) => void;
+    onSubmit: (data: CreateAvailableSlotRequest) => void;
     isLoading: boolean;
     error?: string;
+    mode?: 'create' | 'edit';
+    initialStartTime?: string;
+    initialEndTime?: string;
 }
 
-const CreateSlotModal = ({ open, onClose, onCreate, isLoading, error }: CreateSlotModalProps) => {
+const SlotFormModal = ({
+    open,
+    onClose,
+    onSubmit,
+    isLoading,
+    mode = 'create',
+    initialStartTime,
+    initialEndTime
+}: SlotFormModalProps) => {
     const [startTime, setStartTime] = useState<Date | null>(null);
     const [endTime, setEndTime] = useState<Date | null>(null);
+
+    useEffect(() => {
+        if (open) {
+            if (mode === 'edit' && initialStartTime && initialEndTime) {
+                setStartTime(new Date(initialStartTime));
+                setEndTime(new Date(initialEndTime));
+            } else {
+                setStartTime(null);
+                setEndTime(null);
+            }
+        }
+    }, [open, mode, initialStartTime, initialEndTime]);
 
     const handleSubmit = () => {
         if (!startTime || !endTime) {
             return;
         }
 
-        onCreate({
+        onSubmit({
             startTime: startTime.toISOString(),
             endTime: endTime.toISOString()
         });
@@ -43,18 +65,18 @@ const CreateSlotModal = ({ open, onClose, onCreate, isLoading, error }: CreateSl
         onClose();
     };
 
+    const title = mode === 'create' ? 'Új óraidőpont hozzáadása' : 'Időpont szerkesztése';
+    const submitButtonText = mode === 'create' ? 'Létrehozás' : 'Mentés';
+    const submitButtonLoadingText = mode === 'create' ? 'Létrehozás...' : 'Mentés...';
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={hu}>
             <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
                 <DialogTitle>
-                    Új óraidőpont hozzáadása
+                    {title}
                 </DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                        {error && (
-                            <Alert severity="error">{error}</Alert>
-                        )}
-
                         <DateTimePicker
                             label="Kezdési idő"
                             value={startTime}
@@ -97,7 +119,7 @@ const CreateSlotModal = ({ open, onClose, onCreate, isLoading, error }: CreateSl
                         variant="contained"
                         disabled={!startTime || !endTime || isLoading}
                     >
-                        {isLoading ? 'Létrehozás...' : 'Létrehozás'}
+                        {isLoading ? submitButtonLoadingText : submitButtonText}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -105,4 +127,4 @@ const CreateSlotModal = ({ open, onClose, onCreate, isLoading, error }: CreateSl
     );
 };
 
-export default CreateSlotModal;
+export default SlotFormModal;

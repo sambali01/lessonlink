@@ -24,7 +24,7 @@ public class SubjectService(IUnitOfWork unitOfWork)
         var subject = await unitOfWork.SubjectRepository.GetByIdAsync(id);
         if (subject == null)
         {
-            return ServiceResult<SubjectResponse>.Failure("Subject with given id not found.", 404);
+            return ServiceResult<SubjectResponse>.Failure("A megadott azonosítóval nem található tantárgy.", 404);
         }
 
         var subjectDto = SubjectMappers.SubjectToResponse(subject);
@@ -37,7 +37,7 @@ public class SubjectService(IUnitOfWork unitOfWork)
         var existingSubject = await unitOfWork.SubjectRepository.GetByNameAsync(createSubjectRequest.Name);
         if (existingSubject != null)
         {
-            return ServiceResult<Subject>.Failure("Subject already exists.", 409);
+            return ServiceResult<Subject>.Failure("A tantárgy már létezik.", 409);
         }
 
         Subject subject = SubjectMappers.CreateRequestToSubject(createSubjectRequest);
@@ -49,6 +49,6 @@ public class SubjectService(IUnitOfWork unitOfWork)
             return ServiceResult<Subject>.Success(subject, 201);
         }
 
-        return ServiceResult<Subject>.Failure("An error occurred while creating the subject.", 500);
+        return ServiceResult<Subject>.Failure("Hiba történt a tantárgy létrehozása során.", 500);
     }
 }

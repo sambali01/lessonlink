@@ -105,8 +105,17 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
         var totalCount = await query.CountAsync();
 
         var teachers = await query
+            .Select(t => new
+            {
+                Teacher = t,
+                BookingCount = t.AvailableSlots
+                    .SelectMany(slot => slot.Bookings)
+                    .Count(booking => booking.Status != BookingStatus.Cancelled)
+            })
+            .OrderByDescending(x => x.BookingCount)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(x => x.Teacher)
             .ToListAsync();
 
         return (teachers, totalCount);

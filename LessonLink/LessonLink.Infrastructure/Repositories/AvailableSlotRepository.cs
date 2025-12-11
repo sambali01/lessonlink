@@ -18,6 +18,7 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
     {
         return await dbContext.AvailableSlots
             .Include(slot => slot.Teacher)
+                .ThenInclude(teacher => teacher.User)
             .Include(slot => slot.Bookings)
                 .ThenInclude(booking => booking.Student)
             .FirstOrDefaultAsync(slot => slot.Id == id);
@@ -98,8 +99,10 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
     public async Task<IReadOnlyCollection<AvailableSlot>> GetByTeacherIdWithBookingsAsync(string teacherId)
     {
         return await dbContext.AvailableSlots
+            .Include(slot => slot.Teacher)
+                .ThenInclude(teacher => teacher.User)
             .Include(slot => slot.Bookings)
-            .ThenInclude(booking => booking.Student)
+                .ThenInclude(booking => booking.Student)
             .Where(slot => slot.TeacherId == teacherId)
             .OrderBy(slot => slot.StartTime)
             .ToListAsync();
@@ -108,8 +111,10 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
     public async Task<PaginatedResponse<AvailableSlot>> GetByTeacherIdWithBookingsPaginatedAsync(string teacherId, int page, int pageSize)
     {
         var query = dbContext.AvailableSlots
+            .Include(slot => slot.Teacher)
+                .ThenInclude(teacher => teacher.User)
             .Include(slot => slot.Bookings)
-            .ThenInclude(booking => booking.Student)
+                .ThenInclude(booking => booking.Student)
             .Where(slot => slot.TeacherId == teacherId)
             .OrderBy(slot => slot.StartTime);
 
@@ -122,11 +127,11 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
             .OrderBy(date => date)
             .ToListAsync();
 
-        if (!uniqueDates.Any())
+        if (uniqueDates.Count == 0)
         {
             return new PaginatedResponse<AvailableSlot>
             {
-                Items = new List<AvailableSlot>(),
+                Items = [],
                 TotalCount = 0,
                 Page = page,
                 PageSize = 0,
@@ -143,11 +148,11 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
             .Take(daysPerPage)
             .ToList();
 
-        if (!selectedDates.Any())
+        if (selectedDates.Count == 0)
         {
             return new PaginatedResponse<AvailableSlot>
             {
-                Items = new List<AvailableSlot>(),
+                Items = [],
                 TotalCount = totalCount,
                 Page = page,
                 PageSize = 0,
@@ -172,24 +177,220 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
         };
     }
 
-    public async Task<IReadOnlyCollection<AvailableSlot>> GetNotBookedByTeacherIdAsync(string teacherId)
+    public async Task<PaginatedResponse<AvailableSlot>> GetCurrentSlotsByTeacherIdWithBookingsPaginatedAsync(string teacherId, int page, int pageSize)
     {
-        return await dbContext.AvailableSlots
-            .Where(slot => slot.TeacherId == teacherId &&
-                !dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
-            )
-            .OrderBy(slot => slot.StartTime)
+        var now = DateTime.UtcNow;
+        var query = dbContext.AvailableSlots
+            .Include(slot => slot.Teacher)
+                .ThenInclude(teacher => teacher.User)
+            .Include(slot => slot.Bookings)
+                .ThenInclude(booking => booking.Student)
+            .Where(slot => slot.TeacherId == teacherId && slot.StartTime >= now)
+            .OrderBy(slot => slot.StartTime);
+
+        var totalCount = await query.CountAsync();
+
+        var uniqueDates = await dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId && slot.StartTime >= now)
+            .Select(slot => slot.StartTime.Date)
+            .Distinct()
+            .OrderBy(date => date)
             .ToListAsync();
+
+        if (uniqueDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = 0,
+                TotalPages = 0
+            };
+        }
+
+        var daysPerPage = await CalculateOptimalDaysPerPage(teacherId, uniqueDates, pageSize);
+        var totalPages = (int)Math.Ceiling((double)uniqueDates.Count / daysPerPage);
+
+        var startIndex = (page - 1) * daysPerPage;
+        var selectedDates = uniqueDates
+            .Skip(startIndex)
+            .Take(daysPerPage)
+            .ToList();
+
+        if (selectedDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = 0,
+                TotalPages = totalPages
+            };
+        }
+
+        var startDate = selectedDates.First();
+        var endDate = selectedDates.Last().AddDays(1);
+
+        var items = await query
+            .Where(slot => slot.StartTime.Date >= startDate && slot.StartTime.Date < endDate)
+            .ToListAsync();
+
+        return new PaginatedResponse<AvailableSlot>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = items.Count,
+            TotalPages = totalPages
+        };
     }
 
-    public async Task<bool> HasOverlappingSlotAsync(string teacherId, DateTime startTime, DateTime endTime)
+    public async Task<PaginatedResponse<AvailableSlot>> GetPastSlotsByTeacherIdWithBookingsPaginatedAsync(string teacherId, int page, int pageSize)
     {
-        return await dbContext.AvailableSlots
-            .AnyAsync(slot => slot.TeacherId == teacherId &&
-                ((startTime >= slot.StartTime && startTime < slot.EndTime) ||
-                 (endTime > slot.StartTime && endTime <= slot.EndTime) ||
-                 (startTime <= slot.StartTime && endTime >= slot.EndTime)));
+        var now = DateTime.UtcNow;
+        var query = dbContext.AvailableSlots
+            .Include(slot => slot.Teacher)
+                .ThenInclude(teacher => teacher.User)
+            .Include(slot => slot.Bookings)
+                .ThenInclude(booking => booking.Student)
+            .Where(slot => slot.TeacherId == teacherId && slot.EndTime < now)
+            .OrderByDescending(slot => slot.StartTime);
+
+        var totalCount = await query.CountAsync();
+
+        var uniqueDates = await dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId && slot.EndTime < now)
+            .Select(slot => slot.StartTime.Date)
+            .Distinct()
+            .OrderByDescending(date => date)
+            .ToListAsync();
+
+        if (uniqueDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = 0,
+                TotalPages = 0
+            };
+        }
+
+        var daysPerPage = await CalculateOptimalDaysPerPage(teacherId, uniqueDates, pageSize);
+        var totalPages = (int)Math.Ceiling((double)uniqueDates.Count / daysPerPage);
+
+        var startIndex = (page - 1) * daysPerPage;
+        var selectedDates = uniqueDates
+            .Skip(startIndex)
+            .Take(daysPerPage)
+            .ToList();
+
+        if (selectedDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = 0,
+                TotalPages = totalPages
+            };
+        }
+
+        var startDate = selectedDates.Last();
+        var endDate = selectedDates.First().AddDays(1);
+
+        var items = await query
+            .Where(slot => slot.StartTime.Date >= startDate && slot.StartTime.Date < endDate)
+            .ToListAsync();
+
+        return new PaginatedResponse<AvailableSlot>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = items.Count,
+            TotalPages = totalPages
+        };
     }
+
+    public async Task<PaginatedResponse<AvailableSlot>> GetCurrentNotBookedSlotsByTeacherIdPaginatedAsync(string teacherId, int page, int pageSize)
+    {
+        var now = DateTime.UtcNow;
+        var query = dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId &&
+                slot.StartTime >= now &&
+                !dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id &&
+                    (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
+            )
+            .OrderBy(slot => slot.StartTime);
+
+        var totalCount = await query.CountAsync();
+
+        var uniqueDates = await dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId &&
+                slot.StartTime >= now &&
+                !dbContext.Bookings.Any(booking => booking.AvailableSlotId == slot.Id &&
+                    (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed))
+            )
+            .Select(slot => slot.StartTime.Date)
+            .Distinct()
+            .OrderBy(date => date)
+            .ToListAsync();
+
+        if (uniqueDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = 0,
+                TotalPages = 0
+            };
+        }
+
+        var daysPerPage = await CalculateOptimalDaysPerPage(teacherId, uniqueDates, pageSize);
+        var totalPages = (int)Math.Ceiling((double)uniqueDates.Count / daysPerPage);
+
+        var startIndex = (page - 1) * daysPerPage;
+        var selectedDates = uniqueDates
+            .Skip(startIndex)
+            .Take(daysPerPage)
+            .ToList();
+
+        if (selectedDates.Count == 0)
+        {
+            return new PaginatedResponse<AvailableSlot>
+            {
+                Items = [],
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = 0,
+                TotalPages = totalPages
+            };
+        }
+
+        var startDate = selectedDates.First();
+        var endDate = selectedDates.Last().AddDays(1);
+
+        var items = await query
+            .Where(slot => slot.StartTime.Date >= startDate && slot.StartTime.Date < endDate)
+            .ToListAsync();
+
+        return new PaginatedResponse<AvailableSlot>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = items.Count,
+            TotalPages = totalPages
+        };
+    }
+
     public async Task<bool> HasBookingAsync(int slotId)
     {
         return await dbContext.Bookings
@@ -210,6 +411,22 @@ public class AvailableSlotRepository(LessonLinkDbContext dbContext) : IAvailable
     public void DeleteAsync(AvailableSlot slot)
     {
         dbContext.AvailableSlots.Remove(slot);
+    }
+
+    public async Task<bool> HasOverlappingSlotAsync(string teacherId, DateTime startTime, DateTime endTime, int? excludeSlotId = null)
+    {
+        var query = dbContext.AvailableSlots
+            .Where(slot => slot.TeacherId == teacherId &&
+                ((startTime >= slot.StartTime && startTime < slot.EndTime) ||
+                 (endTime > slot.StartTime && endTime <= slot.EndTime) ||
+                 (startTime <= slot.StartTime && endTime >= slot.EndTime)));
+
+        if (excludeSlotId.HasValue)
+        {
+            query = query.Where(slot => slot.Id != excludeSlotId.Value);
+        }
+
+        return await query.AnyAsync();
     }
 
     private async Task<int> CalculateOptimalDaysPerPage(string teacherId, List<DateTime> uniqueDates, int targetPageSize)
