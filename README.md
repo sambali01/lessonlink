@@ -1,6 +1,6 @@
 # LessonLink
 
-Oktatási foglalási rendszer - Szakdolgozat
+Tanórafoglaló ewbalkalmazás magántanárok és diákok részére
 
 ## Tartalomjegyzék
 
