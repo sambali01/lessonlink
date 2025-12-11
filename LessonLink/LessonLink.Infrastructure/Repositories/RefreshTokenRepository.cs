@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
+/// <summary>
+/// Implementation of IRefreshTokenRepository using Entity Framework Core.
+/// Manages JWT refresh tokens for authentication and session management.
+/// </summary>
 public class RefreshTokenRepository(LessonLinkDbContext dbContext) : IRefreshTokenRepository
 {
     public async Task<RefreshToken?> GetByHashedValueAsync(string hashedValue)
@@ -24,6 +28,7 @@ public class RefreshTokenRepository(LessonLinkDbContext dbContext) : IRefreshTok
 
     public async Task DeleteAllForUserAsync(string userId)
     {
+        // Remove all refresh tokens for a user (e.g., during logout from all devices)
         var tokens = await dbContext.RefreshTokens
             .Where(rt => rt.UserId == userId)
             .ToListAsync();

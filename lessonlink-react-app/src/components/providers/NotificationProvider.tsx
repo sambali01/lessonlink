@@ -3,7 +3,7 @@ import { Notification, NotificationContext, NotificationType } from '../../conte
 import NotificationSnackbar from '../common/NotificationSnackbar';
 import { queryClient } from '../../configs/queryConfig';
 import { ApiError } from '../../utils/ApiError';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface NotificationProviderProps {
     children: ReactNode;
@@ -11,7 +11,6 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: FunctionComponent<NotificationProviderProps> = ({ children }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const navigate = useNavigate();
 
     const showNotification = useCallback((message: string, type: NotificationType) => {
         const id = `${Date.now()}-${Math.random()}`;
@@ -57,18 +56,19 @@ export const NotificationProvider: FunctionComponent<NotificationProviderProps> 
                     if (!handledErrors.has(errorKey)) {
                         handledErrors.add(errorKey);
 
+                        // Skip network errors - they are handled by queryConfig
+                        if (error instanceof ApiError && error.isNetworkError) {
+                            return;
+                        }
+
                         if (error instanceof ApiError) {
-                            // Server errors (5xx) - navigate to error page
-                            if (error.statusCode >= 500) {
-                                navigate('/server-error');
-                            }
-                            // Client errors (4xx) - show notification
-                            else if (error.statusCode >= 400) {
+                            // Show notifications for all API errors (4xx and 5xx)
+                            if (error.statusCode >= 400) {
                                 showError(error.errors);
                             }
-                        } else {
-                            // Network or unknown errors
-                            showError('An unexpected error occurred. Please try again.');
+                        } else if (!(axios.isAxiosError(error) && !error.response)) {
+                            // Show notification for non-network errors
+                            showError('Váratlan hiba történt. Próbálkozz újra.');
                         }
                     }
                 }
@@ -84,18 +84,19 @@ export const NotificationProvider: FunctionComponent<NotificationProviderProps> 
                 if (!handledErrors.has(errorKey)) {
                     handledErrors.add(errorKey);
 
+                    // Skip network errors - they are handled by queryConfig
+                    if (error instanceof ApiError && error.isNetworkError) {
+                        return;
+                    }
+
                     if (error instanceof ApiError) {
-                        // Server errors (5xx) - navigate to error page
-                        if (error.statusCode >= 500) {
-                            navigate('/server-error');
-                        }
-                        // Client errors (4xx) - show notification
-                        else if (error.statusCode >= 400) {
+                        // Show notifications for all API errors (4xx and 5xx)
+                        if (error.statusCode >= 400) {
                             showError(error.errors);
                         }
-                    } else {
-                        // Network or unknown errors
-                        showError('An unexpected error occurred. Please try again.');
+                    } else if (!(axios.isAxiosError(error) && !error.response)) {
+                        // Show notification for non-network errors
+                        showError('Váratlan hiba történt. Próbálkozz újra.');
                     }
                 }
             }
@@ -105,7 +106,7 @@ export const NotificationProvider: FunctionComponent<NotificationProviderProps> 
             mutationUnsubscribe();
             queryUnsubscribe();
         };
-    }, [navigate, showError]);
+    }, [showError]);
 
     const handleClose = useCallback((id: string) => {
         setNotifications(prev => prev.filter(n => n.id !== id));

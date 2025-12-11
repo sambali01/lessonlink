@@ -10,7 +10,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { hu } from 'date-fns/locale';
 import { ErrorBoundary } from 'react-error-boundary';
-import ServerError from './pages/ServerError';
+import ErrorFallback from './components/common/ErrorFallback';
+import { NotificationProvider } from './components/providers/NotificationProvider';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     //<React.StrictMode>
@@ -18,8 +19,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={hu}>
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <ErrorBoundary FallbackComponent={ServerError}>
-                        <App />
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        <NotificationProvider>
+                            <App />
+                        </NotificationProvider>
                     </ErrorBoundary>
                 </AuthProvider>
             </QueryClientProvider>

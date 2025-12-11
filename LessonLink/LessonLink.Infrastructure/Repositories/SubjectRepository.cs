@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
+/// <summary>
+/// Implementation of ISubjectRepository using Entity Framework Core.
+/// Provides simple CRUD operations for Subject entities.
+/// </summary>
 public class SubjectRepository(LessonLinkDbContext dbContext) : ISubjectRepository
 {
     public async Task<IReadOnlyCollection<Subject>> GetAllAsync()
@@ -20,6 +24,7 @@ public class SubjectRepository(LessonLinkDbContext dbContext) : ISubjectReposito
 
     public async Task<Subject?> GetByNameAsync(string name)
     {
+        // Case-sensitive exact match on subject name
         return await dbContext.Subjects
             .SingleOrDefaultAsync(s => s.Name.Equals(name));
     }

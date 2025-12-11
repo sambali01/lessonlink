@@ -1,11 +1,14 @@
 import { Box, Button, Container, Typography, useTheme } from '@mui/material';
 import { FunctionComponent } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import HomeIcon from '@mui/icons-material/Home';
-import SearchOffIcon from '@mui/icons-material/SearchOff';
+import ReplayIcon from '@mui/icons-material/Replay';
+import BugReportIcon from '@mui/icons-material/BugReport';
 
-const NotFound: FunctionComponent = () => {
+const ErrorFallback: FunctionComponent = () => {
     const theme = useTheme();
+
+    const handleReload = () => {
+        window.location.href = '/';
+    };
 
     return (
         <Container>
@@ -15,15 +18,15 @@ const NotFound: FunctionComponent = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: 'calc(100vh - 200px)',
+                    minHeight: '100vh',
                     textAlign: 'center',
                     gap: 3
                 }}
             >
-                <SearchOffIcon
+                <BugReportIcon
                     sx={{
                         fontSize: { xs: '5rem', md: '8rem' },
-                        color: theme.palette.primary.main,
+                        color: theme.palette.error.main,
                         opacity: 0.8
                     }}
                 />
@@ -36,7 +39,7 @@ const NotFound: FunctionComponent = () => {
                         color: theme.palette.text.primary,
                     }}
                 >
-                    404
+                    Váratlan hiba
                 </Typography>
 
                 <Typography
@@ -47,25 +50,25 @@ const NotFound: FunctionComponent = () => {
                         mb: 1
                     }}
                 >
-                    A manóba!
+                    Sajnos valami hiba történt az alkalmazás betöltése során
                 </Typography>
 
                 <Typography
                     variant="body1"
                     sx={{
                         color: theme.palette.text.secondary,
+                        maxWidth: '500px',
                         lineHeight: 1.6
                     }}
                 >
-                    A keresett oldal nem található. Lehet, hogy az URL hibás, vagy az oldal nem létezik.
+                    Ez általában átmeneti probléma. Próbáld újratölteni az oldalt.
                 </Typography>
 
                 <Button
-                    component={RouterLink}
-                    to="/"
                     variant="contained"
                     size="large"
-                    startIcon={<HomeIcon />}
+                    startIcon={<ReplayIcon />}
+                    onClick={handleReload}
                     sx={{
                         px: 4,
                         py: 1.5,
@@ -73,11 +76,11 @@ const NotFound: FunctionComponent = () => {
                         fontSize: '1rem'
                     }}
                 >
-                    Vissza a főoldalra
+                    Oldal újratöltése
                 </Button>
             </Box>
         </Container>
     );
 };
 
-export default NotFound;
+export default ErrorFallback;

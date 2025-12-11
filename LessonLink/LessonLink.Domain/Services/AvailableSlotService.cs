@@ -64,7 +64,7 @@ public class AvailableSlotService(IUnitOfWork unitOfWork)
 
         var paginatedSlots = await unitOfWork.AvailableSlotRepository.GetPastSlotsByTeacherIdWithBookingsPaginatedAsync(teacherId, page, pageSize);
 
-        var slotDtos = paginatedSlots.Items.Select(slot => AvailableSlotMappers.AvailableSlotToResponse(slot)).ToList();
+        var slotDtos = paginatedSlots.Items.Select(AvailableSlotMappers.AvailableSlotToResponse).ToList();
 
         var result = new PaginatedResponse<AvailableSlotResponse>
         {

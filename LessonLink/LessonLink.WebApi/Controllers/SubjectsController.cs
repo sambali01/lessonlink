@@ -1,5 +1,6 @@
 ﻿using LessonLink.BusinessLogic.DTOs.Subject;
 using LessonLink.BusinessLogic.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LessonLink.WebApi.Controllers;
@@ -21,6 +22,7 @@ public class SubjectsController(SubjectService subjectService) : BaseApiControll
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectRequest createSubjectRequest)
     {
         var result = await subjectService.CreateAsync(createSubjectRequest);

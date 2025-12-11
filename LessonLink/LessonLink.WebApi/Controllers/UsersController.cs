@@ -84,7 +84,7 @@ public class UsersController(UserManager<User> userManager, TeacherService teach
         var createResult = await userManager.CreateAsync(user, registerTeacherRequest.Password);
         if (!createResult.Succeeded)
         {
-            return HandleServiceResult(ServiceResult<User>.Failure([.. createResult.Errors.Select(e => e.Description)], 500));
+            return HandleServiceResult(ServiceResult<User>.Failure([.. createResult.Errors.Select(e => e.Description)], 400));
         }
 
         // Give student and teacher role

@@ -5,10 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
+/// <summary>
+/// Implementation of IBookingRepository using Entity Framework Core.
+/// Manages database operations for Booking entities including retrieval,
+/// conflict detection, and CRUD operations.
+/// </summary>
 public class BookingRepository(LessonLinkDbContext dbContext) : IBookingRepository
 {
     public async Task<IReadOnlyCollection<Booking>> GetByStudentIdAsync(string studentId)
     {
+        // Include all related entities needed for displaying booking details
         return await dbContext.Bookings
             .Include(b => b.Student)
             .Include(b => b.AvailableSlot)
@@ -21,6 +27,7 @@ public class BookingRepository(LessonLinkDbContext dbContext) : IBookingReposito
 
     public async Task<IReadOnlyCollection<Booking>> GetByTeacherIdAsync(string teacherId)
     {
+        // Retrieve bookings for a teacher's available slots
         return await dbContext.Bookings
             .Include(b => b.Student)
             .Include(b => b.AvailableSlot)
@@ -64,6 +71,8 @@ public class BookingRepository(LessonLinkDbContext dbContext) : IBookingReposito
 
     public async Task<bool> HasOverlappingActiveBookingForStudentAsync(string studentId, DateTime startTime, DateTime endTime)
     {
+        // Check if student has any non-cancelled booking that conflicts with the given time range
+        // This prevents double-booking: a student cannot book two lessons at the same time
         return await dbContext.Bookings
             .Include(b => b.AvailableSlot)
             .AnyAsync(b =>
@@ -75,6 +84,9 @@ public class BookingRepository(LessonLinkDbContext dbContext) : IBookingReposito
 
     public async Task<bool> HasOverlappingActiveBookingForTeacherAsync(string teacherId, DateTime startTime, DateTime endTime)
     {
+        // Check if a teacher (acting as a student) has bookings that conflict with a new teaching slot
+        // Since teachers can also book lessons, we need to prevent them from creating teaching slots
+        // during times they have booked to be students elsewhere
         return await dbContext.Bookings
             .Include(b => b.AvailableSlot)
             .AnyAsync(b =>

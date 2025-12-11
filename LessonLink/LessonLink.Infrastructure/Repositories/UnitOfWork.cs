@@ -4,6 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
+/// <summary>
+/// Implementation of the Unit of Work pattern using Entity Framework Core.
+/// Coordinates database operations across multiple repositories and ensures
+/// transactional integrity by providing a single point for committing changes.
+/// Repositories are lazily initialized on first access.
+/// </summary>
 public class UnitOfWork(LessonLinkDbContext dbContext) : IUnitOfWork
 {
     private IRefreshTokenRepository? _refreshTokenRepository;
@@ -13,6 +19,7 @@ public class UnitOfWork(LessonLinkDbContext dbContext) : IUnitOfWork
     private IAvailableSlotRepository? _availableSlotRepository;
     private IBookingRepository? _bookingRepository;
 
+    // Lazy initialization pattern: repositories are created only when accessed
     public IRefreshTokenRepository RefreshTokenRepository => _refreshTokenRepository ??= new RefreshTokenRepository(dbContext);
 
     public ITeacherRepository TeacherRepository => _teacherRepository ??= new TeacherRepository(dbContext);
@@ -29,10 +36,12 @@ public class UnitOfWork(LessonLinkDbContext dbContext) : IUnitOfWork
     {
         try
         {
+            // Persist all pending changes to the database in a single transaction
             return await dbContext.SaveChangesAsync() > 0;
         }
         catch (DbUpdateException ex)
         {
+            // Wrap EF Core exceptions with a more descriptive message
             throw new Exception("An error occured while saving changes to the database.", ex);
         }
     }

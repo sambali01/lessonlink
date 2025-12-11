@@ -6,6 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonLink.Infrastructure.Repositories;
 
+/// <summary>
+/// Implementation of ITeacherRepository using Entity Framework Core.
+/// Provides teacher profile management with advanced search and filtering capabilities.
+/// Teachers are ranked by their booking count (popularity) in various queries.
+/// </summary>
 public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherRepository
 {
     public async Task<IReadOnlyCollection<Teacher>> GetAllAsync()
@@ -17,6 +22,8 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
 
     public async Task<IReadOnlyCollection<Teacher>> GetFeaturedAsync()
     {
+        // Featured teachers are determined by their popularity (number of non-cancelled bookings)
+        // Top 4 most popular teachers are returned for display on the home page
         return await dbContext.Teachers
             .Include(t => t.User)
             .Include(t => t.TeacherSubjects)
@@ -62,6 +69,7 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
                 .ThenInclude(ts => ts.Subject)
             .AsQueryable();
 
+        // Apply text search filter: search in teacher's name, nickname, and description
         if (!string.IsNullOrEmpty(searchText))
         {
             query = query.Where(t =>
@@ -71,12 +79,14 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
                 (t.Description != null && t.Description.Contains(searchText)));
         }
 
+        // Filter by subjects: teacher must teach at least one of the specified subjects
         if (subjects != null && subjects.Count != 0)
         {
             query = query.Where(t => t.TeacherSubjects
                 .Any(ts => subjects.Contains(ts.Subject.Name)));
         }
 
+        // Filter by price range
         if (minPrice.HasValue)
         {
             query = query.Where(t => t.HourlyRate >= minPrice);
@@ -87,11 +97,13 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
             query = query.Where(t => t.HourlyRate <= maxPrice);
         }
 
+        // Filter by teaching method: online lessons
         if (acceptsOnline.HasValue && acceptsOnline.Value)
         {
             query = query.Where(t => t.AcceptsOnline == true);
         }
 
+        // Filter by teaching method: in-person lessons and optional location
         if (acceptsInPerson.HasValue && acceptsInPerson.Value)
         {
             query = query.Where(t => t.AcceptsInPerson == true);
@@ -104,6 +116,7 @@ public class TeacherRepository(LessonLinkDbContext dbContext) : ITeacherReposito
 
         var totalCount = await query.CountAsync();
 
+        // Order by popularity (booking count) and apply pagination
         var teachers = await query
             .Select(t => new
             {

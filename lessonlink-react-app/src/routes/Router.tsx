@@ -1,6 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
-import { NotificationProvider } from '../components/providers/NotificationProvider';
 import { Role } from "../models/User";
 import Dashboard from "../pages/Dashboard";
 import Home from "../pages/Home";
@@ -20,11 +19,7 @@ import MySlotDetails from "../pages/MySlotDetails";
 export default function Router() {
     const router = createBrowserRouter([
         {
-            element: (
-                <NotificationProvider>
-                    <MainLayout />
-                </NotificationProvider>
-            ),
+            element: <MainLayout />,
             children: [
                 {
                     element: <UnauthenticatedRoute />,
