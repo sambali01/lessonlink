@@ -59,7 +59,7 @@ const TeacherProfile: FunctionComponent<TeacherProfileProps> = ({ teacher, isLoa
                             border: `3px solid ${theme.palette.primary.light}`
                         }}
                     >
-                        {teacher.firstName?.[0]}{teacher.surName?.[0]}
+                        {teacher.surName?.[0]}{teacher.firstName?.[0]}
                     </Avatar>
 
                     <Box sx={{ flex: 1, minWidth: 250 }}>

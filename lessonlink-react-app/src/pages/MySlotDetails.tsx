@@ -106,7 +106,6 @@ const MySlotDetails: FunctionComponent = () => {
 
     const hasActiveBooking = !!activeBooking;
 
-    // Check if the slot is in the past
     const isPastSlot = slot ? new Date(slot.endTime) < new Date() : false;
 
     const handleAcceptBooking = async () => {
@@ -197,15 +196,7 @@ const MySlotDetails: FunctionComponent = () => {
         }
     }, [slot, isLoading, navigate]);
 
-    if (isLoading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-                <CircularProgress size={60} />
-            </Box>
-        );
-    }
-
-    if (!slot) {
+    if (isLoading || !slot) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
                 <CircularProgress size={60} />
@@ -218,8 +209,7 @@ const MySlotDetails: FunctionComponent = () => {
 
     return (
         <Box sx={{
-            minHeight: '100vh',
-            bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f5f5f5',
+            bgcolor: theme.palette.background.default,
             py: 4
         }}>
             <Box sx={{
@@ -318,8 +308,12 @@ const MySlotDetails: FunctionComponent = () => {
                                         </Typography>
                                     </Box>
                                 </Box>
-
-                                {hasActiveBooking && (
+                                {isPastSlot && (
+                                    <Alert severity="info" sx={{ mt: 3 }}>
+                                        Ez az időpont nem törölhető és nem szerkeszthető, mert már elmúlt.
+                                    </Alert>
+                                )}
+                                {!isPastSlot && hasActiveBooking && (
                                     <Alert severity="info" sx={{ mt: 3 }}>
                                         Ez az időpont nem törölhető és nem szerkeszthető, mert aktív foglalás van rajta.
                                     </Alert>

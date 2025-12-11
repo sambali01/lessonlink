@@ -39,7 +39,7 @@ export const AppLightTheme: Theme = createTheme({
             contrastText: "#FFFFFF"
         },
         background: {
-            default: "#F8FAFC",
+            default: "#dee8f1ff",
             paper: "#FFFFFF"
         },
         text: {

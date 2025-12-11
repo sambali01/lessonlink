@@ -17,10 +17,12 @@ import { useNotification } from '../hooks/useNotification';
 import { AvailableSlot, CreateAvailableSlotRequest } from '../models/AvailableSlot';
 import { ApiError } from '../utils/ApiError';
 import { MY_SLOTS_PAGE_SIZE } from '../utils/constants';
+import { useLocation } from 'react-router-dom';
 
 const MySlots: FunctionComponent = () => {
     const theme = useTheme();
     const { showSuccess, showError } = useNotification();
+    const location = useLocation();
     const [tabValue, setTabValue] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [pastPage, setPastPage] = useState(1);
@@ -31,6 +33,13 @@ const MySlots: FunctionComponent = () => {
     const deleteSlotMutation = useDeleteAvailableSlot();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Open modal if navigated from Dashboard
+    useEffect(() => {
+        if (location.state?.openModal) {
+            setIsModalOpen(true);
+        }
+    }, [location]);
 
     useEffect(() => {
         if (deleteSlotMutation.error) {
