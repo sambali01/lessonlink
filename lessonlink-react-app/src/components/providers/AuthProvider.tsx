@@ -81,25 +81,26 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
     async function handleLogin(email: string, password: string) {
         try {
-            await login(email, password).then((data) => {
-                if (data) {
-                    const tokenStr = data.token;
-                    const currentUserAuthObj: UserAuth = {
-                        userId: data.id,
-                        roles: data.roles
-                    }
-
-                    setToken(tokenStr);
-                    setCurrentUserAuth(currentUserAuthObj);
-                } else {
-                    setToken(null);
-                    setCurrentUserAuth(null);
+            const data = await login(email, password);
+            if (data) {
+                const tokenStr = data.token;
+                const currentUserAuthObj: UserAuth = {
+                    userId: data.id,
+                    roles: data.roles
                 }
-            })
-        } catch {
+
+                setToken(tokenStr);
+                setCurrentUserAuth(currentUserAuthObj);
+            } else {
+                setToken(null);
+                setCurrentUserAuth(null);
+                throw new Error('Login failed');
+            }
+        } catch (error) {
             setToken(null);
             setCurrentUserAuth(null);
-        };
+            throw error;
+        }
     }
 
     async function handleLogout() {

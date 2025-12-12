@@ -34,13 +34,17 @@ const Login: FunctionComponent = () => {
     const onSubmit = async (data: LoginForm) => {
         setLoading(true);
         try {
-            handleLogin(data.email, data.password);
+            await handleLogin(data.email, data.password);
             navigate('/dashboard');
         } catch (error) {
             if (error instanceof ApiError) {
-                showError(error.errors);
+                if (error.statusCode === 401) {
+                    showError('Hibás email cím vagy jelszó.');
+                } else {
+                    showError(error.errors);
+                }
             } else {
-                showError('Bejelentkezés sikertelen');
+                showError('Bejelentkezés sikertelen.');
             }
         } finally {
             setLoading(false);

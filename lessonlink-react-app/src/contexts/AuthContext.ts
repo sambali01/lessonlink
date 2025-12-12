@@ -4,8 +4,8 @@ import { UserAuth } from "../models/User";
 interface IAuthContext {
     token?: string | null;
     currentUserAuth?: UserAuth | null;
-    handleLogin: (email: string, password: string) => void;
-    handleLogout: () => void;
+    handleLogin: (email: string, password: string) => Promise<void>;
+    handleLogout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<IAuthContext | undefined>(undefined);
