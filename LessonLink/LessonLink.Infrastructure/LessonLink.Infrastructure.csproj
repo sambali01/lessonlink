@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -23,6 +23,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LessonLink.Domain\LessonLink.BusinessLogic.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Seed\SeedData\*.json" />
   </ItemGroup>
 
 </Project>

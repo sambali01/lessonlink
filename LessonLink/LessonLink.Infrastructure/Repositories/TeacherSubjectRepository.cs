@@ -3,36 +3,35 @@ using LessonLink.BusinessLogic.Repositories;
 using LessonLink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-public class TeacherSubjectRepository : ITeacherSubjectRepository
+namespace LessonLink.Infrastructure.Repositories;
+
+/// <summary>
+/// Implementation of ITeacherSubjectRepository using Entity Framework Core.
+/// Manages the many-to-many relationship between teachers and subjects.
+/// </summary>
+public class TeacherSubjectRepository(LessonLinkDbContext context) : ITeacherSubjectRepository
 {
-    private readonly LessonLinkDbContext _dbContext;
-
-    public TeacherSubjectRepository(LessonLinkDbContext context)
-    {
-        _dbContext = context;
-    }
-
     public async Task<IReadOnlyCollection<TeacherSubject>> GetByTeacherIdAsync(string teacherId)
     {
-        return await _dbContext.TeacherSubjects
+        return await context.TeacherSubjects
             .Where(ts => ts.TeacherId == teacherId)
             .ToListAsync();
     }
 
-    public async Task<TeacherSubject> CreateAsync(TeacherSubject teacherSubject)
+    public TeacherSubject CreateAsync(TeacherSubject teacherSubject)
     {
-        _dbContext.TeacherSubjects.Add(teacherSubject);
-        await _dbContext.SaveChangesAsync();
+        context.TeacherSubjects.Add(teacherSubject);
         return teacherSubject;
     }
 
-    public async Task DeleteByTeacherIdAsync(string teacherId)
+    public void DeleteByTeacherIdAsync(string teacherId)
     {
-        var teacherSubjects = _dbContext.TeacherSubjects
+        // Remove all subject associations for a teacher
+        // This is used before adding new subjects when updating a teacher's profile
+        var teacherSubjects = context.TeacherSubjects
             .Where(ts => ts.TeacherId == teacherId)
             .ToList();
 
-        _dbContext.TeacherSubjects.RemoveRange(teacherSubjects);
-        await _dbContext.SaveChangesAsync();
+        context.TeacherSubjects.RemoveRange(teacherSubjects);
     }
 }

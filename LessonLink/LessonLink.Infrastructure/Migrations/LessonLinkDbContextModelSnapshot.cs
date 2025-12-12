@@ -124,23 +124,25 @@ namespace LessonLink.Infrastructure.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool?>("AcceptsInPerson")
+                    b.Property<bool>("AcceptsInPerson")
                         .HasColumnType("bit");
 
-                    b.Property<bool?>("AcceptsOnline")
+                    b.Property<bool>("AcceptsOnline")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Contact")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("HourlyRate")
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HourlyRate")
                         .HasColumnType("int");
 
                     b.Property<string>("Location")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("Rating")
-                        .HasColumnType("float");
 
                     b.HasKey("UserId");
 
@@ -185,6 +187,9 @@ namespace LessonLink.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -211,9 +216,6 @@ namespace LessonLink.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<byte[]>("ProfilePicture")
-                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -271,19 +273,19 @@ namespace LessonLink.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "1a1a1111-1111-1111-1111-111111111111",
+                            Id = "student-role-id",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         },
                         new
                         {
-                            Id = "2b2b2222-2222-2222-2222-222222222222",
+                            Id = "teacher-role-id",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "3c3c3333-3333-3333-3333-333333333333",
+                            Id = "admin-role-id",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });
@@ -409,7 +411,7 @@ namespace LessonLink.Infrastructure.Migrations
             modelBuilder.Entity("LessonLink.BusinessLogic.Models.Booking", b =>
                 {
                     b.HasOne("LessonLink.BusinessLogic.Models.AvailableSlot", "AvailableSlot")
-                        .WithMany()
+                        .WithMany("Bookings")
                         .HasForeignKey("AvailableSlotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -515,6 +517,11 @@ namespace LessonLink.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("LessonLink.BusinessLogic.Models.AvailableSlot", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("LessonLink.BusinessLogic.Models.Subject", b =>

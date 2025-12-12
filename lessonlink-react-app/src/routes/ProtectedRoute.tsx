@@ -1,34 +1,33 @@
 import { PropsWithChildren } from 'react';
-import { AuthDto } from '../dtos/AuthDto.ts';
+import { UserAuth } from '../models/User.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { Navigate } from 'react-router-dom';
+import PermissionDenied from '../pages/PermissionDenied.tsx';
+import Loading from '../pages/Loading.tsx';
 
 type ProtectedRouteProps = PropsWithChildren & {
-    allowedRoles: AuthDto['roles'];
+    allowedRoles: UserAuth['roles'];
 };
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     const { currentUserAuth } = useAuth();
 
     if (currentUserAuth === undefined) {
-        return <div>Loading...</div>;
+        return (
+            <Loading />
+        );
     }
 
     if (currentUserAuth === null) {
         return <Navigate to="/login" replace />;
     }
 
-    let userHasAllowedRole = false;
-    const userRoles = currentUserAuth.roles;
-    let i = 0;
-    while (i < userRoles.length && userHasAllowedRole === false) {
-        if (allowedRoles.includes(userRoles[i]))
-            userHasAllowedRole = true;
-        ++i;
-    }
+    const userHasAllowedRole = currentUserAuth.roles.some(role => allowedRoles.includes(role));
 
-    if (userHasAllowedRole === false) {
-        return <div>Permission denied.</div>
+    if (!userHasAllowedRole) {
+        return (
+            <PermissionDenied />
+        );
     }
 
     return children;

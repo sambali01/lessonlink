@@ -1,0 +1,70 @@
+﻿[
+  {
+    "TeacherId": "user-teacher-1",
+    "SubjectId": 1
+  },
+  {
+    "TeacherId": "user-teacher-1",
+    "SubjectId": 2
+  },
+  {
+    "TeacherId": "user-teacher-2",
+    "SubjectId": 3
+  },
+  {
+    "TeacherId": "user-teacher-2",
+    "SubjectId": 13
+  },
+  {
+    "TeacherId": "user-teacher-3",
+    "SubjectId": 4
+  },
+  {
+    "TeacherId": "user-teacher-3",
+    "SubjectId": 6
+  },
+  {
+    "TeacherId": "user-teacher-4",
+    "SubjectId": 2
+  },
+  {
+    "TeacherId": "user-teacher-4",
+    "SubjectId": 1
+  },
+  {
+    "TeacherId": "user-teacher-5",
+    "SubjectId": 5
+  },
+  {
+    "TeacherId": "user-teacher-5",
+    "SubjectId": 7
+  },
+  {
+    "TeacherId": "user-teacher-6",
+    "SubjectId": 10
+  },
+  {
+    "TeacherId": "user-teacher-7",
+    "SubjectId": 14
+  },
+  {
+    "TeacherId": "user-teacher-8",
+    "SubjectId": 8
+  },
+  {
+    "TeacherId": "user-teacher-8",
+    "SubjectId": 13
+  },
+  {
+    "TeacherId": "user-teacher-8",
+    "SubjectId": 9
+  },
+  {
+    "TeacherId": "user-teacher-9",
+    "SubjectId": 11
+  },
+  {
+    "TeacherId": "user-teacher-10",
+    "SubjectId": 15
+  }
+]

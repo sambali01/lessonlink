@@ -1,10 +1,8 @@
 import {
-    Alert,
     Autocomplete,
     Avatar,
     Box,
     Button,
-    Chip,
     CircularProgress,
     Container,
     FormControlLabel,
@@ -12,23 +10,36 @@ import {
     Radio,
     RadioGroup,
     Slider,
-    Snackbar,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
 import { FunctionComponent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ProfileUpdateDto } from "../dtos/ProfileUpdateDto";
+import { Controller, useForm } from "react-hook-form";
+import { useSubjects } from "../hooks/subjectQueries";
 import { useTeacherDetails } from "../hooks/teacherQueries";
 import { useAuth } from "../hooks/useAuth";
-import { useFindUserById, useUpdateProfile } from "../hooks/userQueries";
-import { Role } from "../models/Role";
-import { useSubjects } from "../hooks/subjectQueries";
+import { useFindUserById, useUpdateStudent, useUpdateTeacher } from "../hooks/userQueries";
+import { Subject } from "../models/Subject";
+import { Role, StudentUpdateRequest, TeacherUpdateRequest } from "../models/User";
+import { TeachingMethod } from "../utils/enums";
+import { convertBoolsToTeachingMethod, convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
+import { useNotification } from "../hooks/useNotification";
+import { ApiError } from "../utils/ApiError";
+
+interface ProfileForm {
+    nickName: string;
+    profilePicture?: File;
+    teachingMethod?: TeachingMethod;
+    location?: string;
+    hourlyRate?: number;
+    description?: string;
+    contact?: string;
+    subjectNames?: string[];
+}
 
 const Profile: FunctionComponent = () => {
     const theme = useTheme();
-    const navigate = useNavigate();
     const { currentUserAuth } = useAuth();
     const { data: user, isLoading: userLoading } = useFindUserById(currentUserAuth?.userId || '');
     const { data: teacher, isLoading: teacherLoading } = useTeacherDetails(
@@ -36,85 +47,122 @@ const Profile: FunctionComponent = () => {
         { enabled: currentUserAuth?.roles.includes(Role.Teacher) }
     );
 
-    const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile(currentUserAuth?.userId || '');
+    const updateStudentMutation = useUpdateStudent(currentUserAuth?.userId || '');
+    const updateTeacherMutation = useUpdateTeacher(currentUserAuth?.userId || '');
 
+    const { data: allSubjects } = useSubjects();
+    const subjectNames = allSubjects ? allSubjects.map((s: Subject) => s.name) : [];
+    const isTeacher = currentUserAuth?.roles.includes(Role.Teacher);
+
+    const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProfileForm>({
+        defaultValues: {
+            nickName: '',
+            teachingMethod: TeachingMethod.Online,
+            location: '',
+            hourlyRate: 0,
+            description: '',
+            contact: '',
+            subjectNames: []
+        }
+    });
+
+    const selectedTeachingMethod = watch('teachingMethod');
+    const showLocationField = isTeacher && (
+        selectedTeachingMethod === TeachingMethod.InPerson ||
+        selectedTeachingMethod === TeachingMethod.Both
+    );
+
+    const { showSuccess, showError } = useNotification();
     const [isEditing, setIsEditing] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [profilePicture, setProfilePicture] = useState<File | undefined>(undefined);
-    const [error, setError] = useState<string | null>(null);
 
-    // User state
-    const [nickName, setNickName] = useState('');
-
-    // Teacher state
-    const [teachingMethod, setTeachingMethod] = useState<'online' | 'inPerson' | 'both'>('online');
-    const [location, setLocation] = useState('');
-    const [hourlyRate, setHourlyRate] = useState<number>(0);
-    const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-    const { data: allSubjects = [] } = useSubjects();
+    const isUpdating = updateStudentMutation.isPending || updateTeacherMutation.isPending;
 
     useEffect(() => {
-        if (user) setNickName(user.nickName || '');
-        if (teacher) {
-            setTeachingMethod(
-                teacher.acceptsOnline && teacher.acceptsInPerson ? 'both' :
-                    teacher.acceptsOnline ? 'online' : 'inPerson'
-            );
-            setLocation(teacher.location || '');
-            setHourlyRate(teacher.hourlyRate || 0);
-            setSelectedSubjects(teacher.subjects || []);
+        if (user) {
+            setValue('nickName', user.nickName || '');
         }
-    }, [user, teacher]);
+        if (teacher) {
+            const teachingMethod = convertBoolsToTeachingMethod(teacher.acceptsOnline, teacher.acceptsInPerson);
+            setValue('teachingMethod', teachingMethod);
+            setValue('location', teacher.location || '');
+            setValue('hourlyRate', teacher.hourlyRate || 0);
+            setValue('description', teacher.description || '');
+            setValue('contact', teacher.contact || '');
+            setValue('subjectNames', teacher.subjects.map((s: Subject) => s.name) || []);
+        }
+    }, [user, teacher, setValue]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             const file = e.target.files[0];
-            setProfilePicture(file);
+            setValue('profilePicture', file);
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result as string);
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSave = () => {
+    const onSubmit = async (data: ProfileForm) => {
         if (!currentUserAuth?.userId) return;
 
-        const updateData: ProfileUpdateDto = {
-            nickName: nickName !== user?.nickName ? nickName : undefined,
-            profilePicture: profilePicture || undefined,
-            acceptsOnline: teachingMethod !== 'inPerson',
-            acceptsInPerson: teachingMethod !== 'online',
-            location: teachingMethod !== 'online' ? location : undefined,
-            hourlyRate: hourlyRate !== (teacher?.hourlyRate || 0) ? hourlyRate : undefined,
-            subjects: currentUserAuth?.roles.includes(Role.Teacher) ? selectedSubjects : undefined
+        const onSuccess = () => {
+            setIsEditing(false);
+            setImagePreview(null);
+            showSuccess('Profil sikeresen frissítve!');
         };
 
-        updateProfile(updateData, {
-            onSuccess: () => {
-                setIsEditing(false);
-                setImagePreview(null);
-                setProfilePicture(undefined);
-            },
-            onError: (error) => {
-                setError(error instanceof Error ? error.message : 'Ismeretlen hiba történt');
+        const onError = (error: Error) => {
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Ismeretlen hiba történt');
             }
-        });
+        };
+
+        if (isTeacher) {
+            const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToExplicitBools(data.teachingMethod!);
+
+            const updateData: TeacherUpdateRequest = {
+                nickName: data.nickName !== user?.nickName ? data.nickName : undefined,
+                profilePicture: data.profilePicture || undefined,
+                acceptsOnline: acceptsOnline !== teacher?.acceptsOnline ? acceptsOnline : undefined,
+                acceptsInPerson: acceptsInPerson !== teacher?.acceptsInPerson ? acceptsInPerson : undefined,
+                location: showLocationField && data.location !== teacher?.location ? data.location : undefined,
+                hourlyRate: data.hourlyRate !== teacher?.hourlyRate ? data.hourlyRate : undefined,
+                description: data.description !== teacher?.description ? data.description : undefined,
+                contact: data.contact !== teacher?.contact ? data.contact : undefined,
+                subjectNames: data.subjectNames && data.subjectNames.length > 0 ? data.subjectNames : undefined
+            };
+
+            updateTeacherMutation.mutate(updateData, { onSuccess, onError });
+        } else {
+            const updateData: StudentUpdateRequest = {
+                nickName: data.nickName !== user?.nickName ? data.nickName : undefined,
+                profilePicture: data.profilePicture || undefined
+            };
+
+            updateStudentMutation.mutate(updateData, { onSuccess, onError });
+        }
     };
 
     const handleCancel = () => {
         setIsEditing(false);
-        if (user) setNickName(user.nickName || '');
-        if (teacher) {
-            setTeachingMethod(
-                teacher.acceptsOnline && teacher.acceptsInPerson ? 'both' :
-                    teacher.acceptsOnline ? 'online' : 'inPerson'
-            );
-            setLocation(teacher.location || '');
-            setHourlyRate(teacher.hourlyRate || 0);
-            setSelectedSubjects(teacher.subjects || []);
-        }
         setImagePreview(null);
-        setProfilePicture(undefined);
+
+        // Reset to original values
+        if (user) {
+            setValue('nickName', user.nickName || '');
+        }
+        if (teacher) {
+            const teachingMethod = convertBoolsToTeachingMethod(teacher.acceptsOnline, teacher.acceptsInPerson);
+            setValue('teachingMethod', teachingMethod);
+            setValue('location', teacher.location || '');
+            setValue('hourlyRate', teacher.hourlyRate || 0);
+            setValue('description', teacher.description || '');
+            setValue('contact', teacher.contact || '');
+            setValue('subjectNames', teacher.subjects.map((s: Subject) => s.name) || []);
+        }
     };
 
     if (userLoading || (currentUserAuth?.roles.includes(Role.Teacher) && teacherLoading)) {
@@ -130,10 +178,6 @@ const Profile: FunctionComponent = () => {
                 alignItems: 'center'
             }}
         >
-            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert severity="error">{error}</Alert>
-            </Snackbar>
-
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -159,7 +203,7 @@ const Profile: FunctionComponent = () => {
                     }}
                     >
                         <Avatar
-                            src={imagePreview || user?.profilePicture}
+                            src={imagePreview || user?.imageUrl}
                             sx={{
                                 width: 120,
                                 height: 120,
@@ -168,7 +212,7 @@ const Profile: FunctionComponent = () => {
                                 mb: 2,
                             }}
                         >
-                            {!user?.profilePicture && `${user?.firstName?.[0]}${user?.surName?.[0]}`}
+                            {!user?.imageUrl && `${user?.surName?.[0]}${user?.firstName?.[0]}`}
                         </Avatar>
                         {isEditing && (
                             <Button
@@ -189,7 +233,7 @@ const Profile: FunctionComponent = () => {
                         )}
                     </Box>
                     <Typography variant="h4" color="text.primary">
-                        {user?.firstName} {user?.surName}
+                        {user?.surName} {user?.firstName}
                     </Typography>
                 </Box>
 
@@ -214,7 +258,7 @@ const Profile: FunctionComponent = () => {
                             </Button>
                             <Button
                                 variant="contained"
-                                onClick={handleSave}
+                                onClick={handleSubmit(onSubmit)}
                                 disabled={isUpdating}
                                 startIcon={isUpdating && <CircularProgress size={20} />}
                             >
@@ -225,119 +269,183 @@ const Profile: FunctionComponent = () => {
                 </Box>
 
                 {/* Profile Form */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <TextField
-                        label="Becenév"
-                        value={nickName}
-                        onChange={(e) => setNickName(e.target.value)}
-                        disabled={!isEditing}
-                        fullWidth
-                        variant="outlined"
+                <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Controller
+                        name="nickName"
+                        control={control}
+                        rules={{ required: 'Kötelező mező' }}
+                        render={({ field }) => (
+                            <TextField
+                                {...field}
+                                label="Becenév"
+                                disabled={!isEditing}
+                                fullWidth
+                                variant="outlined"
+                                error={!!errors.nickName}
+                                helperText={errors.nickName?.message}
+                            />
+                        )}
                     />
 
-                    {currentUserAuth?.roles.includes(Role.Teacher) ? (
+                    {isTeacher && (
                         <>
                             <Box sx={{ mt: 2 }}>
-                                <FormLabel component="legend">Óraadás módja</FormLabel>
-                                <RadioGroup
-                                    value={teachingMethod}
-                                    onChange={(e) => setTeachingMethod(e.target.value as 'online' | 'inPerson' | 'both')}
-                                    row
-                                    sx={{
-                                        gap: 3,
-                                        mt: 1,
-                                        color: theme.palette.text.secondary
-                                    }}
-                                >
-                                    <FormControlLabel
-                                        value="online"
-                                        control={<Radio color="primary" />}
-                                        label="Csak online"
-                                        disabled={!isEditing}
-                                    />
-                                    <FormControlLabel
-                                        value="inPerson"
-                                        control={<Radio color="primary" />}
-                                        label="Csak személyesen"
-                                        disabled={!isEditing}
-                                    />
-                                    <FormControlLabel
-                                        value="both"
-                                        control={<Radio color="primary" />}
-                                        label="Online és személyesen"
-                                        disabled={!isEditing}
-                                    />
-                                </RadioGroup>
+                                <FormLabel component="legend">Oktatási mód</FormLabel>
+                                <Controller
+                                    name="teachingMethod"
+                                    control={control}
+                                    rules={{ required: 'Kötelező mező' }}
+                                    render={({ field }) => (
+                                        <RadioGroup
+                                            row
+                                            {...field}
+                                            sx={{
+                                                gap: 2,
+                                                mt: 1,
+                                                color: theme.palette.text.secondary
+                                            }}
+                                        >
+                                            <FormControlLabel
+                                                value={TeachingMethod.Online}
+                                                control={<Radio color="primary" />}
+                                                label="Csak online"
+                                                disabled={!isEditing}
+                                            />
+                                            <FormControlLabel
+                                                value={TeachingMethod.InPerson}
+                                                control={<Radio color="primary" />}
+                                                label="Csak személyesen"
+                                                disabled={!isEditing}
+                                            />
+                                            <FormControlLabel
+                                                value={TeachingMethod.Both}
+                                                control={<Radio color="primary" />}
+                                                label="Online vagy személyesen"
+                                                disabled={!isEditing}
+                                            />
+                                        </RadioGroup>
+                                    )}
+                                />
 
-                                {(teachingMethod === 'inPerson' || teachingMethod === 'both') && (
-                                    <TextField
-                                        label="Város"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        disabled={!isEditing}
-                                        fullWidth
-                                        sx={{ mt: 2 }}
+                                {showLocationField && (
+                                    <Controller
+                                        name="location"
+                                        control={control}
+                                        rules={{
+                                            required: showLocationField ? 'Kötelező mező személyes órákhoz' : false
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Helyszín"
+                                                disabled={!isEditing}
+                                                fullWidth
+                                                sx={{ mt: 2 }}
+                                                error={!!errors.location}
+                                                helperText={errors.location?.message}
+                                            />
+                                        )}
                                     />
                                 )}
                             </Box>
 
                             <Box sx={{ mt: 2 }}>
                                 <FormLabel component="legend">Óradíj (Ft/óra)</FormLabel>
-                                <Slider
-                                    value={hourlyRate}
-                                    onChange={(_, value) => setHourlyRate(value as number)}
-                                    min={0}
-                                    max={20000}
-                                    step={500}
-                                    valueLabelDisplay={isEditing ? 'auto' : 'off'}
-                                    disabled={!isEditing}
-                                    sx={{
-                                        mt: 2
+                                <Controller
+                                    name="hourlyRate"
+                                    control={control}
+                                    rules={{
+                                        required: 'Kötelező mező',
+                                        min: { value: 0, message: 'Az óradíj nem lehet negatív' }
                                     }}
-                                    marks={[
-                                        { value: 0, label: '0 Ft' },
-                                        { value: 10000, label: '10.000 Ft' },
-                                        { value: 20000, label: '20.000 Ft' }
-                                    ]}
-                                />
-                            </Box>
-                            <Box sx={{ mt: 2 }}>
-                                <FormLabel component="legend">Tantárgyak</FormLabel>
-                                <Autocomplete
-                                    multiple
-                                    options={allSubjects}
-                                    value={selectedSubjects}
-                                    onChange={(_, newValue) => setSelectedSubjects(newValue)}
-                                    disabled={!isEditing}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Tantárgyak"
-                                            placeholder="Válassz tantárgyakat"
+                                    render={({ field }) => (
+                                        <Slider
+                                            {...field}
+                                            min={0}
+                                            max={20000}
+                                            step={500}
+                                            valueLabelDisplay={isEditing ? 'auto' : 'off'}
+                                            disabled={!isEditing}
+                                            sx={{
+                                                mt: 2
+                                            }}
+                                            marks={[
+                                                { value: 0, label: '0 Ft' },
+                                                { value: 10000, label: '10.000 Ft' },
+                                                { value: 20000, label: '20.000 Ft' }
+                                            ]}
                                         />
                                     )}
-                                    renderTags={(value, getTagProps) =>
-                                        value.map((option, index) => (
-                                            <Chip
-                                                {...getTagProps({ index })}
-                                                key={option}
-                                                label={option}
-                                                size="small"
-                                            />
-                                        ))
-                                    }
-                                    sx={{ mt: 1 }}
+                                />
+                            </Box>
+
+                            <Controller
+                                name="contact"
+                                control={control}
+                                rules={{ required: 'Kötelező mező' }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Elérhetőség"
+                                        disabled={!isEditing}
+                                        fullWidth
+                                        error={!!errors.contact}
+                                        helperText={errors.contact?.message || "Email, telefon vagy más elérhetőség"}
+                                    />
+                                )}
+                            />
+
+                            <Controller
+                                name="description"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Bemutatkozás"
+                                        disabled={!isEditing}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        helperText="Mutatkozz be röviden a leendő diákjaidnak"
+                                    />
+                                )}
+                            />
+
+                            <Box sx={{ mt: 2 }}>
+                                <Controller
+                                    name="subjectNames"
+                                    control={control}
+                                    rules={{
+                                        required: isTeacher ? 'Legalább egy tantárgyat válassz ki' : false,
+                                        validate: (value) => (value && value.length > 0) || 'Legalább egy tantárgyat válassz ki'
+                                    }}
+                                    render={({ field }) => (
+                                        <Autocomplete
+                                            {...field}
+                                            multiple
+                                            options={subjectNames}
+                                            value={field.value || []}
+                                            onChange={(_, newValue) => field.onChange(newValue)}
+                                            disabled={!isEditing}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    label="Tantárgyak"
+                                                    error={!!errors.subjectNames}
+                                                    helperText={errors.subjectNames?.message}
+                                                />
+                                            )}
+                                            slotProps={{
+                                                chip: {
+                                                    size: "small"
+                                                }
+                                            }}
+                                            sx={{ mt: 1 }}
+                                        />
+                                    )}
                                 />
                             </Box>
                         </>
-                    ) : (
-                        <Button
-                            variant="contained"
-                            onClick={() => navigate('/become-teacher')}
-                            sx={{ mt: 3, alignSelf: 'center' }}
-                        >
-                            Légy te is tanár!
-                        </Button>
                     )}
                 </Box>
             </Box>

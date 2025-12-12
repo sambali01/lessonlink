@@ -1,9 +1,11 @@
-using LessonLink.BusinessLogic.Common;
+﻿using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 using LessonLink.BusinessLogic.Services;
 using LessonLink.Infrastructure.Data;
 using LessonLink.Infrastructure.Repositories;
+using LessonLink.Infrastructure.Seed;
+using LessonLink.WebApi.MiddleWare;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Enable Cross-Origin Resource Sharing (CORS)
+// Configure Cross-Origin Resource Sharing (CORS)
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
@@ -80,25 +82,27 @@ builder.Services.AddSingleton(jwtSettings);
 var connectionString = builder.Configuration.GetConnectionString("LessonLinkDb");
 builder.Services.AddDbContext<LessonLinkDbContext>(options => options.UseSqlServer(connectionString));
 
-// Add repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
-builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
-builder.Services.AddScoped<ITeacherSubjectRepository, TeacherSubjectRepository>();
-builder.Services.AddScoped<IAvailableSlotRepository, AvailableSlotRepository>();
+// Add UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add services to the container
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<TeacherService>();
 builder.Services.AddScoped<SubjectService>();
 builder.Services.AddScoped<AvailableSlotService>();
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<PhotoService>();
+
+var cloudinarySettingsKey = builder.Configuration.GetSection(CloudinarySettings.CloudinarySettingsKey);
+if (cloudinarySettingsKey.Exists())
+{
+    builder.Services.Configure<CloudinarySettings>(cloudinarySettingsKey);
+}
 
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -106,6 +110,8 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
+app.UseMiddleware<ExceptionMiddleWare>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -124,5 +130,28 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Seed database with test data
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+try
+{
+    var context = services.GetRequiredService<LessonLinkDbContext>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+
+    await context.Database.MigrateAsync();
+
+    if (app.Environment.IsDevelopment())
+    {
+        await Seed.ClearAllData(context, userManager);
+    }
+
+    await Seed.SeedData(context, userManager);
+}
+catch (Exception ex)
+{
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred during migration or seeding");
+}
 
 app.Run();

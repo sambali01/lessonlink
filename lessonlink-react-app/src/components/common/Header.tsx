@@ -1,11 +1,10 @@
-import { AppBar, Avatar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme } from "@mui/material";
+import { AppBar, Avatar, Box, Button, IconButton, Menu, MenuItem, Toolbar, useTheme } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useFindUserById } from "../../hooks/userQueries";
-import ThemeSwitcher from "../features/ThemeSwitcher";
-import "./Header.less";
-import { Role } from "../../models/Role";
+import ThemeSwitcher from "./ThemeSwitcher";
+import { Role } from "../../models/User";
 
 const Header: FunctionComponent = () => {
     const theme = useTheme();
@@ -40,22 +39,30 @@ const Header: FunctionComponent = () => {
                 bgcolor: theme.palette.background.paper
             }}
         >
-            <Toolbar className="header-toolbar">
-                <Typography
-                    variant="h6"
+            <Toolbar sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                px: { xs: 2, sm: 4 }
+            }}>
+                <Box
                     component={Link}
                     to="/"
                     sx={{
                         marginRight: 4,
                         textDecoration: 'none',
-                        color: theme.palette.text.primary,
-                        fontFamily: theme.typography.fontFamily,
-                        fontWeight: 700,
-                        letterSpacing: '-0.5px'
+                        display: 'flex',
+                        alignItems: 'center'
                     }}
                 >
-                    LessonLink
-                </Typography>
+                    <img
+                        src="/LessonLink_logo.png"
+                        alt="LessonLink"
+                        style={{
+                            height: '40px',
+                            width: 'auto'
+                        }}
+                    />
+                </Box>
                 <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
                     {currentUserAuth && (
                         <Button
@@ -102,14 +109,31 @@ const Header: FunctionComponent = () => {
                             Óraidőpontjaim
                         </Button>
                     )}
+
+                    {currentUserAuth?.roles.includes(Role.Student) && (
+                        <Button
+                            component={Link}
+                            to="/my-bookings"
+                            sx={{
+                                color: theme.palette.text.primary,
+                                mx: 1,
+                                '&:hover': {
+                                    backgroundColor: theme.palette.action.hover
+                                }
+                            }}
+                        >
+                            Saját foglalások
+                        </Button>
+                    )}
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <ThemeSwitcher />
 
                     {currentUserAuth ? (
-                        <div className="user-section">
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
                                 <Avatar
+                                    src={user?.imageUrl}
                                     sx={{
                                         bgcolor: theme.palette.primary.main,
                                         color: theme.palette.primary.contrastText,
@@ -120,7 +144,7 @@ const Header: FunctionComponent = () => {
                                         }
                                     }}
                                 >
-                                    {user?.firstName?.[0]}{user?.surName?.[0]}
+                                    {user?.surName?.[0]}{user?.firstName?.[0]}
                                 </Avatar>
                             </IconButton>
                             <Menu
@@ -135,9 +159,9 @@ const Header: FunctionComponent = () => {
                                     Kijelentkezés
                                 </MenuItem>
                             </Menu>
-                        </div>
+                        </Box>
                     ) : (
-                        <div className="auth-buttons">
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Button
                                 variant="outlined"
                                 color="primary"
@@ -154,7 +178,7 @@ const Header: FunctionComponent = () => {
                             >
                                 Regisztráció
                             </Button>
-                        </div>
+                        </Box>
                     )}
                 </Box>
             </Toolbar>

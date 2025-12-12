@@ -1,129 +1,283 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+﻿using LessonLink.BusinessLogic.DTOs.AvailableSlot;
+using LessonLink.BusinessLogic.DTOs.Common;
+using LessonLink.BusinessLogic.Helpers;
+using LessonLink.BusinessLogic.Mappers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 
 namespace LessonLink.BusinessLogic.Services;
 
-public class AvailableSlotService
+public class AvailableSlotService(IUnitOfWork unitOfWork)
 {
-    private readonly IAvailableSlotRepository _availableSlotRepository;
-
-    public AvailableSlotService(
-        IAvailableSlotRepository availableSlotRepository)
+    public async Task<ServiceResult<AvailableSlotResponse>> GetSlotDetailsAsync(string teacherId, int slotId)
     {
-        _availableSlotRepository = availableSlotRepository;
+        if (string.IsNullOrEmpty(teacherId))
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("A tanár nem található.", 401);
+        }
+
+        var slot = await unitOfWork.AvailableSlotRepository.GetByIdWithBookingAsync(slotId);
+        if (slot == null)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Az időpont nem található.", 404);
+        }
+
+        if (slot.TeacherId != teacherId)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Nincs jogosultságod megtekinteni ezt az időpontot.", 403);
+        }
+
+        var availableSlotResponse = AvailableSlotMappers.AvailableSlotToResponse(slot);
+
+        return ServiceResult<AvailableSlotResponse>.Success(availableSlotResponse);
     }
 
-    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetMySlotsAsync(string teacherId)
+    public async Task<ServiceResult<PaginatedResponse<AvailableSlotResponse>>> GetCurrentSlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
     {
-        try
+        if (string.IsNullOrEmpty(teacherId))
         {
-            if (string.IsNullOrEmpty(teacherId))
-            {
-                return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Failure("Teacher not found.", 401);
-            }
+            return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Failure("A tanár nem található.", 401);
+        }
 
-            var slots = await _availableSlotRepository.GetByTeacherIdAsync(teacherId);
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Success(slots);
-        }
-        catch (Exception ex)
+        var paginatedSlots = await unitOfWork.AvailableSlotRepository.GetCurrentSlotsByTeacherIdWithBookingsPaginatedAsync(teacherId, page, pageSize);
+
+        var slotDtos = paginatedSlots.Items.Select(slot => AvailableSlotMappers.AvailableSlotToResponse(slot)).ToList();
+
+        var result = new PaginatedResponse<AvailableSlotResponse>
         {
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Failure(ex.Message, 500);
-        }
+            Items = slotDtos,
+            TotalCount = paginatedSlots.TotalCount,
+            Page = paginatedSlots.Page,
+            PageSize = paginatedSlots.PageSize,
+            TotalPages = paginatedSlots.TotalPages
+        };
+
+        return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Success(result);
     }
 
-    public async Task<ServiceResult<IReadOnlyCollection<AvailableSlot>>> GetSlotsByTeacherIdAsync(string teacherId)
+    public async Task<ServiceResult<PaginatedResponse<AvailableSlotResponse>>> GetPastSlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
     {
-        try
+        if (string.IsNullOrEmpty(teacherId))
         {
-            var slots = await _availableSlotRepository.GetByTeacherIdAsync(teacherId);
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Success(slots);
+            return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Failure("A tanár nem található.", 401);
         }
-        catch (Exception ex)
+
+        var paginatedSlots = await unitOfWork.AvailableSlotRepository.GetPastSlotsByTeacherIdWithBookingsPaginatedAsync(teacherId, page, pageSize);
+
+        var slotDtos = paginatedSlots.Items.Select(AvailableSlotMappers.AvailableSlotToResponse).ToList();
+
+        var result = new PaginatedResponse<AvailableSlotResponse>
         {
-            return ServiceResult<IReadOnlyCollection<AvailableSlot>>.Failure(ex.Message, 500);
-        }
+            Items = slotDtos,
+            TotalCount = paginatedSlots.TotalCount,
+            Page = paginatedSlots.Page,
+            PageSize = paginatedSlots.PageSize,
+            TotalPages = paginatedSlots.TotalPages
+        };
+
+        return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Success(result);
     }
 
-    public async Task<ServiceResult<AvailableSlot>> CreateSlotAsync(string teacherId, AvailableSlotCreateDto createDto)
+    public async Task<ServiceResult<PaginatedResponse<AvailableSlotResponse>>> GetCurrentNotBookedSlotsPaginatedAsync(string teacherId, int page = 1, int pageSize = 10)
     {
-        try
+        var paginatedSlots = await unitOfWork.AvailableSlotRepository.GetCurrentNotBookedSlotsByTeacherIdPaginatedAsync(teacherId, page, pageSize);
+        var paginatedSlotsResponse = paginatedSlots.Items.Select(slot => AvailableSlotMappers.AvailableSlotToResponse(slot)).ToList();
+
+        var paginatedSlotsResult = new PaginatedResponse<AvailableSlotResponse>
         {
-            if (string.IsNullOrEmpty(teacherId))
-            {
-                return ServiceResult<AvailableSlot>.Failure("Teacher in HttpContext not found.", 401);
-            }
+            Items = paginatedSlotsResponse,
+            TotalCount = paginatedSlots.TotalCount,
+            Page = paginatedSlots.Page,
+            PageSize = paginatedSlots.PageSize,
+            TotalPages = paginatedSlots.TotalPages
+        };
 
-            // Start time is before end time
-            if (createDto.StartTime >= createDto.EndTime)
-            {
-                return ServiceResult<AvailableSlot>.Failure("A kezdési időnek korábban kell lennie, mint a befejezési időnek", 400);
-            }
-            if (createDto.StartTime < DateTime.Now)
-            {
-                return ServiceResult<AvailableSlot>.Failure("Nem adhatsz múltbeli időpontot", 400);
-            }
+        return ServiceResult<PaginatedResponse<AvailableSlotResponse>>.Success(paginatedSlotsResult);
+    }
 
-            // No overlap
-            var hasOverlap = await _availableSlotRepository.HasOverlappingSlotAsync(
-                teacherId, createDto.StartTime, createDto.EndTime);
-            if (hasOverlap)
-            {
-                return ServiceResult<AvailableSlot>.Failure("Az időpont átfedésben van egy már meglévő időponttal", 400);
-            }
+    public async Task<ServiceResult<AvailableSlot>> CreateSlotAsync(string teacherId, CreateAvailableSlotRequest createDto)
+    {
+        if (string.IsNullOrEmpty(teacherId))
+        {
+            return ServiceResult<AvailableSlot>.Failure("Nem vagy bejelentkezve.", 401);
+        }
 
-            var slot = new AvailableSlot
-            {
-                TeacherId = teacherId,
-                StartTime = createDto.StartTime,
-                EndTime = createDto.EndTime
-            };
+        // Validate start time is before end time
+        if (createDto.StartTime >= createDto.EndTime)
+        {
+            return ServiceResult<AvailableSlot>.Failure("A kezdési időpontnak korábbinak kell lennie, mint a befejezési időpont.", 400);
+        }
 
-            var createdSlot = await _availableSlotRepository.CreateAsync(slot);
+        // Validate not in the past
+        if (createDto.StartTime < DateTime.UtcNow)
+        {
+            return ServiceResult<AvailableSlot>.Failure("Múltbeli időpontot nem adhatsz meg.", 400);
+        }
+
+        // Check for overlapping slots
+        var hasOverlap = await unitOfWork.AvailableSlotRepository.HasOverlappingSlotAsync(
+            teacherId, createDto.StartTime, createDto.EndTime);
+        if (hasOverlap)
+        {
+            return ServiceResult<AvailableSlot>.Failure("Az időpont átfedésben van egy meglévő időponttal.", 400);
+        }
+
+        // Check if teacher has any active bookings that would overlap with this new slot
+        var hasOverlappingBooking = await unitOfWork.BookingRepository.HasOverlappingActiveBookingForTeacherAsync(teacherId, createDto.StartTime, createDto.EndTime);
+        if (hasOverlappingBooking)
+        {
+            return ServiceResult<AvailableSlot>.Failure("Aktív foglalásod van ebben az időszakban.", 400);
+        }
+
+        var slot = new AvailableSlot
+        {
+            TeacherId = teacherId,
+            StartTime = createDto.StartTime,
+            EndTime = createDto.EndTime
+        };
+
+        var createdSlot = unitOfWork.AvailableSlotRepository.CreateAsync(slot);
+
+        if (await unitOfWork.CompleteAsync())
+        {
             return ServiceResult<AvailableSlot>.Success(createdSlot, 201);
         }
-        catch (Exception ex)
-        {
-            return ServiceResult<AvailableSlot>.Failure(ex.Message, 500);
-        }
+
+        return ServiceResult<AvailableSlot>.Failure("Hiba történt az időpont létrehozása során.", 500);
     }
 
-    // AvailableSlotService.cs - Add hozzá ezt a metódust
     public async Task<ServiceResult<bool>> DeleteSlotAsync(string teacherId, int slotId)
     {
-        try
+        if (string.IsNullOrEmpty(teacherId))
         {
-            if (string.IsNullOrEmpty(teacherId))
+            return ServiceResult<bool>.Failure("Nem vagy bejelentkezve.", 401);
+        }
+
+        var slot = await unitOfWork.AvailableSlotRepository.GetByIdWithBookingAsync(slotId);
+        if (slot == null)
+        {
+            return ServiceResult<bool>.Failure("Időpont nem található.", 404);
+        }
+
+        if (slot.TeacherId != teacherId)
+        {
+            return ServiceResult<bool>.Failure("Nincs jogosultságod törölni ezt az időpontot.", 403);
+        }
+
+        // Check if the slot is in the past
+        if (slot.EndTime < DateTime.UtcNow)
+        {
+            return ServiceResult<bool>.Failure("Múltbeli időpontot nem törölhetsz.", 400);
+        }
+
+        var bookingsOnSlot = slot.Bookings;
+        if (bookingsOnSlot.Count > 0)
+        {
+            // if there are any active bookings, prevent deletion
+            var hasAnyActiveBooking = bookingsOnSlot.Any(b => b.Status != BookingStatus.Cancelled);
+            if (hasAnyActiveBooking)
             {
-                return ServiceResult<bool>.Failure("Tanár nem található.", 401);
+                return ServiceResult<bool>.Failure("Ez az időpont nem törölhető, mert aktív foglalások vannak rajta.", 409);
             }
 
-            var slot = await _availableSlotRepository.GetByIdAsync(slotId);
-            if (slot == null)
-            {
-                return ServiceResult<bool>.Failure("Az időpont nem található.", 404);
-            }
+            // Delete all bookings associated with the slot because they are all cancelled
+            unitOfWork.BookingRepository.DeleteRangeAsync(bookingsOnSlot);
+        }
 
-            // Ellenőrizzük, hogy a slot a bejelentkezett tanárhoz tartozik-e
-            if (slot.TeacherId != teacherId)
-            {
-                return ServiceResult<bool>.Failure("Nincs jogosultságod törölni ezt az időpontot.", 403);
-            }
+        unitOfWork.AvailableSlotRepository.DeleteAsync(slot);
 
-            // Ellenőrizzük, hogy nincs-e foglalás a slot-ra
-            var hasBooking = await _availableSlotRepository.HasBookingAsync(slotId);
-            if (hasBooking)
-            {
-                return ServiceResult<bool>.Failure("Nem törölhető az időpont, mert már van foglalás rá.", 400);
-            }
-
-            await _availableSlotRepository.DeleteAsync(slot);
+        if (await unitOfWork.CompleteAsync())
+        {
             return ServiceResult<bool>.Success(true);
         }
-        catch (Exception ex)
+
+        return ServiceResult<bool>.Failure("Hiba történt az időpont törlése során.", 500);
+    }
+
+    public async Task<ServiceResult<AvailableSlotResponse>> UpdateSlotAsync(string teacherId, int slotId, UpdateAvailableSlotRequest updateRequest)
+    {
+        if (string.IsNullOrEmpty(teacherId))
         {
-            return ServiceResult<bool>.Failure(ex.Message, 500);
+            return ServiceResult<AvailableSlotResponse>.Failure("Nem vagy bejelentkezve.", 401);
         }
+
+        var slot = await unitOfWork.AvailableSlotRepository.GetByIdWithBookingAsync(slotId);
+        if (slot == null)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Az időpont nem található.", 404);
+        }
+
+        if (slot.TeacherId != teacherId)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Nincs jogosultságod módosítani ezt az időpontot.", 403);
+        }
+
+        // Check if the slot is in the past
+        if (slot.EndTime < DateTime.UtcNow)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Múltbeli időpontot nem módosíthatsz.", 400);
+        }
+
+        // Check if there's an active booking
+        var hasActiveBooking = slot.Bookings.Any(b => b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed);
+        if (hasActiveBooking)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Az időpont nem módosítható, mert aktív foglalás van rajta.", 400);
+        }
+
+        // Validate start time is before end time
+        if (updateRequest.StartTime >= updateRequest.EndTime)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("A kezdési időpontnak korábbinak kell lennie, mint a befejezési időpont.", 400);
+        }
+
+        // Validate not in the past
+        if (updateRequest.StartTime < DateTime.UtcNow)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Múltbeli időpontot nem adhatsz meg.", 400);
+        }
+
+        // Check for overlapping slots (excluding current slot)
+        var hasOverlap = await unitOfWork.AvailableSlotRepository.HasOverlappingSlotAsync(
+            teacherId, updateRequest.StartTime, updateRequest.EndTime, slotId);
+        if (hasOverlap)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Az időpont átfedésben van egy meglévő időponttal.", 400);
+        }
+
+        // Check if teacher has any active bookings that would overlap with this updated slot
+        var hasOverlappingBooking = await unitOfWork.BookingRepository.HasOverlappingActiveBookingForTeacherAsync(
+            teacherId, updateRequest.StartTime, updateRequest.EndTime);
+        if (hasOverlappingBooking)
+        {
+            return ServiceResult<AvailableSlotResponse>.Failure("Aktív foglalásod van ebben az időszakban.", 400);
+        }
+
+        slot.StartTime = updateRequest.StartTime;
+        slot.EndTime = updateRequest.EndTime;
+
+        unitOfWork.AvailableSlotRepository.UpdateAsync(slot);
+
+        if (await unitOfWork.CompleteAsync())
+        {
+            var updatedSlot = await unitOfWork.AvailableSlotRepository.GetByIdWithBookingAsync(slotId);
+            if (updatedSlot == null)
+            {
+                return ServiceResult<AvailableSlotResponse>.Failure("Hiba történt a frissített időpont lekérése során.", 500);
+            }
+
+            var slotResponse = new AvailableSlotResponse
+            {
+                Id = updatedSlot.Id,
+                TeacherId = updatedSlot.TeacherId,
+                StartTime = updatedSlot.StartTime,
+                EndTime = updatedSlot.EndTime,
+                Bookings = [.. updatedSlot.Bookings.Select(BookingMappers.BookingToResponse)]
+            };
+
+            return ServiceResult<AvailableSlotResponse>.Success(slotResponse);
+        }
+
+        return ServiceResult<AvailableSlotResponse>.Failure("Hiba történt az időpont módosítása során.", 500);
     }
 }

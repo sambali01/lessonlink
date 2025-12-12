@@ -1,6 +1,5 @@
 import {
     Box,
-    Container,
     Pagination,
     Paper,
     Skeleton,
@@ -9,42 +8,30 @@ import {
 } from "@mui/material";
 import { FunctionComponent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TeacherCard from "../components/features/TeacherCard";
-import TeacherFilters from "../components/features/TeacherFilters";
-import { useSubjects } from "../hooks/subjectQueries";
+import TeacherCard from "../components/features/teacher-search/TeacherCard";
+import TeacherFilters from "../components/features/teacher-search/TeacherFilters";
 import { useSearchTeachers } from "../hooks/teacherQueries";
-import { TeacherSearchFilters } from "../models/TeacherSearchFilters";
-
-const PAGE_SIZE = 12;
+import { TeacherSearchRequest } from "../models/Teacher";
+import { TEACHER_SEARCH_PAGE_SIZE } from "../utils/constants";
 
 const TeacherSearch: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const [filters, setFilters] = useState<TeacherSearchFilters>({
-        searchQuery: '',
-        subjects: [],
-        minPrice: 0,
-        maxPrice: 20000,
-        minRating: 0,
-        acceptsOnline: false,
-        acceptsInPerson: false,
-        page: 1,
-        pageSize: PAGE_SIZE
-    });
+    const [searchFilters, setSearchFilters] = useState<TeacherSearchRequest>({ page: 1, pageSize: TEACHER_SEARCH_PAGE_SIZE });
 
-    const { data: paginatedData, isLoading, isError } = useSearchTeachers(filters);
+    const { data: paginatedData, isLoading } = useSearchTeachers(searchFilters);
     const teachers = paginatedData?.items ?? [];
-    const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / PAGE_SIZE) : 0;
-
-    const { data: subjects = [] } = useSubjects();
+    const totalPages = paginatedData?.totalCount ? Math.ceil(paginatedData.totalCount / TEACHER_SEARCH_PAGE_SIZE) : 0;
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
-        setFilters(prev => ({ ...prev, page }));
+        setSearchFilters(prev => ({ ...prev, page }));
     };
 
     return (
-        <Container maxWidth="xl" sx={{ py: 2 }}>
-            <Typography variant="h2"
+        <Box sx={{ p: { xs: 1, sm: 2 } }}>
+            <Typography
+                variant="h2"
+                component="h1"
                 sx={{
                     mb: 4,
                     color: theme.palette.text.primary,
@@ -64,45 +51,48 @@ const TeacherSearch: FunctionComponent = () => {
                 <Box sx={{}}>
                     <Paper elevation={3} sx={{ borderRadius: theme.shape.borderRadius, p: 4 }}>
                         <TeacherFilters
-                            filters={filters}
-                            onFilterChange={(newFilters) => setFilters({ ...newFilters, page: 1 })}
-                            subjectsOptions={subjects}
+                            initialFilters={searchFilters}
+                            onSearch={setSearchFilters}
                         />
                     </Paper>
                 </Box>
 
                 {/* Results */}
                 <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                        xs: '1fr',
-                        sm: 'repeat(2, 1fr)',
-                        lg: 'repeat(3, 1fr)'
-                    },
-                    gap: 4,
-                    alignContent: 'start'
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-start',
+                    gap: 4
                 }}>
-                    {isError ? (
-                        <Typography color="error">
-                            Hiba történt az adatok betöltése közben
+                    {isLoading ? (
+                        Array.from(new Array(6)).map((_, index) => (
+                            <Skeleton
+                                key={`skeleton-${index}`}
+                                variant="rectangular"
+                                height={400}
+                                sx={{ borderRadius: theme.shape.borderRadius }}
+                            />
+                        ))
+                    ) : teachers.length === 0 ? (
+                        <Typography
+                            variant="h6"
+                            color="text.secondary"
+                            sx={{
+                                gridColumn: '1 / -1',
+                                textAlign: 'center',
+                                py: 8,
+                                fontStyle: 'italic'
+                            }}
+                        >
+                            Nincs találat a megadott szűrési feltételekkel.
                         </Typography>
                     ) : (
-                        (isLoading ? Array.from(new Array(6)) : teachers).map((teacher, index) => (
-                            isLoading ? (
-                                <Skeleton
-                                    key={`skeleton-${index}`}
-                                    variant="rectangular"
-                                    height={400}
-                                    sx={{ borderRadius: theme.shape.borderRadius }}
-                                />
-                            ) : (
-                                <TeacherCard
-                                    key={teacher.userId}
-                                    teacher={teacher}
-                                    picturePath="src/assets/images/exampleteacher2.jpg"
-                                    onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
-                                />
-                            )
+                        teachers.map(teacher => (
+                            <TeacherCard
+                                key={teacher.userId}
+                                teacher={teacher}
+                                onCardClick={() => navigate(`/teachers/${teacher.userId}`)}
+                            />
                         ))
                     )}
                 </Box>
@@ -117,12 +107,12 @@ const TeacherSearch: FunctionComponent = () => {
             }}>
                 <Pagination
                     count={totalPages}
-                    page={filters.page}
+                    page={searchFilters.page || 1}
                     onChange={handlePageChange}
                     color="primary"
                 />
             </Box>
-        </Container>
+        </Box>
     );
 };
 

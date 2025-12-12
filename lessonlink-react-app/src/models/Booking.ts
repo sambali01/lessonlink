@@ -1,15 +1,26 @@
-import { AvailableSlot } from "./AvailableSlot";
-import { User } from "./User";
-
 export type Booking = {
-    student: User;
-    availableSlot: AvailableSlot;
+    id: number;
+    studentId: string;
+    studentName: string;
+    availableSlotId: number;
+    slotStartTime: string;
+    slotEndTime: string;
+    teacherId: string;
+    teacherName: string;
     status: BookingStatus;
-    createdAt: Date;
+    createdAt: string;
 }
 
-const enum BookingStatus {
-    Pending,
-    Confirmed,
-    Cancelled
+export interface CreateBookingRequest {
+    availableSlotId: number;
+}
+
+export interface BookingAcceptanceRequest {
+    status: BookingStatus;
+}
+
+export enum BookingStatus {
+    Pending = 0,
+    Confirmed = 1,
+    Cancelled = 2
 }

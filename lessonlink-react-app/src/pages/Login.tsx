@@ -3,36 +3,49 @@ import {
     Box,
     Button,
     CircularProgress,
-    Container, Link, Paper,
+    Container,
+    Link,
+    Paper,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
-import { useState } from 'react';
+import LoginIcon from "@mui/icons-material/Login";
+import { FunctionComponent, useState } from 'react';
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import "./Login.less";
+import { useNotification } from "../hooks/useNotification";
+import { ApiError } from "../utils/ApiError";
 
 interface LoginForm {
     email: string;
     password: string;
 }
 
-export default function Login() {
+const Login: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const { handleLogin } = useAuth();
+    const { showError } = useNotification();
     const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>();
     const [loading, setLoading] = useState(false);
 
     const onSubmit = async (data: LoginForm) => {
         setLoading(true);
         try {
-            handleLogin(data.email, data.password);
+            await handleLogin(data.email, data.password);
             navigate('/dashboard');
         } catch (error) {
-            console.error("Login failed:", error);
+            if (error instanceof ApiError) {
+                if (error.statusCode === 401) {
+                    showError('Hibás email cím vagy jelszó.');
+                } else {
+                    showError(error.errors);
+                }
+            } else {
+                showError('Bejelentkezés sikertelen.');
+            }
         } finally {
             setLoading(false);
         }
@@ -68,7 +81,7 @@ export default function Login() {
                         width: 36,
                         height: 36
                     }}>
-                        🏫
+                        <LoginIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
                         Bejelentkezés
@@ -124,6 +137,7 @@ export default function Login() {
                         fullWidth
                         variant="contained"
                         disabled={loading}
+                        sx={{ py: 1.5 }}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Belépés'}
                     </Button>
@@ -152,4 +166,6 @@ export default function Login() {
             </Paper>
         </Container>
     );
-}
+};
+
+export default Login;

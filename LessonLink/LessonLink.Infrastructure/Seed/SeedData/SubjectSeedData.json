@@ -1,0 +1,62 @@
+﻿[
+  {
+    "Id": 1,
+    "Name": "Matematika"
+  },
+  {
+    "Id": 2,
+    "Name": "Fizika"
+  },
+  {
+    "Id": 3,
+    "Name": "Angol nyelv"
+  },
+  {
+    "Id": 4,
+    "Name": "Programozás"
+  },
+  {
+    "Id": 5,
+    "Name": "Kémia"
+  },
+  {
+    "Id": 6,
+    "Name": "Informatika"
+  },
+  {
+    "Id": 7,
+    "Name": "Biológia"
+  },
+  {
+    "Id": 8,
+    "Name": "Történelem"
+  },
+  {
+    "Id": 9,
+    "Name": "Földrajz"
+  },
+  {
+    "Id": 10,
+    "Name": "Német nyelv"
+  },
+  {
+    "Id": 11,
+    "Name": "Francia nyelv"
+  },
+  {
+    "Id": 12,
+    "Name": "Spanyol nyelv"
+  },
+  {
+    "Id": 13,
+    "Name": "Irodalom"
+  },
+  {
+    "Id": 14,
+    "Name": "Zongora"
+  },
+  {
+    "Id": 15,
+    "Name": "Gitár"
+  }
+]

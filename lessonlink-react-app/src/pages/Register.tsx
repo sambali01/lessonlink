@@ -1,21 +1,33 @@
 import {
+    Autocomplete,
     Avatar,
     Box,
     Button,
     CircularProgress,
     Container,
+    FormControlLabel,
     FormHelperText,
-    Link, Paper,
+    FormLabel,
+    Link,
+    Paper,
+    Radio,
+    RadioGroup,
+    Slider,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
-import { useState } from 'react';
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { FunctionComponent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { register } from "../services/user.service";
-import "./Register.less";
-import { Role } from "../models/Role";
+import { useSubjects } from "../hooks/subjectQueries";
+import { useRegisterStudent, useRegisterTeacher } from "../hooks/userQueries";
+import { useNotification } from "../hooks/useNotification";
+import { Role } from "../models/User";
+import { TeachingMethod } from "../utils/enums";
+import { convertTeachingMethodToExplicitBools } from "../utils/teachingMethodConverters";
+import { ApiError } from "../utils/ApiError";
 
 interface RegisterForm {
     firstName: string;
@@ -23,27 +35,76 @@ interface RegisterForm {
     email: string;
     password: string;
     role: Role;
+    // Teacher-specific fields
+    teachingMethod?: TeachingMethod;
+    location?: string;
+    hourlyRate?: number;
+    contact?: string;
+    subjectNames?: string[];
 }
 
-export default function Register() {
+const Register: FunctionComponent = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { control, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
-        defaultValues: { role: Role.Student }
+    const { control, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>({
+        defaultValues: {
+            role: Role.Student,
+            teachingMethod: TeachingMethod.Online,
+            subjectNames: []
+        }
     });
-    const [loading, setLoading] = useState(false);
+
+    const registerStudentMutation = useRegisterStudent();
+    const registerTeacherMutation = useRegisterTeacher();
+    const { showSuccess, showError } = useNotification();
+    const { data: allSubjects } = useSubjects();
+    const subjectNames = allSubjects ? allSubjects.map((s) => s.name) : [];
+
+    const selectedRole = watch('role');
+    const selectedTeachingMethod = watch('teachingMethod');
+    const isTeacher = selectedRole === Role.Teacher;
+    const showLocationField = isTeacher && (
+        selectedTeachingMethod === TeachingMethod.InPerson ||
+        selectedTeachingMethod === TeachingMethod.Both
+    );
 
     const onSubmit = async (data: RegisterForm) => {
-        setLoading(true);
         try {
-            await register(data.firstName, data.surName, data.email, data.password, data.role);
-            navigate('/dashboard');
+            if (data.role === Role.Student) {
+                await registerStudentMutation.mutateAsync({
+                    firstName: data.firstName,
+                    surName: data.surName,
+                    email: data.email,
+                    password: data.password
+                });
+            } else {
+                const { acceptsOnline, acceptsInPerson } = convertTeachingMethodToExplicitBools(data.teachingMethod!);
+
+                await registerTeacherMutation.mutateAsync({
+                    firstName: data.firstName,
+                    surName: data.surName,
+                    email: data.email,
+                    password: data.password,
+                    acceptsOnline,
+                    acceptsInPerson,
+                    location: showLocationField ? data.location || null : null,
+                    hourlyRate: data.hourlyRate!,
+                    contact: data.contact!,
+                    subjectNames: data.subjectNames || []
+                });
+            }
+            showSuccess('Sikeres regisztráció! Jelentkezz be a folytatáshoz.');
+            navigate('/login');
         } catch (error) {
-            console.error("Registration failed:", error);
-        } finally {
-            setLoading(false);
+            if (error instanceof ApiError) {
+                showError(error.errors);
+            } else {
+                showError('Regisztráció sikertelen');
+            }
         }
     };
+
+    const loading = registerStudentMutation.isPending || registerTeacherMutation.isPending;
 
     return (
         <Container
@@ -75,7 +136,7 @@ export default function Register() {
                         width: 36,
                         height: 36
                     }}>
-                        ✍️
+                        <PersonAddIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
                         Új fiók létrehozása
@@ -90,22 +151,6 @@ export default function Register() {
                         mb: 2
                     }}>
                         <Controller
-                            name="firstName"
-                            control={control}
-                            defaultValue=""
-                            rules={{ required: 'Kötelező mező' }}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Keresztnév"
-                                    error={!!errors.firstName}
-                                    helperText={errors.firstName?.message}
-                                />
-                            )}
-                        />
-
-                        <Controller
                             name="surName"
                             control={control}
                             defaultValue=""
@@ -117,6 +162,22 @@ export default function Register() {
                                     label="Vezetéknév"
                                     error={!!errors.surName}
                                     helperText={errors.surName?.message}
+                                />
+                            )}
+                        />
+
+                        <Controller
+                            name="firstName"
+                            control={control}
+                            defaultValue=""
+                            rules={{ required: 'Kötelező mező' }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    fullWidth
+                                    label="Keresztnév"
+                                    error={!!errors.firstName}
+                                    helperText={errors.firstName?.message}
                                 />
                             )}
                         />
@@ -259,15 +320,154 @@ export default function Register() {
                         />
                     </Box>
 
+                    {isTeacher && (
+                        <>
+                            <FormLabel component="legend" sx={{ mb: 1 }}>
+                                Oktatási mód
+                            </FormLabel>
+                            <Controller
+                                name="teachingMethod"
+                                control={control}
+                                rules={{ required: isTeacher ? 'Kötelező mező' : false }}
+                                render={({ field }) => (
+                                    <RadioGroup row {...field} sx={{ mb: 2 }}>
+                                        <FormControlLabel
+                                            value={TeachingMethod.Online}
+                                            control={<Radio />}
+                                            label="Csak online"
+                                        />
+                                        <FormControlLabel
+                                            value={TeachingMethod.InPerson}
+                                            control={<Radio />}
+                                            label="Csak személyesen"
+                                        />
+                                        <FormControlLabel
+                                            value={TeachingMethod.Both}
+                                            control={<Radio />}
+                                            label="Online vagy személyesen"
+                                        />
+                                    </RadioGroup>
+                                )}
+                            />
+                            {errors.teachingMethod && (
+                                <FormHelperText error>{errors.teachingMethod.message}</FormHelperText>
+                            )}
+
+                            {showLocationField && (
+                                <Controller
+                                    name="location"
+                                    control={control}
+                                    defaultValue=""
+                                    rules={{
+                                        required: showLocationField ? 'Kötelező mező személyes órákhoz' : false
+                                    }}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            fullWidth
+                                            sx={{ mb: 2 }}
+                                            label="Helyszín"
+                                            error={!!errors.location}
+                                            helperText={errors.location?.message}
+                                        />
+                                    )}
+                                />
+                            )}
+
+                            <Box sx={{ mb: 3 }}>
+                                <FormLabel component="legend" sx={{ mb: 1 }}>
+                                    Óradíj (Ft/óra)
+                                </FormLabel>
+                                <Controller
+                                    name="hourlyRate"
+                                    control={control}
+                                    defaultValue={5000}
+                                    rules={{
+                                        required: isTeacher ? 'Kötelező mező' : false,
+                                        min: { value: 0, message: 'Az óradíj nem lehet negatív' }
+                                    }}
+                                    render={({ field }) => (
+                                        <Slider
+                                            {...field}
+                                            min={0}
+                                            max={20000}
+                                            step={500}
+                                            valueLabelDisplay="auto"
+                                            marks={[
+                                                { value: 0, label: '0 Ft' },
+                                                { value: 10000, label: '10.000 Ft' },
+                                                { value: 20000, label: '20.000 Ft' }
+                                            ]}
+                                        />
+                                    )}
+                                />
+                                {errors.hourlyRate && (
+                                    <FormHelperText error>{errors.hourlyRate.message}</FormHelperText>
+                                )}
+                            </Box>
+
+                            <Controller
+                                name="contact"
+                                control={control}
+                                defaultValue=""
+                                rules={{ required: isTeacher ? 'Kötelező mező' : false }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        fullWidth
+                                        sx={{ mb: 2 }}
+                                        label="Elérhetőség"
+                                        placeholder="Email, telefon vagy más elérhetőség"
+                                        error={!!errors.contact}
+                                        helperText={errors.contact?.message || "Ezt fogják látni a diákok a jóváhagyott foglalásokban"}
+                                    />
+                                )}
+                            />
+
+                            <Box sx={{ mb: 3 }}>
+                                <Controller
+                                    name="subjectNames"
+                                    control={control}
+                                    rules={{
+                                        required: isTeacher ? 'Legalább egy tantárgyat válassz ki' : false,
+                                        validate: (value) => (value && value.length > 0) || 'Legalább egy tantárgyat válassz ki'
+                                    }}
+                                    render={({ field }) => (
+                                        <Autocomplete
+                                            {...field}
+                                            multiple
+                                            options={subjectNames}
+                                            value={field.value || []}
+                                            onChange={(_, newValue) => field.onChange(newValue)}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    label="Tantárgyak"
+                                                    error={!!errors.subjectNames}
+                                                    helperText={errors.subjectNames?.message}
+                                                />
+                                            )}
+                                            slotProps={{
+                                                chip: {
+                                                    size: "small"
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Box>
+                        </>
+                    )}
+
                     <Button
                         type="submit"
                         fullWidth
                         variant="contained"
+                        color="secondary"
                         disabled={loading}
                         sx={{
-                            bgcolor: theme.palette.secondary.main,
-                            '&:hover': { bgcolor: theme.palette.secondary.dark },
-                            py: 2
+                            py: 1.5,
+                            mt: 2
                         }}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Regisztráció'}
@@ -298,3 +498,5 @@ export default function Register() {
         </Container>
     );
 }
+
+export default Register;

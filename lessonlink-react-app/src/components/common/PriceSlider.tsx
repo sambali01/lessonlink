@@ -1,43 +1,59 @@
 import { Box, Slider } from '@mui/material';
-import { FunctionComponent, useState } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 
 interface PriceSliderProps {
     minPrice: number;
     maxPrice: number;
     minimumDistance: number;
     onValueChange?: (newValue: number[]) => void;
+    resetTrigger?: number;
 }
 
-const PriceSlider: FunctionComponent<PriceSliderProps> = ({ minPrice, maxPrice, minimumDistance, onValueChange }) => {
-    const [value, setValue] = useState<number[]>([minPrice, maxPrice]);
+const PriceSlider: FunctionComponent<PriceSliderProps> = ({ minPrice, maxPrice, minimumDistance, onValueChange, resetTrigger }) => {
+    const [boundaries, setBoundaries] = useState<number[]>([minPrice, maxPrice]);
+
+    useEffect(() => {
+        onValueChange?.(boundaries);
+    }, [boundaries, onValueChange]);
+
+    // Reset boundaries when resetTrigger changes
+    useEffect(() => {
+        if (resetTrigger !== undefined) {
+            setBoundaries([minPrice, maxPrice]);
+        }
+    }, [resetTrigger, minPrice, maxPrice]);
 
     const handleChange = (_event: Event, newValue: number[], activeThumb: number) => {
+        let newBoundaries: number[];
+
         if (activeThumb === 0) {
-            setValue([Math.min(newValue[0], value[1] - minimumDistance), value[1]]);
+            const newMinValue = Math.min(newValue[0], boundaries[1] - minimumDistance);
+            newBoundaries = [newMinValue, boundaries[1]];
         } else {
-            setValue([value[0], Math.max(newValue[1], value[0] + minimumDistance)]);
+            const newMaxValue = Math.max(newValue[1], boundaries[0] + minimumDistance);
+            newBoundaries = [boundaries[0], newMaxValue];
         }
 
-        onValueChange?.(value);
+        setBoundaries(newBoundaries);
     };
-
-    const valuetext = (value: number) => {
-        return `${value} Ft`;
-    }
 
     return (
         <Box>
             <Slider
                 getAriaLabel={() => 'Price'}
-                value={value}
+                value={boundaries}
                 min={minPrice}
                 max={maxPrice}
                 step={500}
                 shiftStep={500}
                 onChange={handleChange}
                 valueLabelDisplay="auto"
-                getAriaValueText={valuetext}
+                getAriaValueText={(value: number) => `${value} Ft`}
                 disableSwap
+                marks={[
+                    { value: minPrice, label: `${minPrice} Ft` },
+                    { value: maxPrice, label: `${maxPrice} Ft` }
+                ]}
             />
         </Box>
     );

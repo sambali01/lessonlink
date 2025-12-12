@@ -40,13 +40,13 @@ export const AppDarkTheme: Theme = createTheme({
             contrastText: "#1A202C"
         },
         background: {
-            default: "#1A202C", // Mély szürkés-kék - fő háttér
-            paper: "#2D3748"     // Közepes szürke felületeknek
+            default: "#1A202C",
+            paper: "#2D3748"
         },
         text: {
-            primary: "#E2E8F0",   // Világos szürke elsődleges szöveg
-            secondary: "#CBD5E0", // Halványabb szövegek
-            disabled: "#718096"   // Letiltott elemek szövege
+            primary: "#E2E8F0",
+            secondary: "#CBD5E0",
+            disabled: "#718096"
         },
         divider: "#4A5568",
         action: {

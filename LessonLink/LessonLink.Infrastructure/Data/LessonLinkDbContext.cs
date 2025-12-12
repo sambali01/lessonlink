@@ -1,5 +1,6 @@
-﻿using LessonLink.BusinessLogic.Common;
+﻿using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Models;
+using LessonLink.Infrastructure.Data.Converters;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,22 @@ public class LessonLinkDbContext : IdentityDbContext<User>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Convert all DateTime properties to UTC when saving and reading from database
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(DateTimeConverter.UtcConverter);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(DateTimeConverter.NullableUtcConverter);
+                }
+            }
+        }
 
         // Teacher configuration
         modelBuilder.Entity<Teacher>()
@@ -66,7 +83,7 @@ public class LessonLinkDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<Booking>()
             .HasOne(b => b.AvailableSlot)
-            .WithMany()
+            .WithMany(slot => slot.Bookings)
             .HasForeignKey(b => b.AvailableSlotId)
             .OnDelete(DeleteBehavior.Restrict);
 

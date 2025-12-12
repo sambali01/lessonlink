@@ -5,32 +5,22 @@ namespace LessonLink.BusinessLogic.Mappers;
 
 public static class TeacherMappers
 {
-    public static Teacher CreateDtoToTeacher(TeacherCreateDto teacherCreateDto)
+    public static TeacherResponse TeacherToResponse(Teacher teacher)
     {
-        return new Teacher
-        {
-            UserId = teacherCreateDto.UserId
-        };
-    }
-
-    public static TeacherGetDto TeacherToGetDto(Teacher teacher)
-    {
-        return new TeacherGetDto
+        return new TeacherResponse
         {
             UserId = teacher.UserId,
             FirstName = teacher.User.FirstName,
             SurName = teacher.User.SurName,
             NickName = teacher.User.NickName,
-            ProfilePicture = teacher.User.ProfilePicture,
+            ImageUrl = teacher.User.ImageUrl,
             AcceptsOnline = teacher.AcceptsOnline,
             AcceptsInPerson = teacher.AcceptsInPerson,
             Location = teacher.Location,
             HourlyRate = teacher.HourlyRate,
             Description = teacher.Description,
-            Rating = teacher.Rating,
-            Subjects = teacher.TeacherSubjects
-                .Select(ts => ts.Subject.Name)
-                .ToList(),
+            Contact = teacher.Contact,
+            Subjects = [.. teacher.TeacherSubjects.Select(ts => SubjectMappers.SubjectToResponse(ts.Subject))],
         };
     }
 }

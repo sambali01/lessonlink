@@ -1,8 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { TeacherDto } from '../dtos/TeacherDto';
-import { getFeaturedTeachers, getTeacherById, searchTeachers } from '../services/teacher.service';
-import { TeacherSearchFilters } from '../models/TeacherSearchFilters';
 import { PaginatedResponse } from '../models/PaginatedResponse';
+import { Teacher, TeacherSearchRequest } from '../models/Teacher';
+import { getFeaturedTeachers, getTeacherById, getTeacherContact, searchTeachers } from '../services/teacher.service';
 
 export const useFeaturedTeachers = () => {
     return useQuery({
@@ -13,15 +12,24 @@ export const useFeaturedTeachers = () => {
 };
 
 export const useTeacherDetails = (userId: string, options?: { enabled?: boolean }) => {
-    return useQuery<TeacherDto>({
+    return useQuery<Teacher>({
         queryKey: ['teacher', userId],
         queryFn: () => getTeacherById(userId),
         enabled: !!userId && (options?.enabled ?? true)
     });
 };
 
-export const useSearchTeachers = (filters: TeacherSearchFilters) => {
-    return useQuery<PaginatedResponse<TeacherDto>, Error>({
+export const useTeacherContact = (teacherId: string, options?: { enabled?: boolean }) => {
+    return useQuery<string, Error>({
+        queryKey: ['teacherContact', teacherId],
+        queryFn: () => getTeacherContact(teacherId),
+        enabled: !!teacherId && (options?.enabled ?? true),
+        staleTime: 1000 * 60 * 10    // 10 minutes cache
+    });
+};
+
+export const useSearchTeachers = (filters: TeacherSearchRequest) => {
+    return useQuery<PaginatedResponse<Teacher>, Error>({
         queryKey: ['teachers', filters],
         queryFn: () => searchTeachers(filters),
         placeholderData: keepPreviousData,

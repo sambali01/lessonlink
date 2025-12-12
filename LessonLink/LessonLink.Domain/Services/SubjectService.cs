@@ -1,75 +1,54 @@
-﻿using LessonLink.BusinessLogic.Common;
-using LessonLink.BusinessLogic.DTOs.Subject;
+﻿using LessonLink.BusinessLogic.DTOs.Subject;
+using LessonLink.BusinessLogic.Helpers;
 using LessonLink.BusinessLogic.Mappers;
 using LessonLink.BusinessLogic.Models;
 using LessonLink.BusinessLogic.Repositories;
 
 namespace LessonLink.BusinessLogic.Services;
 
-public class SubjectService
+public class SubjectService(IUnitOfWork unitOfWork)
 {
-    private readonly ISubjectRepository _subjectRepository;
-
-    public SubjectService(ISubjectRepository subjectRepository)
+    public async Task<ServiceResult<SubjectResponse[]>> GetAllAsync()
     {
-        _subjectRepository = subjectRepository;
+        var subjects = await unitOfWork.SubjectRepository.GetAllAsync();
+
+        var subjectsDto = subjects
+            .Select(SubjectMappers.SubjectToResponse)
+            .ToArray();
+
+        return ServiceResult<SubjectResponse[]>.Success(subjectsDto);
     }
 
-    public async Task<ServiceResult<SubjectGetDto[]>> GetAllAsync()
+    public async Task<ServiceResult<SubjectResponse>> GetByIdAsync(int id)
     {
-        try
+        var subject = await unitOfWork.SubjectRepository.GetByIdAsync(id);
+        if (subject == null)
         {
-            var subjects = await _subjectRepository.GetAllAsync();
-
-            var subjectsDto = subjects
-                .Select(SubjectMappers.SubjectToGetDto)
-                .ToArray();
-
-            return ServiceResult<SubjectGetDto[]>.Success(subjectsDto);
+            return ServiceResult<SubjectResponse>.Failure("A megadott azonosítóval nem található tantárgy.", 404);
         }
-        catch (Exception ex)
-        {
-            return ServiceResult<SubjectGetDto[]>.Failure(ex.Message, 500);
-        }
+
+        var subjectDto = SubjectMappers.SubjectToResponse(subject);
+
+        return ServiceResult<SubjectResponse>.Success(subjectDto);
     }
 
-    public async Task<ServiceResult<SubjectGetDto>> GetByIdAsync(int id)
+    public async Task<ServiceResult<Subject>> CreateAsync(CreateSubjectRequest createSubjectRequest)
     {
-        try
+        var existingSubject = await unitOfWork.SubjectRepository.GetByNameAsync(createSubjectRequest.Name);
+        if (existingSubject != null)
         {
-            var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null)
-            {
-                return ServiceResult<SubjectGetDto>.Failure("Subject with given id not found.", 404);
-            }
-
-            var subjectDto = SubjectMappers.SubjectToGetDto(subject);
-
-            return ServiceResult<SubjectGetDto>.Success(subjectDto);
+            return ServiceResult<Subject>.Failure("A tantárgy már létezik.", 409);
         }
-        catch (Exception ex)
+
+        Subject subject = SubjectMappers.CreateRequestToSubject(createSubjectRequest);
+
+        unitOfWork.SubjectRepository.CreateAsync(subject);
+
+        if (await unitOfWork.CompleteAsync())
         {
-            return ServiceResult<SubjectGetDto>.Failure(ex.Message, 500);
-        }
-    }
-
-    public async Task<ServiceResult<Subject>> CreateAsync(SubjectCreateDto subjectCreateDto)
-    {
-        try
-        {
-            var existingSubject = await _subjectRepository.GetByNameAsync(subjectCreateDto.Name);
-            if (existingSubject != null)
-                return ServiceResult<Subject>.Failure("Subject already exists.", 409);
-
-            Subject subject = SubjectMappers.CreateDtoToSubject(subjectCreateDto);
-
-            await _subjectRepository.CreateAsync(subject);
-
             return ServiceResult<Subject>.Success(subject, 201);
         }
-        catch (Exception ex)
-        {
-            return ServiceResult<Subject>.Failure(ex.Message, 500);
-        }
+
+        return ServiceResult<Subject>.Failure("Hiba történt a tantárgy létrehozása során.", 500);
     }
 }
