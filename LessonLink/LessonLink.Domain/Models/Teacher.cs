@@ -46,7 +46,7 @@ public class Teacher
     public int HourlyRate { get; set; }
 
     /// <summary>
-    /// A self-written description of the teacher's qualifications, teaching style, and experience.
+    /// A self-written description of the teacher.
     /// Displayed on the teacher's public profile page.
     /// </summary>
     public string Description { get; set; } = string.Empty;

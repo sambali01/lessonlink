@@ -17,6 +17,7 @@ import {
     Typography,
     useTheme
 } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { FunctionComponent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -135,7 +136,7 @@ const Register: FunctionComponent = () => {
                         width: 36,
                         height: 36
                     }}>
-                        ✍️
+                        <PersonAddIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
                         Új fiók létrehozása

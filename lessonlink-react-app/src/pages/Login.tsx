@@ -10,6 +10,7 @@ import {
     Typography,
     useTheme
 } from "@mui/material";
+import LoginIcon from "@mui/icons-material/Login";
 import { FunctionComponent, useState } from 'react';
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -76,7 +77,7 @@ const Login: FunctionComponent = () => {
                         width: 36,
                         height: 36
                     }}>
-                        🏫
+                        <LoginIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
                         Bejelentkezés
