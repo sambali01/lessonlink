@@ -4,11 +4,9 @@ Tanórafoglaló webalkalmazás magántanárok és diákok részére.
 
 ## Tartalomjegyzék
 
-- [Áttekintés](#áttekintés)
 - [Technológiai stack](#technológiai-stack)
 - [Előfeltételek](#előfeltételek)
 - [Futtatási útmutató](#futtatási-útmutató)
-- [Használat](#használat)
 - [Tesztelés](#tesztelés)
 
 ## Technológiai stack
